@@ -46,3 +46,83 @@ body {
 .btn:disabled { opacity: 0.4; cursor: default; }
 .btn--primary { background: var(--accent); color: #1c1917; border-color: transparent; font-weight: 600; }
 .btn--small { padding: 6px 12px; font-size: 0.9rem; }
+
+.fight__header { display: flex; justify-content: space-between; align-items: center; }
+.fight__round { opacity: 0.8; font-size: 0.9rem; }
+.fight__middle { flex: 1; display: flex; align-items: center; gap: 12px; min-height: calc(var(--card-w) * 1.8); }
+.fight__status { margin: 0; min-height: 1.4em; text-align: center; opacity: 0.9; }
+
+.actions { display: flex; justify-content: center; gap: 12px; min-height: 52px; }
+
+.hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; min-height: calc(var(--card-w) * 1.4); }
+.hand--enemy { min-height: var(--card-w); }
+.hand--enemy .card { width: calc(var(--card-w) * 0.7); }
+.hand--waiting .card { filter: brightness(0.8); }
+
+.card {
+  width: var(--card-w);
+  aspect-ratio: 5 / 7;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px 5px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+}
+.card:disabled { cursor: default; }
+.card--red { color: #dc2626; }
+.card--black { color: #111827; }
+.card--trump { background: #fef9c3; }
+.card--playable { outline: 3px solid var(--accent); outline-offset: 1px; }
+.card--back {
+  background: repeating-linear-gradient(45deg, #1e3a8a 0 6px, #1e40af 6px 12px);
+  border-color: #93c5fd;
+}
+.card__rank { font-size: calc(var(--card-w) * 0.32); line-height: 1; }
+.card__suit { font-size: calc(var(--card-w) * 0.36); line-height: 1; }
+
+.deck { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.8rem; text-align: center; }
+
+.table {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, var(--card-w));
+  gap: 20px 14px;
+  justify-content: center;
+  align-content: center;
+}
+.table__pair { position: relative; width: var(--card-w); }
+.table__defense { position: absolute; top: 34%; left: 30%; }
+
+.hp { display: grid; grid-template-columns: 5.5em 1fr 3.5em; align-items: center; gap: 8px; font-size: 0.9rem; }
+.hp__track { height: 10px; border-radius: 5px; background: rgb(0 0 0 / 35%); overflow: hidden; }
+.hp__fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f97316); }
+.hp__value { text-align: right; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 60%);
+}
+.overlay__panel {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  background: var(--felt-dark);
+  text-align: center;
+}
+.overlay__panel h2, .overlay__panel p { margin: 0; }
