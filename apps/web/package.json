@@ -1,0 +1,19 @@
+{
+  "name": "@game/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "icons": "pwa-assets-generator --preset minimal-2023 public/favicon.svg"
+  },
+  "dependencies": {
+    "@game/core": "*",
+    "@game/durak": "*",
+    "motion": "^14.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}
