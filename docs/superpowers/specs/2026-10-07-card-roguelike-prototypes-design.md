@@ -148,7 +148,7 @@
 
 - TypeScript (strict), React, Motion (layout-анимации карт), Vite, Vitest, fast-check, Playwright.
 - `vite-plugin-pwa` — манифест и service worker.
-- pnpm workspaces.
+- npm workspaces (pnpm не установлен; для нашего масштаба разницы нет).
 - Деплой: GitHub → Cloudflare Pages (автодеплой из `main`).
 
 ### 6.2 Структура
