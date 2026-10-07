@@ -41,6 +41,7 @@ const fight = z.object({
   perks: z.array(perk).max(MAX_PERKS),
   roundTakes: perPlayer,
   fightTakes: perPlayer,
+  boss,
 });
 
 const reward = z.object({ base: count, hpBonus: count, interest: count, perkBonus: count, total: count });

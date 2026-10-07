@@ -1,9 +1,10 @@
-import { createRng, err, ok, type Result, type RngState, type Suit } from '@game/core';
+import { createRng, err, nextInt, ok, SUITS, type Result, type RngState, type Suit } from '@game/core';
 import { dealRound } from './deal';
 import { perkHandSizes, perkTakeDamage, type PerkId } from './perks';
 import { applyRoundAction } from './reducer';
 import {
   opponentOf,
+  type BossRule,
   type BoutResult,
   type DurakError,
   type PlayerId,
@@ -16,6 +17,7 @@ export type FightConfig = {
   readonly playerHp: number;
   readonly enemyHp: number;
   readonly perks?: readonly PerkId[];
+  readonly boss?: BossRule | null;
 };
 
 export const DEFAULT_FIGHT_CONFIG = { playerHp: 10, enemyHp: 7 } as const;
@@ -45,6 +47,8 @@ export type FightState = {
   readonly roundTakes: PerPlayer;
   /** Takes per side over the whole fight (used for rewards). */
   readonly fightTakes: PerPlayer;
+  /** The boss rule of this fight, if any. */
+  readonly boss: BossRule | null;
 };
 
 export type FightAction = RoundAction | { readonly type: 'nextRound' };
@@ -55,7 +59,8 @@ const NO_TAKES: PerPlayer = { player: 0, enemy: 0 };
 
 export function createFight(config: FightConfig): FightState {
   const perks = config.perks ?? [];
-  const [round, rng] = dealRound(createRng(config.seed), perkHandSizes(perks));
+  const boss = config.boss ?? null;
+  const [round, rng] = dealRound(createRng(config.seed), perkHandSizes(perks), boss);
   const hp = { player: config.playerHp, enemy: config.enemyHp };
   return {
     round,
@@ -69,6 +74,7 @@ export function createFight(config: FightConfig): FightState {
     perks,
     roundTakes: NO_TAKES,
     fightTakes: NO_TAKES,
+    boss,
   };
 }
 
@@ -83,12 +89,25 @@ export function applyFightAction(
   if (!result.ok) return result;
   const next: FightState = { ...state, round: result.value, hits: [] };
   const bout = newBout(state.round, result.value);
-  return ok(bout ? chargeTake(next, bout, state.round.trumpSuit) : next);
+  const charged = bout ? chargeTake(next, bout, state.round.trumpSuit) : next;
+  return ok(state.boss === 'shuffler' && endedBeaten(state.round, result.value) ? shuffleTrump(charged) : charged);
+}
+
+/** A bout that ended in «Бито»: the table was cleared without a take, and the round goes on. */
+function endedBeaten(previous: RoundState, next: RoundState): boolean {
+  return previous.table.length > 0 && next.table.length === 0 && next.lastBout === previous.lastBout && next.outcome === null;
+}
+
+/** Фокусник: the trump moves to a random different suit, drawn from the fight RNG. */
+function shuffleTrump(state: FightState): FightState {
+  const others = SUITS.filter((suit) => suit !== state.round.trumpSuit);
+  const [index, rng] = nextInt(state.rng, others.length);
+  return { ...state, rng, round: { ...state.round, trumpSuit: others[index] as Suit } };
 }
 
 function nextRound(state: FightState): Result<FightState, FightError> {
   if (!state.round.outcome) return err('roundInProgress');
-  const [round, rng] = dealRound(state.rng, perkHandSizes(state.perks));
+  const [round, rng] = dealRound(state.rng, perkHandSizes(state.perks), state.boss);
   return ok({ ...state, round, rng, roundNumber: state.roundNumber + 1, hits: [], roundTakes: NO_TAKES });
 }
 

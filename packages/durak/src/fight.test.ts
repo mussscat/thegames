@@ -165,3 +165,38 @@ describe('perks in a fight', () => {
     expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
   });
 });
+
+describe('bosses in a fight', () => {
+  const shuffler = createFight({ seed: 1, playerHp: 10, enemyHp: 10, boss: 'shuffler' });
+  const beatenRound = roundState({
+    boss: 'shuffler',
+    hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+    table: [covered],
+    deck: filler(6, 'clubs').slice(2),
+  });
+
+  it('passes the boss into every round', () => {
+    expect(shuffler.boss).toBe('shuffler');
+    expect(shuffler.round.boss).toBe('shuffler');
+    const ended = expectOk(applyFightAction({ ...shuffler, round: { ...endingRound, boss: 'shuffler' } }, 'player', { type: 'endAttack' }));
+    expect(expectOk(applyFightAction(ended, 'player', { type: 'nextRound' })).round.boss).toBe('shuffler');
+  });
+
+  it('Фокусник changes the trump to another suit after «Бито»', () => {
+    const next = expectOk(applyFightAction({ ...shuffler, round: beatenRound }, 'player', { type: 'endAttack' }));
+    expect(next.round.trumpSuit).not.toBe('hearts');
+    expect(next.rng).not.toEqual(shuffler.rng);
+  });
+
+  it('Фокусник keeps the trump after a take', () => {
+    const taking = { ...takingRound, boss: 'shuffler' as const };
+    const next = expectOk(applyFightAction({ ...shuffler, round: taking }, 'player', { type: 'endAttack' }));
+    expect(next.round.trumpSuit).toBe('hearts');
+  });
+
+  it('without the Фокусник the trump never changes', () => {
+    const plain = { ...beatenRound, boss: null };
+    const next = expectOk(applyFightAction({ ...base, round: plain }, 'player', { type: 'endAttack' }));
+    expect(next.round.trumpSuit).toBe('hearts');
+  });
+});
