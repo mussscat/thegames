@@ -2,6 +2,11 @@ import type { Card, Suit } from '@game/core';
 
 export type PlayerId = 'player' | 'enemy';
 
+export const BOSS_RULES = ['witch', 'general', 'shuffler'] as const;
+
+/** witch: queens are trumps; general: the player beats only by 2+ ranks; shuffler: trump changes after every «Бито». */
+export type BossRule = (typeof BOSS_RULES)[number];
+
 export const HAND_SIZE = 6;
 export const MAX_ATTACKS_PER_BOUT = 6;
 
@@ -35,6 +40,7 @@ export type RoundState = {
   readonly outcome: RoundOutcome | null;
   readonly lastBout: BoutResult | null;
   readonly handSizes: HandSizes;
+  readonly boss: BossRule | null;
 };
 
 export type RoundAction =

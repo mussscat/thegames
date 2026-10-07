@@ -23,6 +23,7 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     outcome: null,
     lastBout: null,
     handSizes: DEFAULT_HAND_SIZES,
+    boss: null,
     ...overrides,
   };
 }

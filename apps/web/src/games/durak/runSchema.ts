@@ -1,5 +1,5 @@
 import { RANKS, SUITS, type Rank } from '@game/core';
-import { MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
+import { BOSS_RULES, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
 export const SAVE_VERSION = 1;
@@ -12,6 +12,7 @@ const perk = z.enum(PERK_IDS);
 const card = z.object({ id: z.string(), suit, rank });
 const perPlayer = z.object({ player: count, enemy: count });
 const rng = z.object({ seed: z.number().int() });
+const boss = z.enum(BOSS_RULES).nullable();
 
 const round = z.object({
   deck: z.array(card),
@@ -25,6 +26,7 @@ const round = z.object({
   outcome: z.object({ loser: player.nullable(), cardsLeft: count }).nullable(),
   lastBout: z.object({ damaged: player, attackCards: z.array(card) }).nullable(),
   handSizes: perPlayer,
+  boss,
 });
 
 const fight = z.object({

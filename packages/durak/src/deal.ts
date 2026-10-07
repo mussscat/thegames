@@ -1,5 +1,5 @@
 import { createDeck, shuffle, type Card, type RngState, type Suit } from '@game/core';
-import { DEFAULT_HAND_SIZES, type HandSizes, type Hands, type PlayerId, type RoundState } from './types';
+import { DEFAULT_HAND_SIZES, type BossRule, type HandSizes, type Hands, type PlayerId, type RoundState } from './types';
 
 const DURAK_MIN_RANK = 6;
 
@@ -9,7 +9,11 @@ export function firstAttacker(hands: Hands, trump: Suit): PlayerId {
   return lowestTrump(hands.enemy) < lowestTrump(hands.player) ? 'enemy' : 'player';
 }
 
-export function dealRound(rng: RngState, handSizes: HandSizes = DEFAULT_HAND_SIZES): readonly [RoundState, RngState] {
+export function dealRound(
+  rng: RngState,
+  handSizes: HandSizes = DEFAULT_HAND_SIZES,
+  boss: BossRule | null = null,
+): readonly [RoundState, RngState] {
   const [deck, nextRng] = shuffle(createDeck(DURAK_MIN_RANK), rng);
   const dealtCount = handSizes.player + handSizes.enemy;
   const hands: Hands = {
@@ -30,6 +34,7 @@ export function dealRound(rng: RngState, handSizes: HandSizes = DEFAULT_HAND_SIZ
     outcome: null,
     lastBout: null,
     handSizes,
+    boss,
   };
   return [round, nextRng];
 }

@@ -66,3 +66,10 @@ describe('dealRound with custom hand sizes', () => {
     expect(round.handSizes).toEqual({ player: 6, enemy: 6 });
   });
 });
+
+describe('dealRound with a boss', () => {
+  it('remembers the boss rule and defaults to none', () => {
+    expect(dealRound(createRng(7))[0].boss).toBeNull();
+    expect(dealRound(createRng(7), undefined, 'witch')[0].boss).toBe('witch');
+  });
+});

@@ -52,7 +52,7 @@ function defend(state: RoundState, actor: PlayerId, cardId: string): RoundResult
   if (actor !== defenderOf(state) || !pair) return err('notYourTurn');
   const card = findCard(state.hands[actor], cardId);
   if (!card) return err('cardNotInHand');
-  if (!beats(pair.attack, card, state.trumpSuit)) return err('cannotBeat');
+  if (!beats(pair.attack, card, state.trumpSuit, state.boss, actor)) return err('cannotBeat');
   return ok({
     ...state,
     hands: withHand(state.hands, actor, withoutCard(state.hands[actor], cardId)),

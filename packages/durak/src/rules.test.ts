@@ -1,7 +1,7 @@
 import { createDeck } from '@game/core';
 import { describe, expect, it } from 'vitest';
 import { c, filler, roundState } from './fixtures';
-import { attackLimit, beats, canThrowIn, currentActor, legalActions } from './rules';
+import { attackLimit, beats, canThrowIn, currentActor, isTrumpCard, legalActions } from './rules';
 
 describe('beats', () => {
   it('higher card of the same suit beats lower', () => {
@@ -114,5 +114,34 @@ describe('legalActions', () => {
   });
   it('the player who is not acting has no actions', () => {
     expect(legalActions(roundState(), 'enemy')).toEqual([]);
+  });
+});
+
+describe('boss rules', () => {
+  it('Ведьма: a queen of any suit is a trump', () => {
+    expect(isTrumpCard(c(12, 'clubs'), 'hearts', 'witch')).toBe(true);
+    expect(isTrumpCard(c(12, 'clubs'), 'hearts', null)).toBe(false);
+    expect(beats(c(14, 'spades'), c(12, 'clubs'), 'hearts', 'witch')).toBe(true);
+    expect(beats(c(12, 'clubs'), c(13, 'clubs'), 'hearts', 'witch')).toBe(false);
+    expect(beats(c(12, 'clubs'), c(14, 'hearts'), 'hearts', 'witch')).toBe(true);
+    expect(beats(c(14, 'hearts'), c(12, 'clubs'), 'hearts', 'witch')).toBe(false);
+  });
+
+  it('Генерал: the player must beat by 2+ ranks, the enemy is unaffected', () => {
+    expect(beats(c(8, 'clubs'), c(9, 'clubs'), 'hearts', 'general', 'player')).toBe(false);
+    expect(beats(c(8, 'clubs'), c(10, 'clubs'), 'hearts', 'general', 'player')).toBe(true);
+    expect(beats(c(8, 'clubs'), c(9, 'clubs'), 'hearts', 'general', 'enemy')).toBe(true);
+    expect(beats(c(14, 'clubs'), c(6, 'hearts'), 'hearts', 'general', 'player')).toBe(true);
+    expect(beats(c(7, 'hearts'), c(8, 'hearts'), 'hearts', 'general', 'player')).toBe(false);
+  });
+
+  it('legal defenses follow the boss rule', () => {
+    const state = roundState({
+      attacker: 'enemy',
+      boss: 'general',
+      hands: { player: [c(9, 'clubs'), c(10, 'clubs')], enemy: filler(5) },
+      table: [{ attack: c(8, 'clubs'), defense: null }],
+    });
+    expect(legalActions(state, 'player')).toEqual([{ type: 'defend', cardId: 'clubs-10' }, { type: 'take' }]);
   });
 });

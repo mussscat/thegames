@@ -1,16 +1,35 @@
-import type { Card, Suit } from '@game/core';
+import type { Card, Rank, Suit } from '@game/core';
 import {
   MAX_ATTACKS_PER_BOUT,
   opponentOf,
+  type BossRule,
   type PlayerId,
   type RoundAction,
   type RoundState,
   type TablePair,
 } from './types';
 
-export function beats(attack: Card, defense: Card, trump: Suit): boolean {
-  if (defense.suit === attack.suit) return defense.rank > attack.rank;
-  return defense.suit === trump;
+const QUEEN: Rank = 12;
+const GENERAL_MIN_GAP = 2;
+
+export function isTrumpCard(card: Card, trump: Suit, boss: BossRule | null = null): boolean {
+  return card.suit === trump || (boss === 'witch' && card.rank === QUEEN);
+}
+
+/** `defender` matters only for the General, whose rule binds the player. Two trumps compare by rank. */
+export function beats(
+  attack: Card,
+  defense: Card,
+  trump: Suit,
+  boss: BossRule | null = null,
+  defender: PlayerId = 'enemy',
+): boolean {
+  const gap = boss === 'general' && defender === 'player' ? GENERAL_MIN_GAP : 1;
+  const attackTrump = isTrumpCard(attack, trump, boss);
+  const defenseTrump = isTrumpCard(defense, trump, boss);
+  if (attackTrump !== defenseTrump) return defenseTrump;
+  if (!attackTrump && defense.suit !== attack.suit) return false;
+  return defense.rank - attack.rank >= gap;
 }
 
 export function defenderOf(state: RoundState): PlayerId {
@@ -48,7 +67,7 @@ export function legalActions(state: RoundState, actor: PlayerId): readonly Round
 
   if (actor !== state.attacker && pair) {
     const defends = hand
-      .filter((card) => beats(pair.attack, card, state.trumpSuit))
+      .filter((card) => beats(pair.attack, card, state.trumpSuit, state.boss, actor))
       .map((card): RoundAction => ({ type: 'defend', cardId: card.id }));
     return [...defends, { type: 'take' }];
   }
