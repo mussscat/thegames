@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RUN_SCHEDULE } from '../content/enemies';
-import { applyRunAction, createRun, enemyAt, PLAYER_HP, stageLabel, type RunState } from './run';
+import { BOSSES } from '../content/bosses';
+import { applyRunAction, createRun, enemyAt, PLAYER_HP, stageEnemy, stageLabel, type RunState } from './run';
 
 function expectOk(result: ReturnType<typeof applyRunAction>): RunState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -119,5 +120,27 @@ describe('shop phase', () => {
       error: 'wrongPhase',
     });
     expect(applyRunAction(shop, { type: 'leaveFight' })).toEqual({ ok: false, error: 'wrongPhase' });
+  });
+});
+
+describe('bosses', () => {
+  it('picks a different boss for each circle', () => {
+    const run = createRun(1);
+    expect(run.bosses).toHaveLength(2);
+    expect(new Set(run.bosses).size).toBe(2);
+  });
+
+  it('boss stages fight under the circle boss rule and use its name', () => {
+    const run = createRun(1);
+    const boss = run.bosses[0]!;
+    expect(stageEnemy(run, 2)).toMatchObject({ name: BOSSES[boss].name, tier: 'boss', boss });
+    expect(stageEnemy(run, 0).boss).toBeNull();
+    const atBoss = expectOk(applyRunAction({ ...inShop(createRun(1)), stage: 1 }, { type: 'leaveShop' }));
+    expect(atBoss.phase.kind === 'fight' && atBoss.phase.fight.boss).toBe(boss);
+  });
+
+  it('regular stages fight without a boss rule', () => {
+    const run = createRun(1);
+    expect(run.phase.kind === 'fight' && run.phase.fight.boss).toBeNull();
   });
 });

@@ -12,8 +12,8 @@ export type EnemySpec = {
 export const RUN_SCHEDULE: readonly EnemySpec[] = [
   { name: 'Скупой', tier: 'normal', hp: 6, style: 'stingy' },
   { name: 'Задира', tier: 'strong', hp: 8, style: 'aggressive' },
-  { name: 'Ведьма', tier: 'boss', hp: 10, style: 'aggressive' },
+  { name: 'Босс круга 1', tier: 'boss', hp: 10, style: 'aggressive' },
   { name: 'Скряга', tier: 'normal', hp: 8, style: 'stingy' },
   { name: 'Громила', tier: 'strong', hp: 10, style: 'aggressive' },
-  { name: 'Генерал', tier: 'boss', hp: 12, style: 'aggressive' },
+  { name: 'Босс круга 2', tier: 'boss', hp: 12, style: 'aggressive' },
 ];

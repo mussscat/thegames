@@ -1,14 +1,16 @@
-import { createRng, err, nextInt, ok, type Result, type RngState } from '@game/core';
+import { createRng, err, nextInt, ok, shuffle, type Result, type RngState } from '@game/core';
+import { BOSSES } from '../content/bosses';
 import { RUN_SCHEDULE, type EnemySpec } from '../content/enemies';
 import { applyFightAction, createFight, type FightAction, type FightError, type FightState } from '../fight';
 import type { PerkId } from '../perks';
-import type { PlayerId } from '../types';
+import { BOSS_RULES, type BossRule, type PlayerId } from '../types';
 import { fightReward, type FightReward } from './economy';
 import { buyPerk, createShop, rerollShop, sellPerk, type ShopError, type ShopState, type Wallet } from './shop';
 
 export const PLAYER_HP = 10;
 export const FIGHTS_PER_CIRCLE = 3;
 const FIGHT_SEED_RANGE = 0x100000000;
+const CIRCLES = RUN_SCHEDULE.length / FIGHTS_PER_CIRCLE;
 
 export type RunPhase =
   | { readonly kind: 'fight'; readonly fight: FightState }
@@ -22,6 +24,8 @@ export type RunState = {
   readonly stage: number;
   readonly coins: number;
   readonly perks: readonly PerkId[];
+  /** One boss rule per circle, all different. */
+  readonly bosses: readonly BossRule[];
   readonly phase: RunPhase;
 };
 
@@ -49,8 +53,19 @@ export function stageLabel(stage: number): { readonly circle: number; readonly f
 }
 
 export function createRun(seed: number): RunState {
-  const rng = createRng(seed);
-  return startFight({ seed: rng.seed, rng, stage: 0, coins: 0, perks: [], phase: { kind: 'over', won: false } });
+  const start = createRng(seed);
+  const [order, rng] = shuffle(BOSS_RULES, start);
+  const bosses = order.slice(0, CIRCLES);
+  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, perks: [], bosses, phase: { kind: 'over', won: false } });
+}
+
+export type StageEnemy = EnemySpec & { readonly boss: BossRule | null };
+
+export function stageEnemy(run: RunState, stage: number): StageEnemy {
+  const spec = enemyAt(stage);
+  if (spec.tier !== 'boss') return { ...spec, boss: null };
+  const boss = run.bosses[stageLabel(stage).circle - 1] ?? null;
+  return { ...spec, name: boss ? BOSSES[boss].name : spec.name, boss };
 }
 
 export function applyRunAction(state: RunState, action: RunAction): RunResult {
@@ -92,7 +107,13 @@ function inShop(state: RunState, run: (phase: ShopPhase) => RunResult): RunResul
 
 function startFight(state: RunState): RunState {
   const [fightSeed, rng] = nextInt(state.rng, FIGHT_SEED_RANGE);
-  const fight = createFight({ seed: fightSeed, playerHp: PLAYER_HP, enemyHp: enemyAt(state.stage).hp, perks: state.perks });
+  const fight = createFight({
+    seed: fightSeed,
+    playerHp: PLAYER_HP,
+    enemyHp: enemyAt(state.stage).hp,
+    perks: state.perks,
+    boss: stageEnemy(state, state.stage).boss,
+  });
   return { ...state, rng, phase: { kind: 'fight', fight } };
 }
 
