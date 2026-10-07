@@ -6,3 +6,4 @@ export * from './reducer';
 export * from './rules';
 export * from './types';
 export * from './run/economy';
+export * from './run/shop';
