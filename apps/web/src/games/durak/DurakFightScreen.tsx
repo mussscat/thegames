@@ -6,6 +6,7 @@ import { HpBar } from '../../components/HpBar';
 import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { FightOverlay } from './FightOverlay';
+import { hitLabelFor } from './hits';
 import { statusText } from './status';
 import { TableView } from './TableView';
 import { useDurakFight } from './useDurakFight';
@@ -38,7 +39,13 @@ export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenPr
           <span className="fight__round">Раздача {state.roundNumber}</span>
         </header>
 
-        <HpBar label="Соперник" hp={state.hp.enemy} maxHp={state.maxHp.enemy} />
+        <HpBar
+          label="Соперник"
+          hp={state.hp.enemy}
+          maxHp={state.maxHp.enemy}
+          hitLabel={hitLabelFor(state.hits, 'enemy')}
+          hitKey={state.hitSeq}
+        />
         <div className="hand hand--enemy" data-testid="enemy-hand">
           {round.hands.enemy.map((card) => (
             <CardBack key={card.id} layoutId={card.id} />
@@ -66,7 +73,13 @@ export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenPr
             />
           ))}
         </div>
-        <HpBar label="Ты" hp={state.hp.player} maxHp={state.maxHp.player} />
+        <HpBar
+          label="Ты"
+          hp={state.hp.player}
+          maxHp={state.maxHp.player}
+          hitLabel={hitLabelFor(state.hits, 'player')}
+          hitKey={state.hitSeq}
+        />
       </main>
       <FightOverlay state={state} onNextRound={() => act({ type: 'nextRound' })} onRestart={onRestart} onExit={onExit} />
     </LayoutGroup>

@@ -100,7 +100,7 @@ body {
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
 
-.hp { display: grid; grid-template-columns: 5.5em 1fr 3.5em; align-items: center; gap: 8px; font-size: 0.9rem; }
+.hp { position: relative; display: grid; grid-template-columns: 5.5em 1fr 3.5em; align-items: center; gap: 8px; font-size: 0.9rem; }
 .hp__track { height: 10px; border-radius: 5px; background: rgb(0 0 0 / 35%); overflow: hidden; }
 .hp__fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f97316); }
 .hp__value { text-align: right; }
@@ -126,3 +126,17 @@ body {
   text-align: center;
 }
 .overlay__panel h2, .overlay__panel p { margin: 0; }
+.hp__hit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  text-align: center;
+  z-index: 1;
+  font-weight: 700;
+  color: #fca5a5;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 60%);
+  pointer-events: none;
+}
+.menu__rules { margin: 4px 0 0; font-size: 0.85rem; opacity: 0.75; line-height: 1.4; }
+.hand--player + .hp .hp__hit { top: auto; bottom: calc(100% + 2px); }

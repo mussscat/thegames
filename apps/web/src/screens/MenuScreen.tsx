@@ -8,6 +8,10 @@ export function MenuScreen({ onStartDurak }: MenuScreenProps) {
       <button type="button" className="btn btn--primary" onClick={onStartDurak}>
         Дурак
       </button>
+      <p className="menu__rules">
+        Заставил соперника взять — он теряет HP за каждую карту. Подкинул, а он отбился — теряешь 1 HP за подкинутую.
+        Остался в дураках — минус HP за каждую карту в руке.
+      </p>
       <button type="button" className="btn" disabled>
         TriPeaks — скоро
       </button>
