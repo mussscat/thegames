@@ -1,5 +1,5 @@
 import { createDeck, makeCard, type Card, type Rank, type Suit } from '@game/core';
-import type { RoundState } from './types';
+import { DEFAULT_HAND_SIZES, type RoundState } from './types';
 
 /** Test helpers. Not for production code. */
 export const c = (rank: Rank, suit: Suit): Card => makeCard(suit, rank);
@@ -22,6 +22,7 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     discardCount: 0,
     outcome: null,
     lastBout: null,
+    handSizes: DEFAULT_HAND_SIZES,
     ...overrides,
   };
 }

@@ -1,7 +1,6 @@
 import { err, ok, type Card, type Result } from '@game/core';
 import { beats, canThrowIn, currentActor, defenderOf, uncoveredPair } from './rules';
 import {
-  HAND_SIZE,
   opponentOf,
   withHand,
   type BoutResult,
@@ -95,7 +94,7 @@ function boutResult(state: RoundState): BoutResult | null {
 
 function drawAll(state: RoundState, firstDrawer: PlayerId): RoundState {
   return [firstDrawer, opponentOf(firstDrawer)].reduce<RoundState>((current, id) => {
-    const need = Math.max(0, HAND_SIZE - current.hands[id].length);
+    const need = Math.max(0, current.handSizes[id] - current.hands[id].length);
     return {
       ...current,
       deck: current.deck.slice(need),

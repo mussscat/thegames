@@ -216,3 +216,18 @@ describe('bout damage', () => {
     expect(next.lastBout).toBe(previous);
   });
 });
+
+describe('hand sizes', () => {
+  it('draws up to each player own hand size', () => {
+    const state = roundState({
+      hands: { player: filler(5, 'spades'), enemy: filler(5, 'diamonds') },
+      table: [covered],
+      deck: [c(11, 'clubs'), c(12, 'clubs'), c(13, 'clubs'), c(14, 'clubs')],
+      handSizes: { player: 7, enemy: 6 },
+    });
+    const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
+    expect(next.hands.player).toHaveLength(7);
+    expect(next.hands.enemy).toHaveLength(6);
+    expect(next.deck).toEqual([c(14, 'clubs')]);
+  });
+});

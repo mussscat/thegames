@@ -18,6 +18,10 @@ export type BoutResult = {
 
 export type Hands = Readonly<Record<PlayerId, readonly Card[]>>;
 
+export type HandSizes = Readonly<Record<PlayerId, number>>;
+
+export const DEFAULT_HAND_SIZES: HandSizes = { player: HAND_SIZE, enemy: HAND_SIZE };
+
 export type RoundState = {
   /** deck[0] is the top; the last card is the face-up trump card. */
   readonly deck: readonly Card[];
@@ -30,6 +34,7 @@ export type RoundState = {
   readonly discardCount: number;
   readonly outcome: RoundOutcome | null;
   readonly lastBout: BoutResult | null;
+  readonly handSizes: HandSizes;
 };
 
 export type RoundAction =

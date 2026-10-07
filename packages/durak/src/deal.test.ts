@@ -51,3 +51,18 @@ describe('firstAttacker', () => {
     expect(firstAttacker({ player: [c(14, 'clubs')], enemy: [c(13, 'clubs')] }, 'hearts')).toBe('player');
   });
 });
+
+describe('dealRound with custom hand sizes', () => {
+  it('deals each side its own hand size and remembers it', () => {
+    const [round] = dealRound(createRng(7), { player: 7, enemy: 6 });
+    expect(round.hands.player).toHaveLength(7);
+    expect(round.hands.enemy).toHaveLength(6);
+    expect(round.deck).toHaveLength(23);
+    expect(round.handSizes).toEqual({ player: 7, enemy: 6 });
+  });
+
+  it('defaults to six cards each', () => {
+    const [round] = dealRound(createRng(7));
+    expect(round.handSizes).toEqual({ player: 6, enemy: 6 });
+  });
+});
