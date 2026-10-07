@@ -30,6 +30,9 @@ describe('createFight', () => {
     expect(base.winner).toBeNull();
     expect(base.hits).toEqual([]);
     expect(base.round.hands.player).toHaveLength(6);
+    expect(base.perks).toEqual([]);
+    expect(base.roundTakes).toEqual({ player: 0, enemy: 0 });
+    expect(base.fightTakes).toEqual({ player: 0, enemy: 0 });
   });
 });
 
@@ -99,5 +102,66 @@ describe('rounds and errors', () => {
     const fight = { ...base, hp: { player: 10, enemy: 1 }, round: takingRound };
     const won = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
     expect(applyFightAction(won, 'player', { type: 'nextRound' })).toEqual({ ok: false, error: 'fightOver' });
+  });
+});
+
+describe('perks in a fight', () => {
+  const playerTaking = roundState({
+    attacker: 'enemy',
+    hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+    table: [{ attack: c(7, 'clubs'), defense: null }, { attack: c(8, 'clubs'), defense: null }],
+    defenderTaking: true,
+    deck: filler(6, 'hearts').slice(2),
+  });
+
+  it('counts takes per round and per fight', () => {
+    const next = expectOk(applyFightAction({ ...base, round: takingRound }, 'player', { type: 'endAttack' }));
+    expect(next.roundTakes).toEqual({ player: 0, enemy: 1 });
+    expect(next.fightTakes).toEqual({ player: 0, enemy: 1 });
+  });
+
+  it('a new round resets round takes but keeps fight takes', () => {
+    const fight = { ...base, round: endingRound, roundTakes: { player: 2, enemy: 1 }, fightTakes: { player: 2, enemy: 1 } };
+    const ended = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
+    const next = expectOk(applyFightAction(ended, 'player', { type: 'nextRound' }));
+    expect(next.roundTakes).toEqual({ player: 0, enemy: 0 });
+    expect(next.fightTakes).toEqual({ player: 2, enemy: 1 });
+  });
+
+  it('Подкидной мастер makes enemy takes cost 1 more', () => {
+    const fight = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['throwMaster'] }), round: takingRound };
+    const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
+    expect(next.hp.enemy).toBe(7);
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
+  });
+
+  it('Толстая кожа softens only the first player take in a round', () => {
+    const start = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['thickSkin'] }), round: playerTaking };
+    const first = expectOk(applyFightAction(start, 'enemy', { type: 'endAttack' }));
+    expect(first.hp.player).toBe(9);
+    const second = expectOk(applyFightAction({ ...first, round: playerTaking }, 'enemy', { type: 'endAttack' }));
+    expect(second.hp.player).toBe(7);
+  });
+
+  it('a zero-damage take still counts as a take', () => {
+    const single = { ...playerTaking, table: [{ attack: c(7, 'clubs'), defense: null }] };
+    const start = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['thickSkin'] }), round: single };
+    const next = expectOk(applyFightAction(start, 'enemy', { type: 'endAttack' }));
+    expect(next.hp.player).toBe(10);
+    expect(next.hits).toEqual([]);
+    expect(next.roundTakes.player).toBe(1);
+  });
+
+  it('Длинные руки deals and keeps a 7-card player hand', () => {
+    const fight = createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['longArms'] });
+    expect(fight.round.hands.player).toHaveLength(7);
+    expect(fight.round.handSizes).toEqual({ player: 7, enemy: 6 });
+    expect(fight.perks).toEqual(['longArms']);
+  });
+
+  it('Козырной charges the enemy for every trump it takes', () => {
+    const fight = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['trumpLover'] }), round: takingRound };
+    const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
   });
 });
