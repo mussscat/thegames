@@ -1,5 +1,5 @@
 import type { Card } from '@game/core';
-import { defenderOf, legalActions } from './rules';
+import { legalActions } from './rules';
 import type { PlayerId, RoundAction, RoundState } from './types';
 
 export type AiStyle = 'stingy' | 'aggressive';
@@ -8,7 +8,6 @@ const TRUMP_COST_PENALTY = 20;
 const LATE_GAME_DECK_SIZE = 6;
 const STINGY_MAX_THROW_RANK = 11;
 const COSTLY_TAKE_TABLE_SIZE = 2;
-const STINGY_RISKY_DEFENDER_HAND = 2;
 
 const TAKE: RoundAction = { type: 'take' };
 const END_ATTACK: RoundAction = { type: 'endAttack' };
@@ -57,11 +56,10 @@ function shouldSpendTrump(state: RoundState, style: AiStyle): boolean {
   );
 }
 
-/** A beaten throw-in costs the attacker 1 HP, so stingy only risks it against a nearly empty hand. */
+/** Throw-ins are free (a beaten bout costs nothing), so the only cost is giving away good cards. */
 function wantsToThrow(state: RoundState, card: Card, style: AiStyle): boolean {
   if (state.deck.length === 0) return true;
   const affordable = !isTrump(state, card) || state.deck.length <= LATE_GAME_DECK_SIZE;
   if (state.defenderTaking || style === 'aggressive') return affordable;
-  const defenderCards = state.hands[defenderOf(state)].length;
-  return !isTrump(state, card) && card.rank <= STINGY_MAX_THROW_RANK && defenderCards <= STINGY_RISKY_DEFENDER_HAND;
+  return !isTrump(state, card) && card.rank <= STINGY_MAX_THROW_RANK;
 }

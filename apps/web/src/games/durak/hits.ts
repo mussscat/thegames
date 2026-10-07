@@ -2,7 +2,6 @@ import type { Hit, PlayerId } from '@game/durak';
 
 const REASON_LABELS: Readonly<Record<Hit['reason'], string>> = {
   took: 'взял',
-  beaten: 'отбился',
   durak: 'дурак',
 };
 

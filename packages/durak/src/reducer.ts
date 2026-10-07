@@ -88,11 +88,9 @@ function finishBout(state: RoundState): RoundState {
   });
 }
 
-/** Taking costs the defender every attack card; beaten throw-ins (all but the lead) cost the attacker. */
-function boutResult(state: RoundState): BoutResult {
-  return state.defenderTaking
-    ? { damaged: defenderOf(state), amount: state.table.length, reason: 'took' }
-    : { damaged: state.attacker, amount: Math.max(0, state.table.length - 1), reason: 'beaten' };
+/** Taking costs the defender one HP per attack card taken; a beaten bout costs nothing. */
+function boutResult(state: RoundState): BoutResult | null {
+  return state.defenderTaking ? { damaged: defenderOf(state), amount: state.table.length } : null;
 }
 
 function drawAll(state: RoundState, firstDrawer: PlayerId): RoundState {

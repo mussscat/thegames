@@ -195,31 +195,22 @@ describe('bout damage', () => {
     const taking = expectOk(applyRoundAction(start, 'enemy', { type: 'take' }));
     const thrown = expectOk(applyRoundAction(taking, 'player', { type: 'attack', cardId: 'spades-7' }));
     const done = expectOk(applyRoundAction(thrown, 'player', { type: 'endAttack' }));
-    expect(done.lastBout).toEqual({ damaged: 'enemy', amount: 2, reason: 'took' });
+    expect(done.lastBout).toEqual({ damaged: 'enemy', amount: 2 });
   });
 
-  it('a fully beaten single lead costs the attacker nothing', () => {
-    const state = roundState({
-      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
-      table: [covered],
-      deck: filler(6, 'hearts'),
-    });
-    const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
-    expect(next.lastBout).toEqual({ damaged: 'player', amount: 0, reason: 'beaten' });
-  });
-
-  it('each beaten throw-in costs the attacker 1', () => {
+  it('a fully beaten bout costs nobody anything, even with throw-ins', () => {
     const state = roundState({
       hands: { player: filler(5), enemy: filler(5, 'diamonds') },
       table: [covered, { attack: c(7, 'hearts'), defense: c(8, 'hearts') }, { attack: c(9, 'hearts'), defense: c(10, 'hearts') }],
       deck: filler(6, 'clubs'),
+      lastBout: { damaged: 'enemy', amount: 1 },
     });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
-    expect(next.lastBout).toEqual({ damaged: 'player', amount: 2, reason: 'beaten' });
+    expect(next.lastBout).toBeNull();
   });
 
   it('non-bout actions keep the previous bout result untouched', () => {
-    const previous = { damaged: 'enemy' as const, amount: 3, reason: 'took' as const };
+    const previous = { damaged: 'enemy' as const, amount: 3 };
     const state = roundState({ hands: { player: [c(7, 'clubs')], enemy: filler(6) }, lastBout: previous });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'attack', cardId: 'clubs-7' }));
     expect(next.lastBout).toBe(previous);

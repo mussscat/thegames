@@ -7,11 +7,11 @@ export type FightConfig = { readonly seed: number; readonly playerHp: number; re
 
 export const DEFAULT_FIGHT_CONFIG = { playerHp: 15, enemyHp: 10 } as const;
 
-/** One HP loss caused by the last action: a taken bout, beaten throw-ins, or being left the durak. */
+/** One HP loss caused by the last action: taking the table, or being left the durak. */
 export type Hit = {
   readonly target: PlayerId;
   readonly amount: number;
-  readonly reason: 'took' | 'beaten' | 'durak';
+  readonly reason: 'took' | 'durak';
 };
 
 export type FightState = {
@@ -60,7 +60,7 @@ function pendingHits(previous: RoundState, next: RoundState): readonly Hit[] {
   const bout = next.lastBout !== previous.lastBout ? next.lastBout : null;
   const finisher = next.outcome && !previous.outcome ? next.outcome : null;
   const hits: readonly (Hit | null)[] = [
-    bout && { target: bout.damaged, amount: bout.amount, reason: bout.reason },
+    bout && { target: bout.damaged, amount: bout.amount, reason: 'took' },
     finisher && finisher.loser !== null ? { target: finisher.loser, amount: finisher.cardsLeft, reason: 'durak' } : null,
   ];
   return hits.filter((hit): hit is Hit => hit !== null && hit.amount > 0);

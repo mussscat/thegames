@@ -5,9 +5,6 @@ describe('hitText', () => {
   it('describes a taken bout', () => {
     expect(hitText({ target: 'enemy', amount: 2, reason: 'took' })).toBe('−2 взял');
   });
-  it('describes beaten throw-ins', () => {
-    expect(hitText({ target: 'player', amount: 1, reason: 'beaten' })).toBe('−1 отбился');
-  });
   it('describes the round finisher', () => {
     expect(hitText({ target: 'enemy', amount: 4, reason: 'durak' })).toBe('−4 дурак');
   });

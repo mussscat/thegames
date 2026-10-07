@@ -61,13 +61,8 @@ describe('chooseAction — attacking', () => {
     expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'endAttack' });
   });
 
-  it('stingy does not risk a throw-in against a full hand', () => {
+  it('stingy throws in a cheap matching card', () => {
     const state = roundState({ hands: { player: [c(9, 'diamonds')], enemy: filler(5) }, table: covered, deck: spadesDeck });
-    expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'endAttack' });
-  });
-
-  it('stingy risks a throw-in when the defender is almost out of cards', () => {
-    const state = roundState({ hands: { player: [c(9, 'diamonds')], enemy: filler(2) }, table: covered, deck: spadesDeck });
     expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'attack', cardId: 'diamonds-9' });
   });
 
