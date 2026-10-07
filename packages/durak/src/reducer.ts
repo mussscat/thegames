@@ -4,6 +4,7 @@ import {
   HAND_SIZE,
   opponentOf,
   withHand,
+  type BoutResult,
   type DurakError,
   type PlayerId,
   type RoundAction,
@@ -80,10 +81,18 @@ function finishBout(state: RoundState): RoundState {
   const drawn = drawAll(cleared, state.attacker);
   return checkRoundEnd({
     ...drawn,
+    lastBout: boutResult(state),
     table: [],
     defenderTaking: false,
     attacker: state.defenderTaking ? state.attacker : defender,
   });
+}
+
+/** Taking costs the defender every attack card; beaten throw-ins (all but the lead) cost the attacker. */
+function boutResult(state: RoundState): BoutResult {
+  return state.defenderTaking
+    ? { damaged: defenderOf(state), amount: state.table.length, reason: 'took' }
+    : { damaged: state.attacker, amount: Math.max(0, state.table.length - 1), reason: 'beaten' };
 }
 
 function drawAll(state: RoundState, firstDrawer: PlayerId): RoundState {

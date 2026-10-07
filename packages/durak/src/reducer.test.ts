@@ -184,3 +184,44 @@ describe('round end', () => {
     expect(applyRoundAction(state, 'player', { type: 'endAttack' })).toEqual({ ok: false, error: 'roundOver' });
   });
 });
+
+describe('bout damage', () => {
+  it('taking hurts the defender by every attack card taken, including late throw-ins', () => {
+    const start = roundState({
+      hands: { player: [c(7, 'spades'), c(14, 'clubs')], enemy: filler(5, 'diamonds') },
+      table: [uncovered],
+      deck: filler(6, 'hearts'),
+    });
+    const taking = expectOk(applyRoundAction(start, 'enemy', { type: 'take' }));
+    const thrown = expectOk(applyRoundAction(taking, 'player', { type: 'attack', cardId: 'spades-7' }));
+    const done = expectOk(applyRoundAction(thrown, 'player', { type: 'endAttack' }));
+    expect(done.lastBout).toEqual({ damaged: 'enemy', amount: 2, reason: 'took' });
+  });
+
+  it('a fully beaten single lead costs the attacker nothing', () => {
+    const state = roundState({
+      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+      table: [covered],
+      deck: filler(6, 'hearts'),
+    });
+    const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
+    expect(next.lastBout).toEqual({ damaged: 'player', amount: 0, reason: 'beaten' });
+  });
+
+  it('each beaten throw-in costs the attacker 1', () => {
+    const state = roundState({
+      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+      table: [covered, { attack: c(7, 'hearts'), defense: c(8, 'hearts') }, { attack: c(9, 'hearts'), defense: c(10, 'hearts') }],
+      deck: filler(6, 'clubs'),
+    });
+    const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
+    expect(next.lastBout).toEqual({ damaged: 'player', amount: 2, reason: 'beaten' });
+  });
+
+  it('non-bout actions keep the previous bout result untouched', () => {
+    const previous = { damaged: 'enemy' as const, amount: 3, reason: 'took' as const };
+    const state = roundState({ hands: { player: [c(7, 'clubs')], enemy: filler(6) }, lastBout: previous });
+    const next = expectOk(applyRoundAction(state, 'player', { type: 'attack', cardId: 'clubs-7' }));
+    expect(next.lastBout).toBe(previous);
+  });
+});

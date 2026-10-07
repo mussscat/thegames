@@ -28,6 +28,7 @@ export function dealRound(rng: RngState): readonly [RoundState, RngState] {
     defenderTaking: false,
     discardCount: 0,
     outcome: null,
+    lastBout: null,
   };
   return [round, nextRng];
 }

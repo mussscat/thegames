@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyFightAction, createFight, type FightState } from './fight';
-import { c, roundState } from './fixtures';
+import { c, filler, roundState } from './fixtures';
 
 function expectOk(result: ReturnType<typeof applyFightAction>): FightState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -66,5 +66,63 @@ describe('applyFightAction', () => {
     const fight = { ...base, hp: { player: 10, enemy: 1 }, round: endingRound };
     const won = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
     expect(applyFightAction(won, 'player', { type: 'nextRound' })).toEqual({ ok: false, error: 'fightOver' });
+  });
+});
+
+describe('bout damage in a fight', () => {
+  it('forcing the enemy to take hurts the enemy right away', () => {
+    const round = roundState({
+      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+      table: [{ attack: c(7, 'clubs'), defense: null }, { attack: c(7, 'hearts'), defense: null }],
+      defenderTaking: true,
+      deck: filler(6, 'hearts').slice(2),
+    });
+    const next = expectOk(applyFightAction({ ...base, round }, 'player', { type: 'endAttack' }));
+    expect(next.hp).toEqual({ player: 10, enemy: 8 });
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 2, reason: 'took' }]);
+    expect(next.hitSeq).toBe(base.hitSeq + 1);
+  });
+
+  it('a beaten throw-in hurts the attacker', () => {
+    const round = roundState({
+      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+      table: [covered, { attack: c(9, 'hearts'), defense: c(10, 'hearts') }],
+      deck: filler(6, 'clubs').slice(2),
+    });
+    const next = expectOk(applyFightAction({ ...base, round }, 'player', { type: 'endAttack' }));
+    expect(next.hp).toEqual({ player: 9, enemy: 10 });
+    expect(next.hits).toEqual([{ target: 'player', amount: 1, reason: 'beaten' }]);
+  });
+
+  it('a zero-damage bout records no hit and keeps hitSeq', () => {
+    const round = roundState({ hands: { player: filler(5), enemy: filler(5, 'diamonds') }, table: [covered], deck: filler(6, 'clubs').slice(2) });
+    const next = expectOk(applyFightAction({ ...base, round }, 'player', { type: 'endAttack' }));
+    expect(next.hits).toEqual([]);
+    expect(next.hitSeq).toBe(base.hitSeq);
+  });
+
+  it('the round finisher is recorded as a durak hit', () => {
+    const next = expectOk(applyFightAction({ ...base, round: endingRound }, 'player', { type: 'endAttack' }));
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 2, reason: 'durak' }]);
+  });
+
+  it('a lethal bout ends the fight before the finisher applies', () => {
+    const round = roundState({
+      hands: { player: [], enemy: [c(10, 'spades'), c(11, 'spades')] },
+      table: [covered, { attack: c(9, 'hearts'), defense: c(10, 'hearts') }],
+    });
+    const fight = { ...base, hp: { player: 1, enemy: 10 }, round };
+    const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
+    expect(next.hp).toEqual({ player: 0, enemy: 10 });
+    expect(next.winner).toBe('enemy');
+    expect(next.hits).toEqual([{ target: 'player', amount: 1, reason: 'beaten' }]);
+  });
+
+  it('non-bout actions clear the previous hits', () => {
+    const fight = { ...base, hits: [{ target: 'enemy' as const, amount: 2, reason: 'took' as const }] };
+    const actor = base.round.attacker;
+    const cardId = base.round.hands[actor][0]!.id;
+    const next = expectOk(applyFightAction(fight, actor, { type: 'attack', cardId }));
+    expect(next.hits).toEqual([]);
   });
 });

@@ -21,6 +21,7 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     defenderTaking: false,
     discardCount: 0,
     outcome: null,
+    lastBout: null,
     ...overrides,
   };
 }
