@@ -5,13 +5,12 @@ import { opponentOf, type DurakError, type PlayerId, type RoundAction, type Roun
 
 export type FightConfig = { readonly seed: number; readonly playerHp: number; readonly enemyHp: number };
 
-export const DEFAULT_FIGHT_CONFIG = { playerHp: 15, enemyHp: 10 } as const;
+export const DEFAULT_FIGHT_CONFIG = { playerHp: 10, enemyHp: 7 } as const;
 
-/** One HP loss caused by the last action: taking the table, or being left the durak. */
+/** HP lost by the side that took the table in the last action. */
 export type Hit = {
   readonly target: PlayerId;
   readonly amount: number;
-  readonly reason: 'took' | 'durak';
 };
 
 export type FightState = {
@@ -46,7 +45,9 @@ export function applyFightAction(
   if (action.type === 'nextRound') return nextRound(state);
   const result = applyRoundAction(state.round, actor, action);
   if (!result.ok) return result;
-  return ok(applyHits({ ...state, round: result.value, hits: [] }, pendingHits(state.round, result.value)));
+  const next: FightState = { ...state, round: result.value, hits: [] };
+  const hit = takenHit(state.round, result.value);
+  return ok(hit ? applyHit(next, hit) : next);
 }
 
 function nextRound(state: FightState): Result<FightState, FightError> {
@@ -55,29 +56,21 @@ function nextRound(state: FightState): Result<FightState, FightError> {
   return ok({ ...state, round, rng, roundNumber: state.roundNumber + 1, hits: [] });
 }
 
-/** Bout damage first, then the end-of-round finisher; zero-damage entries are dropped. */
-function pendingHits(previous: RoundState, next: RoundState): readonly Hit[] {
-  const bout = next.lastBout !== previous.lastBout ? next.lastBout : null;
-  const finisher = next.outcome && !previous.outcome ? next.outcome : null;
-  const hits: readonly (Hit | null)[] = [
-    bout && { target: bout.damaged, amount: bout.amount, reason: 'took' },
-    finisher && finisher.loser !== null ? { target: finisher.loser, amount: finisher.cardsLeft, reason: 'durak' } : null,
-  ];
-  return hits.filter((hit): hit is Hit => hit !== null && hit.amount > 0);
+/** Only taking the table hurts: a new non-zero bout result is the one and only source of damage. */
+function takenHit(previous: RoundState, next: RoundState): Hit | null {
+  const bout = next.lastBout;
+  if (!bout || bout === previous.lastBout || bout.amount === 0) return null;
+  return { target: bout.damaged, amount: bout.amount };
 }
 
-/** Applies hits in order and stops at the first lethal one, so both sides can never die at once. */
-function applyHits(state: FightState, hits: readonly Hit[]): FightState {
-  return hits.reduce<FightState>((current, hit) => {
-    if (current.winner) return current;
-    const remaining = Math.max(0, current.hp[hit.target] - hit.amount);
-    const hp = hit.target === 'player' ? { ...current.hp, player: remaining } : { ...current.hp, enemy: remaining };
-    return {
-      ...current,
-      hp,
-      hits: [...current.hits, hit],
-      hitSeq: current.hits.length === 0 ? current.hitSeq + 1 : current.hitSeq,
-      winner: remaining === 0 ? opponentOf(hit.target) : null,
-    };
-  }, state);
+function applyHit(state: FightState, hit: Hit): FightState {
+  const remaining = Math.max(0, state.hp[hit.target] - hit.amount);
+  const hp = hit.target === 'player' ? { ...state.hp, player: remaining } : { ...state.hp, enemy: remaining };
+  return {
+    ...state,
+    hp,
+    hits: [hit],
+    hitSeq: state.hitSeq + 1,
+    winner: remaining === 0 ? opponentOf(hit.target) : null,
+  };
 }

@@ -10,7 +10,6 @@ export function MenuScreen({ onStartDurak }: MenuScreenProps) {
       </button>
       <p className="menu__rules">
         Заставил соперника взять — он теряет HP за каждую карту.
-        Остался в дураках — минус HP за каждую карту в руке.
       </p>
       <button type="button" className="btn" disabled>
         TriPeaks — скоро

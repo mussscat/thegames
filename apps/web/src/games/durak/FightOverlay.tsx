@@ -13,10 +13,10 @@ function roundTitle(outcome: RoundOutcome): string {
 }
 
 function roundDetails(outcome: RoundOutcome): string {
-  if (outcome.loser === null) return 'Оба вышли одновременно — урона нет';
+  if (outcome.loser === null) return 'Оба вышли одновременно';
   return outcome.loser === 'player'
-    ? `Ты получаешь ${outcome.cardsLeft} урона`
-    : `Соперник получает ${outcome.cardsLeft} урона`;
+    ? `У тебя осталось карт: ${outcome.cardsLeft}`
+    : `У соперника осталось карт: ${outcome.cardsLeft}`;
 }
 
 export function FightOverlay({ state, onNextRound, onRestart, onExit }: FightOverlayProps) {
