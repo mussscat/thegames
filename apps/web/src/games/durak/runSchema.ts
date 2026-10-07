@@ -2,7 +2,7 @@ import { RANKS, SUITS, type Rank } from '@game/core';
 import { BOSS_RULES, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));

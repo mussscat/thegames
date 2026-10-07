@@ -161,3 +161,4 @@ body {
 .shop__item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .shop__item p { margin: 2px 0 0; font-size: 0.8rem; opacity: 0.8; }
 .shop__item--sold { opacity: 0.5; font-style: italic; }
+.run-header__boss { color: #fca5a5; font-weight: 600; }

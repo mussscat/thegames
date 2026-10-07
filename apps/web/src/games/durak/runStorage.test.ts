@@ -74,6 +74,11 @@ describe('run storage', () => {
     }
   });
 
+  it('rejects saves from version 1', () => {
+    const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: 1, run: createRun(1) }) });
+    expect(loadRun(store)).toEqual({ status: 'invalid' });
+  });
+
   it('survives a storage that throws', () => {
     expect(saveRun(brokenStore, createRun(1))).toBe(false);
     expect(loadRun(brokenStore)).toEqual({ status: 'invalid' });

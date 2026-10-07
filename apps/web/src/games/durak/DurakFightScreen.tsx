@@ -1,5 +1,5 @@
 import type { Card } from '@game/core';
-import { currentActor, legalActions, revealsTopCard, type FightAction, type FightState } from '@game/durak';
+import { currentActor, isTrumpCard, legalActions, revealsTopCard, type FightAction, type FightState } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
 import type { ReactNode } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
@@ -71,7 +71,7 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
               key={card.id}
               card={card}
               playable={myTurn && playableIds.has(card.id)}
-              trump={card.suit === round.trumpSuit}
+              trump={isTrumpCard(card, round.trumpSuit, round.boss)}
               onTap={myTurn ? () => onCardTap(card) : undefined}
             />
           ))}

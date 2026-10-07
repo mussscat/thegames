@@ -1,8 +1,8 @@
 import {
-  enemyAt,
   MAX_PERKS,
   PERKS,
   sellPrice,
+  stageEnemy,
   stageLabel,
   type FightReward,
   type RunAction,
@@ -20,7 +20,7 @@ type ShopScreenProps = {
 };
 
 export function ShopScreen({ run, shop, reward, error, onAct, onExit }: ShopScreenProps) {
-  const next = enemyAt(run.stage + 1);
+  const next = stageEnemy(run, run.stage + 1);
   return (
     <main className="screen shop" data-testid="shop">
       <header className="fight__header">

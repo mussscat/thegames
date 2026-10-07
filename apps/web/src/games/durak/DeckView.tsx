@@ -12,7 +12,11 @@ export function DeckView({ round, revealTop }: DeckViewProps) {
       {round.deck.length > 1 && (showTopFaceUp ? <CardView card={top} /> : <CardBack />)}
       {round.deck.length > 0 && <CardView card={round.trumpCard} trump />}
       <span className="deck__count">{round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
-      <span className="deck__trump">Козырь {SUIT_SYMBOLS[round.trumpSuit]}</span>
+      <span className="deck__trump">
+        Козырь {SUIT_SYMBOLS[round.trumpSuit]}
+        {round.boss === 'witch' && ' + дамы'}
+        {round.boss === 'shuffler' && ' (меняется)'}
+      </span>
     </div>
   );
 }
