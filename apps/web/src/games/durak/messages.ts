@@ -1,6 +1,6 @@
-import type { FightError } from '@game/durak';
+import type { RunError } from '@game/durak';
 
-const ERROR_MESSAGES: Readonly<Record<FightError, string>> = {
+const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   roundOver: 'Раздача уже окончена',
   notYourTurn: 'Сейчас не твой ход',
   cardNotInHand: 'Этой карты нет в руке',
@@ -9,8 +9,14 @@ const ERROR_MESSAGES: Readonly<Record<FightError, string>> = {
   cannotEndAttack: 'Сначала сходи картой',
   fightOver: 'Бой окончен',
   roundInProgress: 'Раздача ещё идёт',
+  noOffer: 'Этот товар уже куплен',
+  notEnoughCoins: 'Не хватает монет',
+  perkSlotsFull: 'Все 3 слота заняты — сначала продай перк',
+  perkNotOwned: 'Такого перка нет',
+  wrongPhase: 'Сейчас это недоступно',
+  fightNotOver: 'Бой ещё идёт',
 };
 
-export function errorMessage(error: FightError): string {
+export function errorMessage(error: RunError): string {
   return ERROR_MESSAGES[error];
 }

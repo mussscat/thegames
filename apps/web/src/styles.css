@@ -140,3 +140,24 @@ body {
 }
 .menu__rules { margin: 4px 0 0; font-size: 0.85rem; opacity: 0.75; line-height: 1.4; }
 .hand--player + .hp .hp__hit { top: auto; bottom: calc(100% + 2px); }
+
+.run-header { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; opacity: 0.85; text-align: center; }
+.menu__notice { margin: 0; color: #fca5a5; }
+
+.shop { overflow-y: auto; }
+.shop__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  background: rgb(0 0 0 / 20%);
+}
+.shop__title { margin: 0; font-size: 1rem; }
+.shop__reward { margin: 0; padding-left: 18px; font-size: 0.9rem; }
+.shop__coins { margin: 0; font-weight: 700; color: var(--accent); }
+.shop__empty { margin: 0; opacity: 0.6; font-size: 0.9rem; }
+.shop__item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.shop__item p { margin: 2px 0 0; font-size: 0.8rem; opacity: 0.8; }
+.shop__item--sold { opacity: 0.5; font-style: italic; }

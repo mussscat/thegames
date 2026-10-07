@@ -1,6 +1,7 @@
 import type { Card } from '@game/core';
-import { currentActor, legalActions } from '@game/durak';
+import { currentActor, legalActions, revealsTopCard, type FightAction, type FightState } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
+import type { ReactNode } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
 import { HpBar } from '../../components/HpBar';
 import { ActionBar } from './ActionBar';
@@ -9,25 +10,26 @@ import { FightOverlay } from './FightOverlay';
 import { hitLabelFor } from './hits';
 import { statusText } from './status';
 import { TableView } from './TableView';
-import { useDurakFight } from './useDurakFight';
 
 type DurakFightScreenProps = {
-  readonly seed: number;
+  readonly fight: FightState;
+  readonly error: string | null;
+  readonly header: ReactNode;
+  readonly onFightAction: (action: FightAction) => void;
+  readonly onLeaveFight: () => void;
   readonly onExit: () => void;
-  readonly onRestart: () => void;
 };
 
-export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenProps) {
-  const { state, error, act } = useDurakFight(seed);
-  const { round } = state;
-  const myTurn = !state.winner && currentActor(round) === 'player';
+export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+  const { round } = fight;
+  const myTurn = !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
   const playableIds = new Set(
     legalActions(round, 'player').flatMap((action) => ('cardId' in action ? [action.cardId] : [])),
   );
 
   const onCardTap = (card: Card): void =>
-    act(defending ? { type: 'defend', cardId: card.id } : { type: 'attack', cardId: card.id });
+    onFightAction(defending ? { type: 'defend', cardId: card.id } : { type: 'attack', cardId: card.id });
 
   return (
     <LayoutGroup>
@@ -36,15 +38,16 @@ export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenPr
           <button type="button" className="btn btn--small" onClick={onExit}>
             Меню
           </button>
-          <span className="fight__round">Раздача {state.roundNumber}</span>
+          <span className="fight__round">Раздача {fight.roundNumber}</span>
         </header>
+        {header}
 
         <HpBar
           label="Соперник"
-          hp={state.hp.enemy}
-          maxHp={state.maxHp.enemy}
-          hitLabel={hitLabelFor(state.hits, 'enemy')}
-          hitKey={state.hitSeq}
+          hp={fight.hp.enemy}
+          maxHp={fight.maxHp.enemy}
+          hitLabel={hitLabelFor(fight.hits, 'enemy')}
+          hitKey={fight.hitSeq}
         />
         <div className="hand hand--enemy" data-testid="enemy-hand">
           {round.hands.enemy.map((card) => (
@@ -53,14 +56,14 @@ export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenPr
         </div>
 
         <div className="fight__middle">
-          <DeckView round={round} />
+          <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
           <TableView table={round.table} />
         </div>
 
         <p className="fight__status" role="status">
-          {error ?? statusText(state)}
+          {error ?? statusText(fight)}
         </p>
-        <ActionBar round={round} myTurn={myTurn} onAct={act} />
+        <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
 
         <div className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand">
           {round.hands.player.map((card) => (
@@ -75,13 +78,13 @@ export function DurakFightScreen({ seed, onExit, onRestart }: DurakFightScreenPr
         </div>
         <HpBar
           label="Ты"
-          hp={state.hp.player}
-          maxHp={state.maxHp.player}
-          hitLabel={hitLabelFor(state.hits, 'player')}
-          hitKey={state.hitSeq}
+          hp={fight.hp.player}
+          maxHp={fight.maxHp.player}
+          hitLabel={hitLabelFor(fight.hits, 'player')}
+          hitKey={fight.hitSeq}
         />
       </main>
-      <FightOverlay state={state} onNextRound={() => act({ type: 'nextRound' })} onRestart={onRestart} onExit={onExit} />
+      <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />
     </LayoutGroup>
   );
 }

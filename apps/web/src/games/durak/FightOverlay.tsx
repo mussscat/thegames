@@ -3,8 +3,7 @@ import type { FightState, RoundOutcome } from '@game/durak';
 type FightOverlayProps = {
   readonly state: FightState;
   readonly onNextRound: () => void;
-  readonly onRestart: () => void;
-  readonly onExit: () => void;
+  readonly onLeaveFight: () => void;
 };
 
 function roundTitle(outcome: RoundOutcome): string {
@@ -19,18 +18,16 @@ function roundDetails(outcome: RoundOutcome): string {
     : `У соперника осталось карт: ${outcome.cardsLeft}`;
 }
 
-export function FightOverlay({ state, onNextRound, onRestart, onExit }: FightOverlayProps) {
+export function FightOverlay({ state, onNextRound, onLeaveFight }: FightOverlayProps) {
   if (state.winner) {
+    const won = state.winner === 'player';
     return (
       <div className="overlay" role="dialog" aria-modal="true">
         <div className="overlay__panel">
-          <h2>{state.winner === 'player' ? 'Победа!' : 'Поражение'}</h2>
+          <h2>{won ? 'Победа!' : 'Поражение'}</h2>
           <p>Раздач сыграно: {state.roundNumber}</p>
-          <button type="button" className="btn btn--primary" onClick={onRestart}>
-            Ещё бой
-          </button>
-          <button type="button" className="btn" onClick={onExit}>
-            В меню
+          <button type="button" className="btn btn--primary" onClick={onLeaveFight}>
+            {won ? 'Забрать награду' : 'К итогам'}
           </button>
         </div>
       </div>
