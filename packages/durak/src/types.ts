@@ -10,10 +10,10 @@ export type TablePair = { readonly attack: Card; readonly defense: Card | null }
 /** loser === null means both players ran out of cards at once (draw). */
 export type RoundOutcome = { readonly loser: PlayerId | null; readonly cardsLeft: number };
 
-/** Damage from the last bout the defender took; a bout that ended in «Бито» leaves it null. */
+/** The last bout the defender took: who took it and which attack cards; a bout that ended in «Бито» leaves it null. */
 export type BoutResult = {
   readonly damaged: PlayerId;
-  readonly amount: number;
+  readonly attackCards: readonly Card[];
 };
 
 export type Hands = Readonly<Record<PlayerId, readonly Card[]>>;

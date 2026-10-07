@@ -87,9 +87,11 @@ function finishBout(state: RoundState): RoundState {
   });
 }
 
-/** Taking costs the defender one HP per attack card taken; a beaten bout costs nothing. */
+/** Records a take: the defender and every attack card it takes; a beaten bout records nothing. */
 function boutResult(state: RoundState): BoutResult | null {
-  return state.defenderTaking ? { damaged: defenderOf(state), amount: state.table.length } : null;
+  return state.defenderTaking
+    ? { damaged: defenderOf(state), attackCards: state.table.map((pair) => pair.attack) }
+    : null;
 }
 
 function drawAll(state: RoundState, firstDrawer: PlayerId): RoundState {

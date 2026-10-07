@@ -59,8 +59,8 @@ function nextRound(state: FightState): Result<FightState, FightError> {
 /** Only taking the table hurts: a new non-zero bout result is the one and only source of damage. */
 function takenHit(previous: RoundState, next: RoundState): Hit | null {
   const bout = next.lastBout;
-  if (!bout || bout === previous.lastBout || bout.amount === 0) return null;
-  return { target: bout.damaged, amount: bout.amount };
+  if (!bout || bout === previous.lastBout || bout.attackCards.length === 0) return null;
+  return { target: bout.damaged, amount: bout.attackCards.length };
 }
 
 function applyHit(state: FightState, hit: Hit): FightState {
