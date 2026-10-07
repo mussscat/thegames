@@ -90,3 +90,13 @@ describe('chooseAction — attacking', () => {
     expect(chooseAction(roundState(), 'enemy', 'stingy')).toBeNull();
   });
 });
+
+describe('chooseAction under a boss', () => {
+  it('under the Witch a queen counts as a trump, so it is not the cheapest lead', () => {
+    const state = roundState({
+      boss: 'witch',
+      hands: { player: [c(12, 'clubs'), c(13, 'spades')], enemy: filler(6, 'diamonds') },
+    });
+    expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'attack', cardId: 'spades-13' });
+  });
+});

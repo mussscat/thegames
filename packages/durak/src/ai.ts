@@ -1,5 +1,5 @@
 import type { Card } from '@game/core';
-import { legalActions } from './rules';
+import { isTrumpCard, legalActions } from './rules';
 import type { PlayerId, RoundAction, RoundState } from './types';
 
 export type AiStyle = 'stingy' | 'aggressive';
@@ -25,7 +25,7 @@ export function chooseAction(state: RoundState, me: PlayerId, style: AiStyle): R
 }
 
 function isTrump(state: RoundState, card: Card): boolean {
-  return card.suit === state.trumpSuit;
+  return isTrumpCard(card, state.trumpSuit, state.boss);
 }
 
 function cardCost(state: RoundState, card: Card): number {
