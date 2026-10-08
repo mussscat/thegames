@@ -38,8 +38,12 @@ test('the hand is sorted by suit with trumps on the right, and the order is conf
   await expect(cards.last()).toHaveAccessibleName('10 пики');
   await page.getByRole('button', { name: 'Меню' }).click();
   await page.getByRole('button', { name: 'Настройки' }).click();
-  await page.getByLabel('Сортировка руки').selectOption('trumpsFirst');
+  await page.getByLabel('Козыри').selectOption('first');
+  await page.getByLabel('По рангу').selectOption('desc');
+  await page.getByLabel('По масти').uncheck();
   await page.getByRole('button', { name: 'Назад' }).click();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
   await expect(cards.first()).toHaveAccessibleName('10 пики');
+  await expect(cards.nth(1)).toHaveAccessibleName('Т бубны');
+  await expect(cards.last()).toHaveAccessibleName('8 червы');
 });

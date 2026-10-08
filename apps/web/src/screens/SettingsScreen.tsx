@@ -1,19 +1,20 @@
 import type { CSSProperties } from 'react';
-import { HAND_SORTS, type HandSort } from '../ui/handSort';
+import { RANK_ORDERS, TRUMP_PLACES, type HandSort } from '../ui/handSort';
 import { PALETTE_IDS, PALETTES } from '../ui/palettes';
 import { PixelButton } from '../ui/PixelButton';
 import { useSettings } from '../ui/SettingsContext';
 import './menu.css';
 
-const SORT_NAMES: Readonly<Record<HandSort, string>> = {
-  deal: 'Как раздали',
-  suit: 'По масти, козыри справа',
-  rank: 'По величине, козыри справа',
-  trumpsFirst: 'Сначала козыри',
+const RANK_NAMES: Readonly<Record<HandSort['rank'], string>> = { asc: 'Сначала младшие', desc: 'Сначала старшие' };
+const TRUMP_NAMES: Readonly<Record<HandSort['trumps'], string>> = {
+  first: 'В начале',
+  last: 'В конце',
+  mixed: 'Вместе с остальными',
 };
 
 export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
   const { settings, update, play } = useSettings();
+  const sortBy = (patch: Partial<HandSort>): void => update({ sort: { ...settings.sort, ...patch } });
   return (
     <main className="screen menu">
       <h1 className="menu__title">Настройки</h1>
@@ -44,25 +45,6 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
           <input type="checkbox" checked={settings.sound} onChange={(event) => update({ sound: event.target.checked })} />
           Звук
         </label>
-        <label className="settings__row">
-          <input type="checkbox" checked={settings.sway} onChange={(event) => update({ sway: event.target.checked })} />
-          Покачивание карт
-        </label>
-        <label className="settings__row settings__row--column">
-          <span>Сортировка руки</span>
-          <select
-            className="settings__select"
-            aria-label="Сортировка руки"
-            value={settings.sort}
-            onChange={(event) => update({ sort: event.target.value as HandSort })}
-          >
-            {HAND_SORTS.map((id) => (
-              <option key={id} value={id}>
-                {SORT_NAMES[id]}
-              </option>
-            ))}
-          </select>
-        </label>
         <label className="settings__row settings__row--column">
           <span>Громкость: {Math.round(settings.volume * 100)}%</span>
           <input
@@ -77,6 +59,47 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
             onPointerUp={() => play('coin')}
           />
         </label>
+        <label className="settings__row">
+          <input type="checkbox" checked={settings.sway} onChange={(event) => update({ sway: event.target.checked })} />
+          Покачивание карт
+        </label>
+        <fieldset className="settings__group">
+          <legend className="settings__label">Сортировка руки</legend>
+          <label className="settings__row">
+            <input type="checkbox" checked={settings.sort.bySuit} onChange={(event) => sortBy({ bySuit: event.target.checked })} />
+            По масти
+          </label>
+          <label className="settings__row settings__row--column">
+            <span>По рангу</span>
+            <select
+              className="settings__select"
+              aria-label="По рангу"
+              value={settings.sort.rank}
+              onChange={(event) => sortBy({ rank: event.target.value as HandSort['rank'] })}
+            >
+              {RANK_ORDERS.map((id) => (
+                <option key={id} value={id}>
+                  {RANK_NAMES[id]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="settings__row settings__row--column">
+            <span>Козыри</span>
+            <select
+              className="settings__select"
+              aria-label="Козыри"
+              value={settings.sort.trumps}
+              onChange={(event) => sortBy({ trumps: event.target.value as HandSort['trumps'] })}
+            >
+              {TRUMP_PLACES.map((id) => (
+                <option key={id} value={id}>
+                  {TRUMP_NAMES[id]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </fieldset>
       </section>
       <PixelButton tone="blue" onClick={onBack}>
         Назад

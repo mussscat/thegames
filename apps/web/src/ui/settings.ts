@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { KeyValueStore } from '../storage';
-import { HAND_SORTS, type HandSort } from './handSort';
+import { DEFAULT_HAND_SORT, RANK_ORDERS, TRUMP_PLACES, type HandSort } from './handSort';
 import { PALETTE_IDS, type PaletteId } from './palettes';
 
 export type Settings = {
@@ -13,7 +13,7 @@ export type Settings = {
   readonly sort: HandSort;
 };
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: 'suit' };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -23,7 +23,13 @@ const schema = z.object({
   sound: z.boolean().catch(DEFAULT_SETTINGS.sound),
   volume: z.number().min(0).max(1).catch(DEFAULT_SETTINGS.volume),
   sway: z.boolean().catch(DEFAULT_SETTINGS.sway),
-  sort: z.enum(HAND_SORTS).catch(DEFAULT_SETTINGS.sort),
+  sort: z
+    .object({
+      bySuit: z.boolean().catch(DEFAULT_HAND_SORT.bySuit),
+      rank: z.enum(RANK_ORDERS).catch(DEFAULT_HAND_SORT.rank),
+      trumps: z.enum(TRUMP_PLACES).catch(DEFAULT_HAND_SORT.trumps),
+    })
+    .catch(DEFAULT_HAND_SORT),
 });
 
 export function parseSettings(raw: unknown): Settings {
