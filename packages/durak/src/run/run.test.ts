@@ -28,11 +28,11 @@ describe('schedule', () => {
 });
 
 describe('createRun', () => {
-  it('starts the first fight with full player HP and no coins or perks', () => {
+  it('starts the first fight with full player HP and no coins or jokers', () => {
     const run = createRun(1);
     expect(run.stage).toBe(0);
     expect(run.coins).toBe(0);
-    expect(run.perks).toEqual([]);
+    expect(run.jokers).toEqual([]);
     expect(run.phase.kind).toBe('fight');
     if (run.phase.kind !== 'fight') return;
     expect(run.phase.fight.hp).toEqual({ player: PLAYER_HP, enemy: enemyAt(0).hp });
@@ -56,7 +56,7 @@ describe('fight phase', () => {
   it('rejects shop actions during a fight', () => {
     const run = createRun(1);
     expect(applyRunAction(run, { type: 'reroll' })).toEqual({ ok: false, error: 'wrongPhase' });
-    expect(applyRunAction(run, { type: 'sellPerk', perkId: 'looter' })).toEqual({ ok: false, error: 'wrongPhase' });
+    expect(applyRunAction(run, { type: 'sellJoker', jokerId: 'looter' })).toEqual({ ok: false, error: 'wrongPhase' });
     expect(applyRunAction(run, { type: 'leaveShop' })).toEqual({ ok: false, error: 'wrongPhase' });
   });
 
@@ -86,23 +86,24 @@ describe('fight phase', () => {
 });
 
 describe('shop phase', () => {
-  it('buying a perk spends coins and carries the perk into the next fight', () => {
-    const shop = inShop(createRun(1));
+  it('buying a joker spends coins and carries the joker into the next fight', () => {
+    /** Rich enough for any offer, legendary ones included. */
+    const shop = { ...inShop(createRun(1)), coins: 50 };
     if (shop.phase.kind !== 'shop') throw new Error('not in shop');
     const offer = shop.phase.shop.offers[0]!;
-    const bought = expectOk(applyRunAction(shop, { type: 'buyPerk', index: 0 }));
-    expect(bought.perks).toEqual([offer.perkId]);
+    const bought = expectOk(applyRunAction(shop, { type: 'buyJoker', index: 0 }));
+    expect(bought.jokers).toEqual([offer.jokerId]);
     expect(bought.coins).toBe(shop.coins - offer.price);
     const next = expectOk(applyRunAction(bought, { type: 'leaveShop' }));
     expect(next.stage).toBe(1);
-    expect(next.phase.kind === 'fight' && next.phase.fight.perks).toEqual([offer.perkId]);
+    expect(next.phase.kind === 'fight' && next.phase.fight.jokers.player).toEqual([offer.jokerId]);
     expect(next.phase.kind === 'fight' && next.phase.fight.hp).toEqual({ player: PLAYER_HP, enemy: enemyAt(1).hp });
   });
 
   it('selling and rerolling update coins', () => {
-    const shop = { ...inShop(createRun(1)), perks: ['looter' as const] };
-    const sold = expectOk(applyRunAction(shop, { type: 'sellPerk', perkId: 'looter' }));
-    expect(sold.perks).toEqual([]);
+    const shop = { ...inShop(createRun(1)), jokers: ['looter' as const] };
+    const sold = expectOk(applyRunAction(shop, { type: 'sellJoker', jokerId: 'looter' }));
+    expect(sold.jokers).toEqual([]);
     expect(sold.coins).toBe(shop.coins + 2);
     const rerolled = expectOk(applyRunAction(sold, { type: 'reroll' }));
     expect(rerolled.coins).toBe(sold.coins - 2);
@@ -110,7 +111,7 @@ describe('shop phase', () => {
 
   it('passes shop errors through', () => {
     const broke = { ...inShop(createRun(1)), coins: 0 };
-    expect(applyRunAction(broke, { type: 'buyPerk', index: 0 })).toEqual({ ok: false, error: 'notEnoughCoins' });
+    expect(applyRunAction(broke, { type: 'buyJoker', index: 0 })).toEqual({ ok: false, error: 'notEnoughCoins' });
   });
 
   it('rejects fight actions in the shop', () => {
@@ -170,5 +171,25 @@ describe('deck profiles in a run', () => {
       ok: false,
       error: 'wrongPhase',
     });
+  });
+});
+
+describe('jokers in the run', () => {
+  it('moveJoker reorders the run jokers and the current fight uses the new order', () => {
+    const run = createRun(1);
+    if (run.phase.kind !== 'fight') throw new Error('not in a fight');
+    const jokers = ['clubs', 'gloat'] as const;
+    const fighting: RunState = { ...run, jokers, phase: { kind: 'fight', fight: { ...run.phase.fight, jokers: { player: jokers, enemy: [] } } } };
+    const moved = expectOk(applyRunAction(fighting, { type: 'moveJoker', from: 0, to: 1 }));
+    expect(moved.jokers).toEqual(['gloat', 'clubs']);
+    expect(moved.phase.kind === 'fight' && moved.phase.fight.jokers.player).toEqual(['gloat', 'clubs']);
+  });
+
+  it('carries Коллекционер growth from a won fight into the run', () => {
+    const run = createRun(1);
+    if (run.phase.kind !== 'fight') throw new Error('not in a fight');
+    const fight = { ...run.phase.fight, winner: 'player' as const, jokerState: { ...run.phase.fight.jokerState, player: { rage: 0, cleanStreak: 0, collected: 4 } } };
+    const left = expectOk(applyRunAction({ ...run, phase: { kind: 'fight', fight } }, { type: 'leaveFight' }));
+    expect(left.collected).toBe(4);
   });
 });

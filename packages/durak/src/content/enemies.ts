@@ -1,5 +1,6 @@
 import type { AiStyle } from '../ai';
 import type { DeckProfile } from '../enhancements';
+import type { JokerId } from '../jokers/catalog';
 import type { EnemyTier } from '../run/economy';
 
 export type EnemySpec = {
@@ -9,38 +10,47 @@ export type EnemySpec = {
   readonly style: AiStyle;
   /** The enemy's version of the shared deck. */
   readonly profile: DeckProfile;
+  /** The enemy's jokers (strong 1, boss 2), scoring the player's takes. */
+  readonly jokers: readonly JokerId[];
 };
 
-/** 2 circles × (normal → strong → boss). Boss rules arrive in Plan 2b; for now bosses are just tougher. */
+/** Multiplier of the enemy's hits on the player, by tier. */
+export const TIER_MULT: Readonly<Record<EnemyTier, number>> = { normal: 1, strong: 2, boss: 3 };
+
+/** 2 circles × (normal → strong → boss). HP is tuned by the balance simulation. */
 export const RUN_SCHEDULE: readonly EnemySpec[] = [
-  { name: 'Скупой', tier: 'normal', hp: 6, style: 'stingy', profile: { 'diamonds-6': 'trump' } },
-  { name: 'Задира', tier: 'strong', hp: 8, style: 'aggressive', profile: { 'clubs-13': 'golden', 'spades-12': 'sharp' } },
+  { name: 'Скупой', tier: 'normal', hp: 30, style: 'stingy', profile: { 'diamonds-6': 'trump' }, jokers: [] },
+  { name: 'Задира', tier: 'strong', hp: 50, style: 'aggressive', profile: { 'clubs-13': 'golden', 'spades-12': 'sharp' }, jokers: ['gloat'] },
   {
     name: 'Босс круга 1',
     tier: 'boss',
-    hp: 10,
+    hp: 80,
     style: 'aggressive',
     profile: { 'hearts-14': 'golden', 'spades-14': 'sharp', 'clubs-11': 'heavy' },
+    jokers: ['serial', 'trumpAce'],
   },
   {
     name: 'Скряга',
     tier: 'normal',
-    hp: 8,
+    hp: 120,
     style: 'stingy',
     profile: { 'diamonds-13': 'coin', 'spades-7': 'trump', 'clubs-10': 'sharp' },
+    jokers: [],
   },
   {
     name: 'Громила',
     tier: 'strong',
-    hp: 10,
+    hp: 180,
     style: 'aggressive',
     profile: { 'spades-13': 'golden', 'spades-11': 'golden', 'diamonds-12': 'sharp', 'hearts-10': 'heavy' },
+    jokers: ['rage'],
   },
   {
     name: 'Босс круга 2',
     tier: 'boss',
-    hp: 12,
+    hp: 300,
     style: 'aggressive',
     profile: { 'hearts-13': 'golden', 'diamonds-14': 'sharp', 'clubs-14': 'sharp', 'spades-10': 'heavy', 'clubs-8': 'trump' },
+    jokers: ['gloat', 'usurer'],
   },
 ];

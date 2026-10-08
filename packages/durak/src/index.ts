@@ -1,7 +1,6 @@
 export * from './ai';
 export * from './deal';
 export * from './fight';
-export * from './perks';
 export * from './reducer';
 export * from './rules';
 export * from './types';
@@ -12,3 +11,4 @@ export * from './run/run';
 export * from './content/bosses';
 export * from './enhancements';
 export * from './origin';
+export * from './jokers';

@@ -1,17 +1,17 @@
 import { createRng } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { PERKS } from '../perks';
-import { buyEnhancement, buyPerk, createShop, MAX_PERKS, rerollShop, sellPerk, sellPrice, type ShopState, type Wallet } from './shop';
+import { JOKERS, MAX_JOKERS } from '../jokers/catalog';
+import { buyEnhancement, buyJoker, createShop, moveJoker, rerollShop, sellJoker, sellPrice, type ShopState, type Wallet } from './shop';
 
 const shop: ShopState = {
   offers: [
-    { perkId: 'looter', price: 5 },
-    { perkId: 'cardSharp', price: 4 },
+    { jokerId: 'looter', price: 5 },
+    { jokerId: 'cardSharp', price: 4 },
   ],
   enhancementOffers: [{ enhancementId: 'golden', price: 4, cardIds: ['clubs-7', 'hearts-8', 'spades-9'] }, null],
   rerollCost: 2,
 };
-const rich: Wallet = { coins: 20, perks: [] };
+const rich: Wallet = { coins: 20, jokers: [] };
 
 function expectOk<T>(result: { ok: true; value: T } | { ok: false; error: string }): T {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -19,16 +19,16 @@ function expectOk<T>(result: { ok: true; value: T } | { ok: false; error: string
 }
 
 describe('createShop', () => {
-  it('offers two different perks the player does not own, at catalogue prices', () => {
+  it('offers two different jokers the player does not own, at catalogue prices', () => {
     const [created] = createShop(createRng(3), ['looter', 'thickSkin']);
     expect(created.offers).toHaveLength(2);
     expect(created.rerollCost).toBe(2);
-    const ids = created.offers.map((offer) => offer?.perkId);
+    const ids = created.offers.map((offer) => offer?.jokerId);
     expect(new Set(ids).size).toBe(2);
     for (const offer of created.offers) {
       expect(offer).not.toBeNull();
-      expect(['looter', 'thickSkin']).not.toContain(offer!.perkId);
-      expect(offer!.price).toBe(PERKS[offer!.perkId].price);
+      expect(['looter', 'thickSkin']).not.toContain(offer!.jokerId);
+      expect(offer!.price).toBe(JOKERS[offer!.jokerId].price);
     }
   });
 
@@ -37,59 +37,59 @@ describe('createShop', () => {
   });
 });
 
-describe('buyPerk', () => {
-  it('moves the perk into the wallet, takes the price and empties the slot', () => {
-    const { shop: after, wallet } = expectOk(buyPerk(shop, rich, 0));
-    expect(wallet).toEqual({ coins: 15, perks: ['looter'] });
-    expect(after.offers).toEqual([null, { perkId: 'cardSharp', price: 4 }]);
+describe('buyJoker', () => {
+  it('moves the joker into the wallet, takes the price and empties the slot', () => {
+    const { shop: after, wallet } = expectOk(buyJoker(shop, rich, 0));
+    expect(wallet).toEqual({ coins: 15, jokers: ['looter'] });
+    expect(after.offers).toEqual([null, { jokerId: 'cardSharp', price: 4 }]);
   });
 
   it('works with exactly enough coins', () => {
-    expect(expectOk(buyPerk(shop, { coins: 5, perks: [] }, 0)).wallet.coins).toBe(0);
+    expect(expectOk(buyJoker(shop, { coins: 5, jokers: [] }, 0)).wallet.coins).toBe(0);
   });
 
   it('rejects a missing or sold offer', () => {
-    expect(buyPerk(shop, rich, 5)).toEqual({ ok: false, error: 'noOffer' });
-    const { shop: after } = expectOk(buyPerk(shop, rich, 0));
-    expect(buyPerk(after, rich, 0)).toEqual({ ok: false, error: 'noOffer' });
+    expect(buyJoker(shop, rich, 5)).toEqual({ ok: false, error: 'noOffer' });
+    const { shop: after } = expectOk(buyJoker(shop, rich, 0));
+    expect(buyJoker(after, rich, 0)).toEqual({ ok: false, error: 'noOffer' });
   });
 
   it('rejects when coins are short', () => {
-    expect(buyPerk(shop, { coins: 4, perks: [] }, 0)).toEqual({ ok: false, error: 'notEnoughCoins' });
+    expect(buyJoker(shop, { coins: 4, jokers: [] }, 0)).toEqual({ ok: false, error: 'notEnoughCoins' });
   });
 
   it('reports full slots before missing coins', () => {
-    const full: Wallet = { coins: 0, perks: ['thickSkin', 'longArms', 'piggyBank'] };
-    expect(full.perks).toHaveLength(MAX_PERKS);
-    expect(buyPerk(shop, full, 0)).toEqual({ ok: false, error: 'perkSlotsFull' });
+    const full: Wallet = { coins: 0, jokers: ['thickSkin', 'longArms', 'piggyBank', 'clubs', 'gloat'] };
+    expect(full.jokers).toHaveLength(MAX_JOKERS);
+    expect(buyJoker(shop, full, 0)).toEqual({ ok: false, error: 'jokerSlotsFull' });
   });
 });
 
-describe('sellPerk', () => {
-  it('removes the perk and pays half its price rounded down', () => {
+describe('sellJoker', () => {
+  it('removes the joker and pays half its price rounded down', () => {
     expect(sellPrice('looter')).toBe(2);
-    expect(expectOk(sellPerk({ coins: 1, perks: ['looter', 'cardSharp'] }, 'looter'))).toEqual({
+    expect(expectOk(sellJoker({ coins: 1, jokers: ['looter', 'cardSharp'] }, 'looter'))).toEqual({
       coins: 3,
-      perks: ['cardSharp'],
+      jokers: ['cardSharp'],
     });
   });
 
-  it('rejects a perk the player does not own', () => {
-    expect(sellPerk(rich, 'looter')).toEqual({ ok: false, error: 'perkNotOwned' });
+  it('rejects a joker the player does not own', () => {
+    expect(sellJoker(rich, 'looter')).toEqual({ ok: false, error: 'jokerNotOwned' });
   });
 });
 
 describe('rerollShop', () => {
-  it('charges the reroll cost, raises it by 1 and offers perks the player does not own', () => {
-    const wallet: Wallet = { coins: 5, perks: ['looter'] };
+  it('charges the reroll cost, raises it by 1 and offers jokers the player does not own', () => {
+    const wallet: Wallet = { coins: 5, jokers: ['looter'] };
     const { shop: after, wallet: paid } = expectOk(rerollShop(shop, wallet, createRng(9)));
     expect(paid.coins).toBe(3);
     expect(after.rerollCost).toBe(3);
-    expect(after.offers.map((offer) => offer?.perkId)).not.toContain('looter');
+    expect(after.offers.map((offer) => offer?.jokerId)).not.toContain('looter');
   });
 
   it('rejects when coins are short', () => {
-    expect(rerollShop(shop, { coins: 1, perks: [] }, createRng(9))).toEqual({ ok: false, error: 'notEnoughCoins' });
+    expect(rerollShop(shop, { coins: 1, jokers: [] }, createRng(9))).toEqual({ ok: false, error: 'notEnoughCoins' });
   });
 });
 
@@ -118,8 +118,26 @@ describe('enhancement offers', () => {
   });
 
   it('reroll also renews enhancement offers', () => {
-    const { shop: after } = expectOk(rerollShop(shop, { coins: 5, perks: [] }, createRng(9)));
+    const { shop: after } = expectOk(rerollShop(shop, { coins: 5, jokers: [] }, createRng(9)));
     expect(after.enhancementOffers).toHaveLength(2);
     expect(after.enhancementOffers.every((offer) => offer !== null)).toBe(true);
+  });
+});
+
+describe('jokers in the shop', () => {
+  it('moves a joker to another slot', () => {
+    expect(moveJoker(['clubs', 'gloat', 'rage'], 0, 2)).toEqual({ ok: true, value: ['gloat', 'rage', 'clubs'] });
+    expect(moveJoker(['clubs'], 0, 3)).toEqual({ ok: false, error: 'jokerNotOwned' });
+  });
+
+  it('legendary jokers are rarer than common ones over many shops', () => {
+    const counts = { common: 0, rare: 0, legendary: 0 };
+    let rng = createRng(7);
+    for (let i = 0; i < 400; i++) {
+      const [shop, next] = createShop(rng, []);
+      rng = next;
+      for (const offer of shop.offers) if (offer) counts[JOKERS[offer.jokerId].rarity] += 1;
+    }
+    expect(counts.common).toBeGreaterThan(counts.legendary * 3);
   });
 });

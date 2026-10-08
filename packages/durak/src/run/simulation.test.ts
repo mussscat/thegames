@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { chooseAction } from '../ai';
 import { currentActor } from '../rules';
-import { MAX_PERKS } from './shop';
+import { MAX_JOKERS } from '../jokers/catalog';
 import { applyRunAction, createRun, enemyAt, type RunAction, type RunState } from './run';
 
 const MAX_STEPS = 300_000;
@@ -22,13 +22,13 @@ function nextAction(run: RunState): RunAction {
   }
   if (phase.kind === 'shop') {
     const index = phase.shop.offers.findIndex((offer) => offer !== null && offer.price <= run.coins);
-    return index >= 0 && run.perks.length < MAX_PERKS ? { type: 'buyPerk', index } : { type: 'leaveShop' };
+    return index >= 0 && run.jokers.length < MAX_JOKERS ? { type: 'buyJoker', index } : { type: 'leaveShop' };
   }
   throw new Error('run is over');
 }
 
 describe('run simulation', () => {
-  it('every run ends; coins stay non-negative; perks stay unique and within 3 slots', () => {
+  it('every run ends; coins stay non-negative; jokers stay unique and within 5 slots', () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 0xffffffff }), (seed) => {
         let run = createRun(seed);
@@ -37,8 +37,8 @@ describe('run simulation', () => {
           if (!result.ok) throw new Error(`illegal bot move: ${result.error}`);
           run = result.value;
           expect(run.coins).toBeGreaterThanOrEqual(0);
-          expect(run.perks.length).toBeLessThanOrEqual(MAX_PERKS);
-          expect(new Set(run.perks).size).toBe(run.perks.length);
+          expect(run.jokers.length).toBeLessThanOrEqual(MAX_JOKERS);
+          expect(new Set(run.jokers).size).toBe(run.jokers.length);
         }
         expect(run.phase.kind).toBe('over');
       }),
