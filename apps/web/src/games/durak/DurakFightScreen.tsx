@@ -1,5 +1,14 @@
 import type { Card } from '@game/core';
-import { currentActor, isTrumpCard, legalActions, revealsTopCard, type FightAction, type FightState } from '@game/durak';
+import {
+  cardEnhancements,
+  currentActor,
+  isTrumpCard,
+  legalActions,
+  revealsTopCard,
+  type EnhancementSource,
+  type FightAction,
+  type FightState,
+} from '@game/durak';
 import { LayoutGroup } from 'motion/react';
 import type { ReactNode } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
@@ -28,8 +37,10 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
     legalActions(round, 'player').flatMap((action) => ('cardId' in action ? [action.cardId] : [])),
   );
 
-  const onCardTap = (card: Card): void =>
-    onFightAction(defending ? { type: 'defend', cardId: card.id } : { type: 'attack', cardId: card.id });
+  const play = (card: Card, use?: EnhancementSource): void => {
+    const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
+    onFightAction(use ? { ...base, use } : base);
+  };
 
   return (
     <LayoutGroup>
@@ -57,7 +68,7 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
 
         <div className="fight__middle">
           <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
-          <TableView table={round.table} />
+          <TableView table={round.table} attacker={round.attacker} />
         </div>
 
         <p className="fight__status" role="status">
@@ -66,15 +77,21 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
         <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
 
         <div className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand">
-          {round.hands.player.map((card) => (
-            <CardView
-              key={card.id}
-              card={card}
-              playable={myTurn && playableIds.has(card.id)}
-              trump={isTrumpCard(card, round.trumpSuit, round.boss)}
-              onTap={myTurn ? () => onCardTap(card) : undefined}
-            />
-          ))}
+          {round.hands.player.map((card) => {
+            const enhancements = cardEnhancements(round, 'player', card);
+            const split = Boolean(enhancements.own && enhancements.foreign);
+            return (
+              <CardView
+                key={card.id}
+                card={card}
+                enhancements={enhancements}
+                playable={myTurn && playableIds.has(card.id)}
+                trump={isTrumpCard(card, round.trumpSuit, round.boss)}
+                onTap={myTurn && !split ? () => play(card) : undefined}
+                onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
+              />
+            );
+          })}
         </div>
         <HpBar
           label="Ты"

@@ -1,4 +1,6 @@
+import { createDeck, rankLabel, SUIT_SYMBOLS, type Card } from '@game/core';
 import {
+  ENHANCEMENTS,
   MAX_PERKS,
   PERKS,
   sellPrice,
@@ -9,6 +11,13 @@ import {
   type RunState,
   type ShopState,
 } from '@game/durak';
+
+const CARDS_BY_ID: ReadonlyMap<string, Card> = new Map(createDeck(6).map((card) => [card.id, card]));
+
+function cardLabel(cardId: string): string {
+  const card = CARDS_BY_ID.get(cardId);
+  return card ? `${rankLabel(card.rank)}${SUIT_SYMBOLS[card.suit]}` : cardId;
+}
 
 type ShopScreenProps = {
   readonly run: RunState;
@@ -78,6 +87,53 @@ export function ShopScreen({ run, shop, reward, error, onAct, onExit }: ShopScre
             </div>
           ),
         )}
+      </section>
+
+      <section className="shop__panel">
+        <h3 className="shop__title">Усиления карт</h3>
+        {shop.enhancementOffers.map((offer, index) =>
+          offer ? (
+            <div key={offer.enhancementId} className="shop__enhancement">
+              <div>
+                <strong>
+                  {ENHANCEMENTS[offer.enhancementId].name} — {offer.price}
+                </strong>
+                <p>{ENHANCEMENTS[offer.enhancementId].description}</p>
+              </div>
+              <div className="shop__cards">
+                {offer.cardIds.map((cardId) => (
+                  <button
+                    key={cardId}
+                    type="button"
+                    className="btn btn--small"
+                    onClick={() => onAct({ type: 'buyEnhancement', index, cardId })}
+                  >
+                    {cardLabel(cardId)}
+                    {run.profile[cardId] ? ` (заменит ${ENHANCEMENTS[run.profile[cardId]!].short})` : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div key={`sold-enh-${index}`} className="shop__item shop__item--sold">
+              Продано
+            </div>
+          ),
+        )}
+      </section>
+
+      <section className="shop__panel">
+        <h3 className="shop__title">Твоя колода</h3>
+        {Object.keys(run.profile).length === 0 && <p className="shop__empty">Усилений пока нет</p>}
+        <div className="shop__cards">
+          {Object.entries(run.profile).map(([cardId, id]) =>
+            id ? (
+              <span key={cardId} className="shop__chip">
+                {cardLabel(cardId)} — {ENHANCEMENTS[id].name}
+              </span>
+            ) : null,
+          )}
+        </div>
       </section>
 
       <p className="fight__status" role="status">

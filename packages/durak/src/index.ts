@@ -11,3 +11,4 @@ export * from './content/enemies';
 export * from './run/run';
 export * from './content/bosses';
 export * from './enhancements';
+export * from './origin';
