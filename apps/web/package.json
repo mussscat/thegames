@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource/pixelify-sans": "^5.3.0",
+    "@fontsource/rubik": "^5.3.0",
     "@game/core": "*",
     "@game/durak": "*",
     "motion": "^14.0.0",

@@ -140,3 +140,19 @@
   box-shadow: 2px 2px 0 rgb(0 0 0 / 50%);
 }
 .lab__gallery { display: flex; gap: 6px; padding-top: 6px; }
+
+/* Rank as text over the sprite: readable at any size, coloured like the suit. */
+.pcard__rank {
+  position: absolute;
+  top: 3%;
+  left: 8%;
+  font-size: 1.4em;
+  line-height: 1;
+  color: #1b1426;
+  text-shadow: 0.05em 0.05em 0 rgb(255 255 255 / 55%);
+  pointer-events: none;
+}
+.pcard__rank--red { color: #c2292e; }
+.pcard__rank--pixelify { font-family: 'Pixelify Sans', ui-monospace, monospace; font-weight: 700; }
+.pcard__rank--rubik { font-family: 'Rubik', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.04em; }
+.pcard__rank--bottom { top: auto; left: auto; bottom: 3%; right: 8%; transform: rotate(180deg); }

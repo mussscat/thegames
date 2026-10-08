@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/rubik/700.css';
 import './lab.css';
-import { PixelCard, type CardFeel } from './PixelCard';
+import { PixelCard, type CardFeel, type RankFont } from './PixelCard';
 import { playSound, setVolume } from './sound';
 import { PALETTES, SwirlBackground } from './SwirlBackground';
 
@@ -38,6 +39,7 @@ export function CardLab() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [played, setPlayed] = useState(false);
   const [panel, setPanel] = useState(false);
+  const [rankFont, setRankFont] = useState<RankFont>('rubik');
   const palette = PALETTES[paletteIndex] ?? PALETTES[0]!;
   const tune = (patch: Partial<CardFeel>): void => setFeel((f) => ({ ...f, ...patch }));
 
@@ -70,6 +72,7 @@ export function CardLab() {
                 <PixelCard
                   card={HERO}
                   feel={feel}
+                  rankFont={rankFont}
                   width={150}
                   enhancement={enhancement}
                   faceDown={faceDown}
@@ -94,13 +97,13 @@ export function CardLab() {
         <div className="lab__hand">
           {HAND.map((card, i) => (
             <div key={card.id} className="lab__hand-slot" style={{ transform: `rotate(${(i - 2) * 5}deg) translateY(${Math.abs(i - 2) * 6}px)` }}>
-              <PixelCard card={card} feel={feel} width={64} selected={selected.has(card.id)} swayDelay={i * 0.4} onTap={() => toggle(card)} />
+              <PixelCard card={card} feel={feel} rankFont={rankFont} width={64} selected={selected.has(card.id)} swayDelay={i * 0.4} onTap={() => toggle(card)} />
             </div>
           ))}
         </div>
         <div className="lab__gallery">
           {ENHANCEMENT_IDS.map((id, i) => (
-            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} swayDelay={i * 0.3} onTap={() => playSound('select', sound)} />
+            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} rankFont={rankFont} width={66} enhancement={id} swayDelay={i * 0.3} onTap={() => playSound('select', sound)} />
           ))}
         </div>
       </main>
@@ -137,6 +140,14 @@ export function CardLab() {
                     {p.name}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label className="lab__slider">
+              <span>Шрифт ранга</span>
+              <select value={rankFont} onChange={(e) => setRankFont(e.target.value as RankFont)}>
+                <option value="pixelify">Pixelify Sans</option>
+                <option value="rubik">Rubik</option>
+                <option value="sprite">Пиксельный (спрайт)</option>
               </select>
             </label>
             <label className="lab__slider">

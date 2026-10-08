@@ -129,17 +129,18 @@ function suitShades(ink: string): readonly [string, string, string] {
   return [ink, mix(ink, '#ffffff', 0.4), mix(ink, '#000000', 0.45)];
 }
 
-export function drawFront(card: Card, enhancement?: EnhancementId): Grid {
+/** `spriteRanks: false` leaves the rank corners empty so the UI can render the rank as text on top. */
+export function drawFront(card: Card, enhancement?: EnhancementId, spriteRanks = true): Grid {
   const grid = createGrid(SPRITE_W, SPRITE_H);
   drawBody(grid, PAPERS[enhancement ?? 'plain']);
   drawPattern(grid, enhancement);
   const ink = card.suit === 'hearts' || card.suit === 'diamonds' ? RED : INK;
   const [base, light, dark] = suitShades(ink);
-  drawRank(grid, card.rank, 5, 5, ink, false);
+  if (spriteRanks) drawRank(grid, card.rank, 5, 5, ink, false);
   stampShaded(grid, MINI_SUITS[card.suit], 5, 17, 2, base, light, dark);
   stampShaded(grid, BIG_SUITS[card.suit], 14, 26, 3, base, light, dark);
   stampShaded(grid, MINI_SUITS[card.suit], SPRITE_W - 15, SPRITE_H - 27, 2, base, light, dark, true);
-  drawRank(grid, card.rank, SPRITE_W - 6, SPRITE_H - 6, ink, true);
+  if (spriteRanks) drawRank(grid, card.rank, SPRITE_W - 6, SPRITE_H - 6, ink, true);
   if (enhancement) {
     const icon = ICONS[enhancement];
     stampOutlinedIcon(grid, icon.rows, icon.palette, SPRITE_W - 22, 4, 2, INK);

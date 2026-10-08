@@ -1,4 +1,4 @@
-import type { Card } from '@game/core';
+import { isRedSuit, rankLabel, type Card } from '@game/core';
 import { ENHANCEMENTS, type EnhancementId } from '@game/durak';
 import { motion, useSpring } from 'motion/react';
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
@@ -15,9 +15,13 @@ export type CardFeel = {
   readonly pixel: number;
 };
 
+/** How the rank is drawn: as sprite pixels or as text in one of the fonts. */
+export type RankFont = 'sprite' | 'pixelify' | 'rubik';
+
 type PixelCardProps = {
   readonly card: Card;
   readonly feel: CardFeel;
+  readonly rankFont?: RankFont;
   readonly width: number;
   readonly enhancement?: EnhancementId;
   readonly faceDown?: boolean;
@@ -28,13 +32,18 @@ type PixelCardProps = {
 };
 
 
-export function PixelCard({ card, feel, width, enhancement, faceDown = false, selected = false, swayDelay = 0, onTap, onHover }: PixelCardProps) {
+export function PixelCard({ card, feel, rankFont = 'pixelify', width, enhancement, faceDown = false, selected = false, swayDelay = 0, onTap, onHover }: PixelCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const spring = { stiffness: feel.stiffness, damping: feel.damping };
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squash, setSquash] = useState(0);
-  const front = useMemo(() => spriteUrl(`${card.id}:${enhancement ?? '-'}`, () => drawFront(card, enhancement)), [card, enhancement]);
+  const spriteRanks = rankFont === 'sprite';
+  const front = useMemo(
+    () => spriteUrl(`${card.id}:${enhancement ?? '-'}:${spriteRanks}`, () => drawFront(card, enhancement, spriteRanks)),
+    [card, enhancement, spriteRanks],
+  );
+  const rankClass = `pcard__rank pcard__rank--${rankFont} ${isRedSuit(card.suit) ? 'pcard__rank--red' : ''}`;
   const back = useMemo(() => spriteUrl('back', drawBack), []);
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
@@ -90,6 +99,12 @@ export function PixelCard({ card, feel, width, enhancement, faceDown = false, se
             >
               <div className="pcard__face pcard__front">
                 <SpriteImage url={front} />
+                {!spriteRanks && (
+                  <>
+                    <span className={rankClass}>{rankLabel(card.rank)}</span>
+                    <span className={`${rankClass} pcard__rank--bottom`}>{rankLabel(card.rank)}</span>
+                  </>
+                )}
               </div>
               <div className="pcard__face pcard__back">
                 <SpriteImage url={back} />
