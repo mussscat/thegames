@@ -1,6 +1,6 @@
 import type { Card, Rank, Suit } from '@game/core';
 import type { EnhancementId } from '@game/durak';
-import { createGrid, ditherIndex, getPixel, mix, setPixel, stampOutlinedIcon, stampShaded, toDataUrl, type Grid } from './pixelArt';
+import { createGrid, ditherIndex, getPixel, mix, setPixel, stampOutlinedIcon, stampShaded, toDataUrl, type Grid } from '../ui/pixel/pixelArt';
 
 /** 50×70 pixel sprite: enough pixels for dithered gradients, bevels and shaded shapes. */
 export const SPRITE_W = 50;
