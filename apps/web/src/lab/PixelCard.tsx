@@ -1,8 +1,8 @@
 import { isRedSuit, rankLabel, type Card } from '@game/core';
 import { ENHANCEMENTS, type EnhancementId } from '@game/durak';
 import { motion, useSpring } from 'motion/react';
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
-import { drawBack, drawFront, SpriteImage, spriteUrl } from './CardSprite';
+import { useRef, useState, type PointerEvent } from 'react';
+import { backUrl, frontUrl } from '../ui/pixel/cardSprite';
 
 export type CardFeel = {
   /** Max tilt in degrees while the pointer is over the card. */
@@ -38,13 +38,9 @@ export function PixelCard({ card, feel, rankFont = 'pixelify', width, enhancemen
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squash, setSquash] = useState(0);
-  const spriteRanks = rankFont === 'sprite';
-  const front = useMemo(
-    () => spriteUrl(`${card.id}:${enhancement ?? '-'}:${spriteRanks}`, () => drawFront(card, enhancement, spriteRanks)),
-    [card, enhancement, spriteRanks],
-  );
+  const front = frontUrl(card, enhancement);
   const rankClass = `pcard__rank pcard__rank--${rankFont} ${isRedSuit(card.suit) ? 'pcard__rank--red' : ''}`;
-  const back = useMemo(() => spriteUrl('back', drawBack), []);
+  const back = backUrl();
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
     const rect = ref.current?.getBoundingClientRect();
@@ -98,16 +94,12 @@ export function PixelCard({ card, feel, rankFont = 'pixelify', width, enhancemen
               transition={{ duration: 0.38, ease: 'easeOut' }}
             >
               <div className="pcard__face pcard__front">
-                <SpriteImage url={front} />
-                {!spriteRanks && (
-                  <>
-                    <span className={rankClass}>{rankLabel(card.rank)}</span>
-                    <span className={`${rankClass} pcard__rank--bottom`}>{rankLabel(card.rank)}</span>
-                  </>
-                )}
+                <img className="sprite" src={front} alt="" draggable={false} />
+                <span className={rankClass}>{rankLabel(card.rank)}</span>
+                <span className={`${rankClass} pcard__rank--bottom`}>{rankLabel(card.rank)}</span>
               </div>
               <div className="pcard__face pcard__back">
-                <SpriteImage url={back} />
+                <img className="sprite" src={back} alt="" draggable={false} />
               </div>
             </motion.div>
           </motion.div>

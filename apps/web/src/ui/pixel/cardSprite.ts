@@ -1,6 +1,6 @@
-import type { Card, Rank, Suit } from '@game/core';
+import type { Card, Suit } from '@game/core';
 import type { EnhancementId } from '@game/durak';
-import { createGrid, ditherIndex, getPixel, mix, setPixel, stampOutlinedIcon, stampShaded, toDataUrl, type Grid } from '../ui/pixel/pixelArt';
+import { createGrid, ditherIndex, getPixel, mix, setPixel, stampOutlinedIcon, stampShaded, toDataUrl, type Grid } from './pixelArt';
 
 /** 50×70 pixel sprite: enough pixels for dithered gradients, bevels and shaded shapes. */
 export const SPRITE_W = 50;
@@ -8,20 +8,6 @@ export const SPRITE_H = 70;
 
 const INK = '#1b1426';
 const RED = '#c2292e';
-
-const GLYPHS: Readonly<Record<string, readonly string[]>> = {
-  '0': ['XXX', 'X.X', 'X.X', 'X.X', 'XXX'],
-  '1': ['.X', 'XX', '.X', '.X', '.X'],
-  '6': ['XXX', 'X..', 'XXX', 'X.X', 'XXX'],
-  '7': ['XXX', '..X', '.X.', '.X.', '.X.'],
-  '8': ['XXX', 'X.X', 'XXX', 'X.X', 'XXX'],
-  '9': ['XXX', 'X.X', 'XXX', '..X', 'XXX'],
-  В: ['XX.', 'X.X', 'XX.', 'X.X', 'XX.'],
-  Д: ['.XX.', '.XX.', '.XX.', 'XXXX', 'X..X'],
-  К: ['X.X', 'X.X', 'XX.', 'X.X', 'X.X'],
-  Т: ['XXX', '.X.', '.X.', '.X.', '.X.'],
-};
-const RANK_TEXT: Readonly<Record<number, string>> = { 11: 'В', 12: 'Д', 13: 'К', 14: 'Т' };
 
 const MINI_SUITS: Readonly<Record<Suit, readonly string[]>> = {
   hearts: ['XX.XX', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
@@ -113,34 +99,20 @@ function drawPattern(grid: Grid, enhancement: EnhancementId | undefined): void {
   }
 }
 
-function drawRank(grid: Grid, rank: Rank, ox: number, oy: number, ink: string, flip: boolean): void {
-  const text = RANK_TEXT[rank] ?? String(rank);
-  const glyphs = (flip ? [...text].reverse() : [...text]).map((ch) => GLYPHS[ch] ?? GLYPHS['0']!);
-  let cursor = ox;
-  for (const glyph of glyphs) {
-    const width = (glyph[0]?.length ?? 3) * 2;
-    const x = flip ? cursor - width + 1 : cursor;
-    stampShaded(grid, glyph, x, flip ? oy - 9 : oy, 2, ink, mix(ink, '#ffffff', 0.35), mix(ink, '#000000', 0.45), flip);
-    cursor = flip ? cursor - width - 2 : cursor + width + 2;
-  }
-}
-
 function suitShades(ink: string): readonly [string, string, string] {
   return [ink, mix(ink, '#ffffff', 0.4), mix(ink, '#000000', 0.45)];
 }
 
-/** `spriteRanks: false` leaves the rank corners empty so the UI can render the rank as text on top. */
-export function drawFront(card: Card, enhancement?: EnhancementId, spriteRanks = true): Grid {
+/** The rank is drawn as text by the UI, so the sprite leaves the rank corners empty. */
+export function drawFront(card: Card, enhancement?: EnhancementId): Grid {
   const grid = createGrid(SPRITE_W, SPRITE_H);
   drawBody(grid, PAPERS[enhancement ?? 'plain']);
   drawPattern(grid, enhancement);
   const ink = card.suit === 'hearts' || card.suit === 'diamonds' ? RED : INK;
   const [base, light, dark] = suitShades(ink);
-  if (spriteRanks) drawRank(grid, card.rank, 5, 5, ink, false);
   stampShaded(grid, MINI_SUITS[card.suit], 5, 17, 2, base, light, dark);
   stampShaded(grid, BIG_SUITS[card.suit], 14, 26, 3, base, light, dark);
   stampShaded(grid, MINI_SUITS[card.suit], SPRITE_W - 15, SPRITE_H - 27, 2, base, light, dark, true);
-  if (spriteRanks) drawRank(grid, card.rank, SPRITE_W - 6, SPRITE_H - 6, ink, true);
   if (enhancement) {
     const icon = ICONS[enhancement];
     stampOutlinedIcon(grid, icon.rows, icon.palette, SPRITE_W - 22, 4, 2, INK);
@@ -163,7 +135,7 @@ export function drawBack(): Grid {
 
 const cache = new Map<string, string>();
 
-export function spriteUrl(key: string, draw: () => Grid): string {
+function cached(key: string, draw: () => Grid): string {
   const hit = cache.get(key);
   if (hit) return hit;
   const url = toDataUrl(draw());
@@ -171,6 +143,10 @@ export function spriteUrl(key: string, draw: () => Grid): string {
   return url;
 }
 
-export function SpriteImage({ url }: { readonly url: string }) {
-  return <img className="sprite" src={url} alt="" draggable={false} />;
+export function frontUrl(card: Card, enhancement?: EnhancementId): string {
+  return cached(`${card.id}:${enhancement ?? '-'}`, () => drawFront(card, enhancement));
+}
+
+export function backUrl(): string {
+  return cached('back', drawBack);
 }
