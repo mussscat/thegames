@@ -162,10 +162,25 @@ describe('jokers in a fight', () => {
     expect(hit.jokerState.player.rage).toBe(0);
   });
 
+  it('a Зеркало copying Копилка ярости adds the charge exactly twice', () => {
+    const beaten = expectOk(applyFightAction(fightWith(['mirror', 'rage'], playerBeats), 'enemy', { type: 'endAttack' }));
+    const hit = expectOk(applyFightAction({ ...beaten, round: takingRound }, 'player', { type: 'endAttack' }));
+    expect(hit.lastScore?.damage).toBe(2 + 4 + 4);
+  });
+
+  it('a Зеркало copying Чистюля adds the streak exactly twice', () => {
+    const ended = expectOk(applyFightAction(fightWith(['mirror', 'cleanHands'], endingRound), 'player', { type: 'endAttack' }));
+    const next = expectOk(applyFightAction(ended, 'player', { type: 'nextRound' }));
+    const hit = expectOk(applyFightAction({ ...next, round: takingRound }, 'player', { type: 'endAttack' }));
+    expect(hit.lastScore?.mult).toBe(3);
+  });
+
   it('a 0-damage take still counts and still spends the charge', () => {
     const single = roundState({ ...takingRound, table: [{ attack: c(7, 'clubs'), defense: null }] });
-    const fight = { ...fightWith(['thickSkin'], single), jokers: { player: ['thickSkin'] as const, enemy: ['thickSkin'] as const } };
+    const base0 = fightWith(['thickSkin', 'rage'], single);
+    const fight = { ...base0, jokers: { player: ['thickSkin', 'rage'] as const, enemy: ['thickSkin', 'thickSkin', 'thickSkin', 'thickSkin'] as const }, jokerState: { ...base0.jokerState, player: { rage: 8, cleanStreak: 0, collected: 0 } } };
     const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
+    expect(next.jokerState.player.rage).toBe(0);
     expect(next.lastScore?.damage).toBe(0);
     expect(next.hp.enemy).toBe(60);
     expect(next.fightTakes.enemy).toBe(1);

@@ -5,9 +5,9 @@ import { afterBeaten, afterHitDealt, afterOwnTake, afterRound, EMPTY_JOKER_STATE
 const s = (over: Partial<JokerState> = {}): JokerState => ({ ...EMPTY_JOKER_STATE, ...over });
 
 describe('joker events', () => {
-  it('«Бито» charges Копилка ярости, mirrors included', () => {
+  it('«Бито» charges Копилка ярости once per event (copies read the same charge)', () => {
     expect(afterBeaten(s(), ['rage']).rage).toBe(4);
-    expect(afterBeaten(s({ rage: 4 }), ['mirror', 'rage']).rage).toBe(12);
+    expect(afterBeaten(s({ rage: 4 }), ['mirror', 'rage']).rage).toBe(8);
     expect(afterBeaten(s(), ['clubs'])).toEqual(s());
   });
 
@@ -18,12 +18,14 @@ describe('joker events', () => {
     ];
     expect(afterHitDealt(s({ rage: 8 }), ['rage'], taken).rage).toBe(0);
     expect(afterHitDealt(s({ collected: 2 }), ['collector'], taken).collected).toBe(3);
+    expect(afterHitDealt(s({ collected: 2 }), ['mirror', 'collector'], taken).collected).toBe(3);
     expect(afterHitDealt(s({ collected: 2 }), [], taken).collected).toBe(2);
   });
 
   it('taking resets the Чистюля streak; a clean deal grows it', () => {
     expect(afterOwnTake(s({ cleanStreak: 3 })).cleanStreak).toBe(0);
     expect(afterRound(s({ cleanStreak: 1 }), ['cleanHands'], false).cleanStreak).toBe(2);
+    expect(afterRound(s({ cleanStreak: 1 }), ['mirror', 'cleanHands'], false).cleanStreak).toBe(2);
     expect(afterRound(s({ cleanStreak: 1 }), ['cleanHands'], true).cleanStreak).toBe(1);
     expect(afterRound(s(), [], false).cleanStreak).toBe(0);
   });
