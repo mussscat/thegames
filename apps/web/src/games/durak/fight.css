@@ -132,8 +132,10 @@
 .perks__head { position: relative; display: flex; justify-content: center; align-items: baseline; }
 .perks__title { margin: 0; font-size: 0.8rem; }
 .perks__count { position: absolute; right: 0; bottom: 0; font-size: 0.85em; opacity: 0.85; }
-.perks__list { display: flex; gap: 0.6em; margin: 0; padding: 0; list-style: none; }
-.perks__list--wide { flex-direction: column; }
+/* Compact: three equal slots spread evenly, empty ones drawn as dashed ticket outlines — symmetric at any count. */
+.perks__list { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-evenly; gap: 0.6em; margin: 0; padding: 0; list-style: none; }
+.ticket--placeholder { width: calc(2.6em + 1.2em + 4px); height: calc(2.6em + 0.7em + 4px); border: 2px dashed rgb(255 255 255 / 25%); border-radius: 4px; filter: none; }
+.perks__list--wide { display: flex; flex-direction: column; }
 
 /* ---------- perk tickets (lottery-ticket style) ---------- */
 .perks__list { position: relative; }

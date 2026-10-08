@@ -9,6 +9,7 @@ import { PixelCard } from '../ui/PixelCard';
 import { playSound, setVolume } from '../ui/sound';
 import { SwirlBackground } from '../ui/SwirlBackground';
 import { FontTab } from './FontTab';
+import { GalleryTab } from './GalleryTab';
 import { HighlightTab } from './HighlightTab';
 import './labFonts';
 import '../games/durak/shop.css';
@@ -20,6 +21,7 @@ const TABS = [
   { id: 'font', name: 'Шрифт' },
   { id: 'highlight', name: 'Подсветка' },
   { id: 'trump', name: 'Козырь' },
+  { id: 'gallery', name: 'Галерея' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
@@ -86,6 +88,7 @@ export function CardLab() {
         {tab === 'font' && <FontTab />}
         {tab === 'highlight' && <HighlightTab />}
         {tab === 'trump' && <TrumpTab />}
+        {tab === 'gallery' && <GalleryTab />}
         {tab === 'card' && (
           <>
         <div className="lab__hero">
