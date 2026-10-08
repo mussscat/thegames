@@ -12,6 +12,7 @@ export type FightReward = {
   readonly hpBonus: number;
   readonly interest: number;
   readonly perkBonus: number;
+  readonly cardBonus: number;
   readonly total: number;
 };
 
@@ -23,6 +24,8 @@ export type RewardInput = {
   readonly perks: readonly PerkId[];
   readonly playerTakes: number;
   readonly enemyTakes: number;
+  /** Coins earned by Монетная defenses during the fight. */
+  readonly cardCoins: number;
 };
 
 export function fightReward(input: RewardInput): FightReward {
@@ -31,5 +34,6 @@ export function fightReward(input: RewardInput): FightReward {
   const cap = perkInterestCap(input.perks, BASE_INTEREST_CAP);
   const interest = Math.min(Math.floor(Math.max(0, input.coinsBefore) / COINS_PER_INTEREST), cap);
   const perkBonus = perkFightCoins(input.perks, { playerTakes: input.playerTakes, enemyTakes: input.enemyTakes });
-  return { base, hpBonus, interest, perkBonus, total: base + hpBonus + interest + perkBonus };
+  const cardBonus = Math.max(0, input.cardCoins);
+  return { base, hpBonus, interest, perkBonus, cardBonus, total: base + hpBonus + interest + perkBonus + cardBonus };
 }

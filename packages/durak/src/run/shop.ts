@@ -1,18 +1,33 @@
-import { err, ok, shuffle, type Result, type RngState } from '@game/core';
+import { createDeck, err, ok, shuffle, type Result, type RngState } from '@game/core';
+import { ENHANCEMENT_IDS, ENHANCEMENTS, withEnhancement, type DeckProfile, type EnhancementId } from '../enhancements';
 import { PERK_IDS, PERKS, type PerkId } from '../perks';
 
 export const SHOP_OFFER_COUNT = 2;
 export const BASE_REROLL_COST = 2;
 export const MAX_PERKS = 3;
+export const ENHANCEMENT_OFFER_COUNT = 2;
+export const ENHANCEMENT_CARD_CHOICES = 3;
+const DURAK_MIN_RANK = 6;
+
+export type EnhancementOffer = {
+  readonly enhancementId: EnhancementId;
+  readonly price: number;
+  /** The player picks one of these cards to carry the enhancement. */
+  readonly cardIds: readonly string[];
+};
 
 export type ShopOffer = { readonly perkId: PerkId; readonly price: number };
 
 /** A `null` offer has been bought this visit. */
-export type ShopState = { readonly offers: readonly (ShopOffer | null)[]; readonly rerollCost: number };
+export type ShopState = {
+  readonly offers: readonly (ShopOffer | null)[];
+  readonly enhancementOffers: readonly (EnhancementOffer | null)[];
+  readonly rerollCost: number;
+};
 
 export type Wallet = { readonly coins: number; readonly perks: readonly PerkId[] };
 
-export type ShopError = 'noOffer' | 'notEnoughCoins' | 'perkSlotsFull' | 'perkNotOwned';
+export type ShopError = 'noOffer' | 'notEnoughCoins' | 'perkSlotsFull' | 'perkNotOwned' | 'cardNotOffered';
 
 function rollOffers(rng: RngState, owned: readonly PerkId[]): readonly [readonly ShopOffer[], RngState] {
   const pool = PERK_IDS.filter((id) => !owned.includes(id));
@@ -21,9 +36,40 @@ function rollOffers(rng: RngState, owned: readonly PerkId[]): readonly [readonly
   return [offers, next];
 }
 
+function rollEnhancementOffers(rng: RngState): readonly [readonly EnhancementOffer[], RngState] {
+  const [ids, afterIds] = shuffle(ENHANCEMENT_IDS, rng);
+  return ids.slice(0, ENHANCEMENT_OFFER_COUNT).reduce<readonly [readonly EnhancementOffer[], RngState]>(
+    ([offers, current], enhancementId) => {
+      const [cards, next] = shuffle(createDeck(DURAK_MIN_RANK), current);
+      const cardIds = cards.slice(0, ENHANCEMENT_CARD_CHOICES).map((card) => card.id);
+      return [[...offers, { enhancementId, price: ENHANCEMENTS[enhancementId].price, cardIds }], next];
+    },
+    [[], afterIds],
+  );
+}
+
 export function createShop(rng: RngState, owned: readonly PerkId[]): readonly [ShopState, RngState] {
-  const [offers, next] = rollOffers(rng, owned);
-  return [{ offers, rerollCost: BASE_REROLL_COST }, next];
+  const [offers, afterPerks] = rollOffers(rng, owned);
+  const [enhancementOffers, next] = rollEnhancementOffers(afterPerks);
+  return [{ offers, enhancementOffers, rerollCost: BASE_REROLL_COST }, next];
+}
+
+export function buyEnhancement(
+  shop: ShopState,
+  coins: number,
+  profile: DeckProfile,
+  index: number,
+  cardId: string,
+): Result<{ readonly shop: ShopState; readonly coins: number; readonly profile: DeckProfile }, ShopError> {
+  const offer = shop.enhancementOffers[index];
+  if (!offer) return err('noOffer');
+  if (!offer.cardIds.includes(cardId)) return err('cardNotOffered');
+  if (coins < offer.price) return err('notEnoughCoins');
+  return ok({
+    shop: { ...shop, enhancementOffers: shop.enhancementOffers.map((current, i) => (i === index ? null : current)) },
+    coins: coins - offer.price,
+    profile: withEnhancement(profile, cardId, offer.enhancementId),
+  });
 }
 
 export function sellPrice(perkId: PerkId): number {
@@ -57,9 +103,10 @@ export function rerollShop(
 ): Result<{ readonly shop: ShopState; readonly wallet: Wallet; readonly rng: RngState }, ShopError> {
   if (wallet.coins < shop.rerollCost) return err('notEnoughCoins');
   const [offers, next] = rollOffers(rng, wallet.perks);
+  const [enhancementOffers, afterEnhancements] = rollEnhancementOffers(next);
   return ok({
-    shop: { offers, rerollCost: shop.rerollCost + 1 },
+    shop: { offers, enhancementOffers, rerollCost: shop.rerollCost + 1 },
     wallet: { ...wallet, coins: wallet.coins - shop.rerollCost },
-    rng: next,
+    rng: afterEnhancements,
   });
 }

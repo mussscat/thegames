@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { fightReward, type RewardInput } from './economy';
 
-const input: RewardInput = { tier: 'normal', playerHp: 10, coinsBefore: 0, perks: [], playerTakes: 1, enemyTakes: 3 };
+const input: RewardInput = { tier: 'normal', playerHp: 10, coinsBefore: 0, perks: [], playerTakes: 1, enemyTakes: 3, cardCoins: 0 };
 
 describe('fightReward', () => {
   it('pays base + 1 per 2 HP left', () => {
-    expect(fightReward(input)).toEqual({ base: 3, hpBonus: 5, interest: 0, perkBonus: 0, total: 8 });
+    expect(fightReward(input)).toEqual({ base: 3, hpBonus: 5, interest: 0, perkBonus: 0, cardBonus: 0, total: 8 });
   });
 
   it('pays more for stronger enemies and rounds HP bonus down', () => {
@@ -32,5 +32,10 @@ describe('fightReward', () => {
     const reward = fightReward({ ...input, playerHp: -3, coinsBefore: -10 });
     expect(reward.hpBonus).toBe(0);
     expect(reward.interest).toBe(0);
+  });
+  it('pays Монетная coins earned in the fight', () => {
+    const reward = fightReward({ ...input, cardCoins: 2 });
+    expect(reward.cardBonus).toBe(2);
+    expect(reward.total).toBe(10);
   });
 });

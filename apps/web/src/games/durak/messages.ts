@@ -14,6 +14,7 @@ const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   notEnoughCoins: 'Не хватает монет',
   perkSlotsFull: 'Все 3 слота заняты — сначала продай перк',
   perkNotOwned: 'Такого перка нет',
+  cardNotOffered: 'Эту карту нельзя выбрать',
   wrongPhase: 'Сейчас это недоступно',
   fightNotOver: 'Бой ещё идёт',
 };

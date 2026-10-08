@@ -135,6 +135,7 @@ function leaveFight(state: RunState): RunResult {
     perks: state.perks,
     playerTakes: fight.fightTakes.player,
     enemyTakes: fight.fightTakes.enemy,
+    cardCoins: fight.cardCoins.player,
   });
   const coins = state.coins + reward.total;
   if (state.stage >= RUN_SCHEDULE.length - 1) return ok({ ...state, coins, phase: { kind: 'over', won: true } });

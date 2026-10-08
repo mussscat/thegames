@@ -1,13 +1,14 @@
 import { createRng } from '@game/core';
 import { describe, expect, it } from 'vitest';
 import { PERKS } from '../perks';
-import { buyPerk, createShop, MAX_PERKS, rerollShop, sellPerk, sellPrice, type ShopState, type Wallet } from './shop';
+import { buyEnhancement, buyPerk, createShop, MAX_PERKS, rerollShop, sellPerk, sellPrice, type ShopState, type Wallet } from './shop';
 
 const shop: ShopState = {
   offers: [
     { perkId: 'looter', price: 5 },
     { perkId: 'cardSharp', price: 4 },
   ],
+  enhancementOffers: [{ enhancementId: 'golden', price: 4, cardIds: ['clubs-7', 'hearts-8', 'spades-9'] }, null],
   rerollCost: 2,
 };
 const rich: Wallet = { coins: 20, perks: [] };
@@ -89,5 +90,36 @@ describe('rerollShop', () => {
 
   it('rejects when coins are short', () => {
     expect(rerollShop(shop, { coins: 1, perks: [] }, createRng(9))).toEqual({ ok: false, error: 'notEnoughCoins' });
+  });
+});
+
+describe('enhancement offers', () => {
+  it('createShop offers two different enhancements, each on 3 different cards', () => {
+    const [created] = createShop(createRng(3), []);
+    expect(created.enhancementOffers).toHaveLength(2);
+    const ids = created.enhancementOffers.map((offer) => offer?.enhancementId);
+    expect(new Set(ids).size).toBe(2);
+    for (const offer of created.enhancementOffers) {
+      expect(new Set(offer!.cardIds).size).toBe(3);
+    }
+  });
+
+  it('buyEnhancement puts it on the chosen offered card and charges the price', () => {
+    const bought = expectOk(buyEnhancement(shop, 10, { 'hearts-8': 'coin' }, 0, 'hearts-8'));
+    expect(bought.coins).toBe(6);
+    expect(bought.profile).toEqual({ 'hearts-8': 'golden' });
+    expect(bought.shop.enhancementOffers[0]).toBeNull();
+  });
+
+  it('rejects a card that is not offered, a sold offer and short coins', () => {
+    expect(buyEnhancement(shop, 10, {}, 0, 'diamonds-14')).toEqual({ ok: false, error: 'cardNotOffered' });
+    expect(buyEnhancement(shop, 10, {}, 1, 'clubs-7')).toEqual({ ok: false, error: 'noOffer' });
+    expect(buyEnhancement(shop, 3, {}, 0, 'clubs-7')).toEqual({ ok: false, error: 'notEnoughCoins' });
+  });
+
+  it('reroll also renews enhancement offers', () => {
+    const { shop: after } = expectOk(rerollShop(shop, { coins: 5, perks: [] }, createRng(9)));
+    expect(after.enhancementOffers).toHaveLength(2);
+    expect(after.enhancementOffers.every((offer) => offer !== null)).toBe(true);
   });
 });

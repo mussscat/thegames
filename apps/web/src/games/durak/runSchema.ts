@@ -52,9 +52,10 @@ const fight = z.object({
   cardCoins: perPlayer,
 });
 
-const reward = z.object({ base: count, hpBonus: count, interest: count, perkBonus: count, total: count });
+const reward = z.object({ base: count, hpBonus: count, interest: count, perkBonus: count, cardBonus: count, total: count });
 const shop = z.object({
   offers: z.array(z.object({ perkId: perk, price: count }).nullable()),
+  enhancementOffers: z.array(z.object({ enhancementId: enhancement, price: count, cardIds: z.array(z.string()) }).nullable()),
   rerollCost: count,
 });
 
