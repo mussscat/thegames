@@ -11,11 +11,13 @@ type HpBarProps = {
   /** Damage label to pop near the bar; `hitKey` changes on every new hit to replay the animation. */
   readonly hitLabel?: string | null;
   readonly hitKey?: number;
+  /** Extra class for screen layout (grid placement). */
+  readonly className?: string;
 };
 
-export function HpBar({ label, hp, maxHp, hitLabel = null, hitKey = 0 }: HpBarProps) {
+export function HpBar({ label, hp, maxHp, hitLabel = null, hitKey = 0, className = '' }: HpBarProps) {
   return (
-    <div className="hp panel" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
+    <div className={`hp panel ${className}`} role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
       <span className="hp__label">{label}</span>
       <motion.div key={hitLabel ? hitKey : 'still'} className="hp__track" animate={hitLabel ? SHAKE : {}} transition={{ duration: 0.35 }}>
         {hpSegments(hp, maxHp).map((full, i) => (

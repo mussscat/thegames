@@ -62,7 +62,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         <span className="shop__coins">● {run.coins}</span>
       </header>
 
-      <section className="panel shop__reward">
+      <section className="panel shop__reward" data-testid="shop-reward">
         <h2 className="shop__title">Награда за бой: +{reward.total}</h2>
         <p>
           Победа {reward.base} · HP {reward.hpBonus} · проценты {reward.interest}
@@ -70,7 +70,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         </p>
       </section>
 
-      <section className="panel">
+      <section className="panel shop__offers" data-testid="shop-offers">
         <h3 className="shop__title">Товары</h3>
         <div className="shop__shelf">
           {shop.offers.map((offer, index) =>
@@ -98,7 +98,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel shop__enh">
         <h3 className="shop__title">Усиления карт</h3>
         {shop.enhancementOffers.map((offer, index) =>
           offer ? (
@@ -139,7 +139,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel shop__perks">
         <h3 className="shop__title">
           Твои перки ({run.perks.length}/{MAX_PERKS})
         </h3>
@@ -159,7 +159,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel shop__mydeck">
         <h3 className="shop__title">Твоя колода</h3>
         {Object.keys(run.profile).length === 0 && <p className="shop__empty">Усилений пока нет</p>}
         <div className="shop__deck">
