@@ -3,6 +3,7 @@ import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, ty
 import type { CSSProperties } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
 import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';
+import { sortHand, type HandSort } from '../../ui/handSort';
 
 /** Card widths a hand may take: leaves room for the fan's rotation at the screen edges. */
 const HAND_FIT = 6;
@@ -30,14 +31,21 @@ export function EnemyHand({ cards }: { readonly cards: readonly Card[] }) {
   );
 }
 
+/** A trump this round: the trump suit, boss trumps (witch queens) or a card the player holds as Козырная. */
+function isRoundTrump(round: RoundState, card: Card): boolean {
+  const { own, foreign } = cardEnhancements(round, 'player', card);
+  return isTrumpCard(card, round.trumpSuit, round.boss) || own === 'trump' || foreign === 'trump';
+}
+
 type PlayerHandProps = {
   readonly round: RoundState;
   readonly myTurn: boolean;
   readonly sway: boolean;
+  readonly sort: HandSort;
   readonly onPlay: (card: Card, use?: EnhancementSource) => void;
 };
 
-export function PlayerHand({ round, myTurn, sway, onPlay }: PlayerHandProps) {
+export function PlayerHand({ round, myTurn, sway, sort, onPlay }: PlayerHandProps) {
   const legal = legalActions(round, 'player');
   const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
@@ -45,7 +53,7 @@ export function PlayerHand({ round, myTurn, sway, onPlay }: PlayerHandProps) {
 
   return (
     <div className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand">
-      {round.hands.player.map((card, index, all) => {
+      {sortHand(round.hands.player, sort, (card) => isRoundTrump(round, card)).map((card, index, all) => {
         const enhancements = cardEnhancements(round, 'player', card);
         const split = Boolean(enhancements.own && enhancements.foreign);
         return (
@@ -54,7 +62,7 @@ export function PlayerHand({ round, myTurn, sway, onPlay }: PlayerHandProps) {
               card={card}
               enhancements={enhancements}
               playable={myTurn && playableIds.has(card.id)}
-              trump={isTrumpCard(card, round.trumpSuit, round.boss) || enhancements.own === 'trump' || enhancements.foreign === 'trump'}
+              trump={isRoundTrump(round, card)}
               onTap={myTurn && !split ? () => onPlay(card) : undefined}
               onTapOption={myTurn && split ? (use) => onPlay(card, use) : undefined}
               legalUses={myTurn && split ? legalUses(card.id) : undefined}

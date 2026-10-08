@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { KeyValueStore } from '../storage';
+import { HAND_SORTS, type HandSort } from './handSort';
 import { PALETTE_IDS, type PaletteId } from './palettes';
 
 export type Settings = {
@@ -8,9 +9,11 @@ export type Settings = {
   readonly volume: number;
   /** Idle sway of the cards in hand. */
   readonly sway: boolean;
+  /** How the player's hand is ordered. */
+  readonly sort: HandSort;
 };
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: 'suit' };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -20,6 +23,7 @@ const schema = z.object({
   sound: z.boolean().catch(DEFAULT_SETTINGS.sound),
   volume: z.number().min(0).max(1).catch(DEFAULT_SETTINGS.volume),
   sway: z.boolean().catch(DEFAULT_SETTINGS.sway),
+  sort: z.enum(HAND_SORTS).catch(DEFAULT_SETTINGS.sort),
 });
 
 export function parseSettings(raw: unknown): Settings {

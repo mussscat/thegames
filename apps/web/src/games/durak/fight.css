@@ -15,10 +15,12 @@
 }
 .card:disabled { cursor: default; }
 .card--playable { translate: 0 -10%; }
-/* Owner-picked in the lab: soft glow for playable cards, gold glow for trumps, other cards dimmed on your turn. */
+/* Owner-picked in the lab, layered so the effects never cancel each other:
+   dimming darkens only the face, the gold trump glow sits on the feel layer (always visible, even when dimmed),
+   and the playable glow + lift sit on the card itself. */
 .card--playable { filter: drop-shadow(0 0 3px var(--glow-playable)) drop-shadow(0 0 1px var(--glow-playable)); }
-.card--trump:not(.card--playable) { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
-.hand--player:not(.hand--waiting) .card:not(.card--playable, .card--trump) { filter: brightness(0.6) saturate(0.7); }
+.card--trump .feel { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
+.hand--player:not(.hand--waiting) .card:not(.card--playable) .face { filter: brightness(0.6) saturate(0.7); }
 .card--back { cursor: default; }
 .card__tag {
   position: absolute;
@@ -46,7 +48,7 @@
 .hand__slot { transform-origin: 50% 120%; }
 .hand--enemy { --slot-w: calc(var(--card-w) * 0.6); min-height: calc(var(--card-w) * 0.9); }
 .hand--enemy .card { width: calc(var(--card-w) * 0.6); }
-.hand--waiting .card { filter: brightness(0.7); }
+.hand--waiting .card .face { filter: brightness(0.7); }
 
 /* ---------- table & deck ---------- */
 .table {

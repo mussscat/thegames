@@ -91,7 +91,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
           <p className="fight__status panel" role="status">
             {error ?? statusText(fight)}
           </p>
-          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} onPlay={play} />
+          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} sort={settings.sort} onPlay={play} />
           <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
         </section>
       </main>

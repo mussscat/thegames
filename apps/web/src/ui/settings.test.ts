@@ -24,18 +24,18 @@ const brokenStore: KeyValueStore = {
 };
 
 describe('parseSettings', () => {
-  it('defaults to the Неон palette, sound on, volume 0.35, sway on', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ palette: 'neon', sound: true, volume: 0.35, sway: true });
+  it('defaults to the Неон palette, sound on, volume 0.35, sway on, sorted by suit', () => {
+    expect(DEFAULT_SETTINGS).toEqual({ palette: 'neon', sound: true, volume: 0.35, sway: true, sort: 'suit' });
     expect(parseSettings(undefined)).toEqual(DEFAULT_SETTINGS);
   });
 
   it('keeps valid values', () => {
-    const settings = { palette: 'felt', sound: false, volume: 0.5, sway: false };
+    const settings = { palette: 'felt', sound: false, volume: 0.5, sway: false, sort: 'rank' };
     expect(parseSettings(settings)).toEqual(settings);
   });
 
   it('replaces each invalid field with its default', () => {
-    expect(parseSettings({ palette: 'pink', sound: 'yes', volume: 7, sway: 'no' })).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings({ palette: 'pink', sound: 'yes', volume: 7, sway: 'no', sort: 'random' })).toEqual(DEFAULT_SETTINGS);
     expect(parseSettings({ palette: 'balatro', volume: -1 })).toEqual({ ...DEFAULT_SETTINGS, palette: 'balatro' });
   });
 
@@ -48,7 +48,7 @@ describe('parseSettings', () => {
 describe('loadSettings / saveSettings', () => {
   it('round-trips through the store', () => {
     const store = memoryStore();
-    const settings = { palette: 'balatro', sound: false, volume: 0.8, sway: false } as const;
+    const settings = { palette: 'balatro', sound: false, volume: 0.8, sway: false, sort: 'trumpsFirst' } as const;
     expect(saveSettings(store, settings)).toBe(true);
     expect(loadSettings(store)).toEqual(settings);
   });

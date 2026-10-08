@@ -29,3 +29,17 @@ test('card sway can be switched off and stays off after a reload', async ({ page
   await page.getByRole('button', { name: 'Настройки' }).click();
   await expect(page.getByLabel('Покачивание карт')).not.toBeChecked();
 });
+
+test('the hand is sorted by suit with trumps on the right, and the order is configurable', async ({ page }) => {
+  await page.goto('/?seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  const cards = page.getByTestId('player-hand').getByRole('button');
+  await expect(cards.first()).toHaveAccessibleName('9 бубны');
+  await expect(cards.last()).toHaveAccessibleName('10 пики');
+  await page.getByRole('button', { name: 'Меню' }).click();
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await page.getByLabel('Сортировка руки').selectOption('trumpsFirst');
+  await page.getByRole('button', { name: 'Назад' }).click();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await expect(cards.first()).toHaveAccessibleName('10 пики');
+});
