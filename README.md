@@ -34,6 +34,9 @@ npm run e2e          # Playwright, мобильный viewport
 - `packages/core` — RNG с сидом, карты, Result
 - `packages/durak` — правила дурака, бой с HP, ИИ (чистая логика)
 - `apps/web` — React PWA
+  - `apps/web/src/ui` — пиксельный стиль: спрайты карт, фон, кнопки, звук, настройки
+  - `?lab` — лаборатория карты (подбор ощущения карты и палитры)
+  - настройки (палитра, звук, громкость, покачивание карт) хранятся в `localStorage` под ключом `thegame.settings`
 
 ## Деплой (Cloudflare Pages)
 
