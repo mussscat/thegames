@@ -1,20 +1,35 @@
 import { RANKS, SUITS, type Rank } from '@game/core';
-import { BOSS_RULES, ENHANCEMENT_IDS, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
+import { BOSS_RULES, ENHANCEMENT_IDS, JOKER_IDS, MAX_JOKERS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
 const suit = z.enum(SUITS);
 const player = z.enum(['player', 'enemy']);
-const perk = z.enum(PERK_IDS);
 const card = z.object({ id: z.string(), suit, rank });
 const perPlayer = z.object({ player: count, enemy: count });
 const rng = z.object({ seed: z.number().int() });
 const boss = z.enum(BOSS_RULES).nullable();
 const enhancement = z.enum(ENHANCEMENT_IDS);
 const profile = z.record(z.string(), enhancement);
+const joker = z.enum(JOKER_IDS);
+const jokerList = z.array(joker).max(MAX_JOKERS);
+const jokerState = z.object({ rage: count, cleanStreak: count, collected: count });
+const stepSource = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('tier') }),
+  z.object({ kind: z.literal('card'), card }),
+  z.object({ kind: z.literal('enhancement'), card, enhancement }),
+  z.object({ kind: z.literal('joker'), side: z.enum(['attacker', 'defender']), slot: count, joker, acting: joker }),
+]);
+const step = z.object({
+  source: stepSource,
+  effect: z.object({ kind: z.enum(['chips', 'mult', 'times']), value: z.number() }),
+  chips: z.number(),
+  mult: z.number(),
+});
+const lastScore = z.object({ target: player, chips: z.number(), mult: z.number(), damage: count, steps: z.array(step) }).nullable();
 
 const round = z.object({
   deck: z.array(card),
@@ -45,16 +60,19 @@ const fight = z.object({
   winner: player.nullable(),
   hits: z.array(z.object({ target: player, amount: count })),
   hitSeq: count,
-  perks: z.array(perk).max(MAX_PERKS),
+  jokers: z.object({ player: jokerList, enemy: jokerList }),
+  baseMult: z.object({ player: z.number().positive(), enemy: z.number().positive() }),
+  jokerState: z.object({ player: jokerState, enemy: jokerState }),
+  lastScore,
   roundTakes: perPlayer,
   fightTakes: perPlayer,
   boss,
   cardCoins: perPlayer,
 });
 
-const reward = z.object({ base: count, hpBonus: count, interest: count, perkBonus: count, cardBonus: count, total: count });
+const reward = z.object({ base: count, hpBonus: count, interest: count, jokerBonus: count, cardBonus: count, total: count });
 const shop = z.object({
-  offers: z.array(z.object({ perkId: perk, price: count }).nullable()),
+  offers: z.array(z.object({ jokerId: joker, price: count }).nullable()),
   enhancementOffers: z.array(z.object({ enhancementId: enhancement, price: count, cardIds: z.array(z.string()) }).nullable()),
   rerollCost: count,
 });
@@ -70,7 +88,8 @@ const run = z.object({
   rng,
   stage: z.number().int().min(0).max(RUN_SCHEDULE.length - 1),
   coins: count,
-  perks: z.array(perk).max(MAX_PERKS),
+  jokers: jokerList,
+  collected: count,
   profile,
   bosses: z.array(z.enum(BOSS_RULES)).max(RUN_SCHEDULE.length),
   phase,

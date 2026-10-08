@@ -139,5 +139,5 @@
 .gallery__subtitle { margin: 6px 0 0; font-size: 0.6rem; }
 .gallery__cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px 10px; padding-bottom: 12px; }
 .gallery__cards--hand { gap: 10px; }
-.gallery__perks { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.gallery__perk { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; font-size: 0.9rem; }
+.gallery__jokers { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.gallery__joker { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; font-size: 0.9rem; }

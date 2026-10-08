@@ -1,4 +1,5 @@
-import { applyRunAction, createRun, type RunState } from '@game/durak';
+import { makeCard } from '@game/core';
+import { applyRunAction, createRun, scoreTake, type RunState } from '@game/durak';
 import { describe, expect, it } from 'vitest';
 import { SAVE_VERSION } from './runSchema';
 import { clearRun, loadRun, RUN_STORAGE_KEY, saveRun, type KeyValueStore } from './runStorage';
@@ -62,16 +63,41 @@ describe('run storage', () => {
     expect(loadRun(memoryStore({ [RUN_STORAGE_KEY]: raw }))).toEqual({ status: 'invalid' });
   });
 
-  it('rejects tampered saves: 4 perks or negative coins', () => {
+  it('rejects tampered saves: 6 jokers or negative coins', () => {
     const run = createRun(1);
     const tampered = [
-      { ...run, perks: ['looter', 'cardSharp', 'piggyBank', 'thickSkin'] },
+      { ...run, jokers: ['looter', 'cardSharp', 'piggyBank', 'thickSkin', 'clubs', 'gloat'] },
       { ...run, coins: -5 },
     ];
     for (const bad of tampered) {
       const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: SAVE_VERSION, run: bad }) });
       expect(loadRun(store)).toEqual({ status: 'invalid' });
     }
+  });
+
+  it('rejects a v6 save (perks era) as corrupted', () => {
+    const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: 6, run: {} }) });
+    expect(loadRun(store)).toEqual({ status: 'invalid' });
+  });
+
+  it('round-trips a fight with jokers and a scored take', () => {
+    const run = createRun(1);
+    if (run.phase.kind !== 'fight') throw new Error('not in a fight');
+    const lastScore = { ...scoreTake({
+      taken: [{ card: makeCard('clubs', 7), enhancement: 'golden' }],
+      trumpSuit: 'hearts',
+      boss: null,
+      topCard: null,
+      takerPriorTakes: 0,
+      baseMult: 1,
+      attacker: { jokers: ['mirror', 'clubs'], state: { rage: 0, cleanStreak: 0, collected: 0 } },
+      defender: { jokers: ['usurer'], state: { rage: 0, cleanStreak: 0, collected: 0 } },
+    }), target: 'enemy' as const };
+    const fight = { ...run.phase.fight, jokers: { player: ['mirror', 'clubs'] as const, enemy: ['usurer'] as const }, lastScore };
+    const saved: RunState = { ...run, jokers: ['mirror', 'clubs'], collected: 2, phase: { kind: 'fight', fight } };
+    const store = memoryStore();
+    expect(saveRun(store, saved)).toBe(true);
+    expect(loadRun(store)).toEqual({ status: 'ok', run: saved });
   });
 
   it('rejects saves from version 1', () => {

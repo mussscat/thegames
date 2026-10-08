@@ -1,4 +1,4 @@
-import { PERKS, RUN_SCHEDULE, type RunState } from '@game/durak';
+import { JOKERS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import '../../screens/menu.css';
 import { PixelButton } from '../../ui/PixelButton';
 
@@ -19,7 +19,7 @@ export function RunOverScreen({ run, won, onNewRun, onExit }: RunOverScreenProps
           Боёв выиграно: {fightsWon} из {RUN_SCHEDULE.length}
         </p>
         <p>Монеты: {run.coins}</p>
-        <p>Перки: {run.perks.length > 0 ? run.perks.map((id) => PERKS[id].name).join(', ') : '—'}</p>
+        <p>Джокеры: {run.jokers.length > 0 ? run.jokers.map((id) => JOKERS[id].name).join(', ') : '—'}</p>
       </section>
       <div className="menu__buttons">
         <PixelButton tone="green" onClick={onNewRun}>

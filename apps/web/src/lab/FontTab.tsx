@@ -1,12 +1,12 @@
 import { useState, type CSSProperties } from 'react';
-import { PerkCard } from '../games/durak/PerkCard';
+import { JokerCard } from '../games/durak/JokerCard';
 import { FONT_OPTIONS, fontFamily, type FontId } from './labFonts';
 import { LabSelect } from './LabSelect';
 
 const RULES =
   'Заставь соперника взять — он теряет HP за каждую карту. Победа приносит монеты; в магазине — перки (до 3) и усиления карт.';
 
-/** Real game copy in candidate fonts: title, rules, a perk card, buttons, status and HP. */
+/** Real game copy in candidate fonts: title, rules, a joker card, buttons, status and HP. */
 export function FontTab() {
   const [body, setBody] = useState<FontId>('nunito');
   const [head, setHead] = useState<FontId>('press');
@@ -26,7 +26,7 @@ export function FontTab() {
       <h2 className="fontlab__title">Карточный рогалик</h2>
       <p className="panel fontlab__text">{RULES}</p>
       <div className="fontlab__row">
-        <PerkCard perkId="trumpLover" action={<button type="button" className="pbtn pbtn--orange pbtn--small">● 6</button>} />
+        <JokerCard jokerId="trumpAce" action={<button type="button" className="pbtn pbtn--orange pbtn--small">● 6</button>} />
         <div className="fontlab__col">
           <p className="panel fontlab__status">Отбивайся или бери</p>
           <div className="panel fontlab__hp">

@@ -18,7 +18,7 @@ import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
-import { PerkPanel } from './PerkPanel';
+import { JokerPanel } from './JokerPanel';
 import { RunHeader } from './RunHeader';
 import { hitLabelFor } from './hits';
 import { fightSound, isNewError } from './sounds';
@@ -67,7 +67,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
             className="hp--enemy"
             hp={fight.hp.enemy}
             maxHp={fight.maxHp.enemy}
-            hitLabel={hitLabelFor(fight.hits, 'enemy')}
+            hitLabel={hitLabelFor(fight.hits, 'enemy', fight.lastScore)}
             hitKey={fight.hitSeq}
           />
           <HpBar
@@ -75,11 +75,11 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
             className="hp--player"
             hp={fight.hp.player}
             maxHp={fight.maxHp.player}
-            hitLabel={hitLabelFor(fight.hits, 'player')}
+            hitLabel={hitLabelFor(fight.hits, 'player', fight.lastScore)}
             hitKey={fight.hitSeq}
           />
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
-          <PerkPanel perks={fight.perks} />
+          <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} />
           <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
             Меню
           </PixelButton>
@@ -92,7 +92,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
             {error ?? statusText(fight)}
           </p>
           <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} sort={settings.sort} onPlay={play} />
-          <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
+          <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} />
         </section>
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />

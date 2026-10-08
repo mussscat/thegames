@@ -1,8 +1,8 @@
 import { makeCard } from '@game/core';
-import { ENHANCEMENT_IDS, PERK_IDS, PERKS } from '@game/durak';
+import { ENHANCEMENT_IDS, JOKER_IDS, JOKERS } from '@game/durak';
 import { CardView } from '../components/CardView';
-import { PerkCard } from '../games/durak/PerkCard';
-import { TicketFace } from '../games/durak/PerkTicket';
+import { JokerCard } from '../games/durak/JokerCard';
+import { TicketFace } from '../games/durak/JokerTicket';
 import { PixelCard } from '../ui/PixelCard';
 import '../games/durak/fight.css';
 
@@ -10,7 +10,7 @@ const SAMPLE = makeCard('hearts', 12);
 /** Distinct cards: CardView animates by card id, so equal ids would merge into one. */
 const HAND = [makeCard('spades', 10), makeCard('clubs', 9), makeCard('diamonds', 13), makeCard('spades', 14)] as const;
 
-/** Everything collectible at a glance: all perks (wide ticket, compact ticket, shop card) and all card enhancements. */
+/** Everything collectible at a glance: all jokers (wide ticket, compact ticket, shop card) and all card enhancements. */
 export function GalleryTab() {
   return (
     <div className="gallery">
@@ -31,10 +31,10 @@ export function GalleryTab() {
         </div>
       </section>
       <section className="panel gallery__section">
-        <h2 className="gallery__title">Перки</h2>
-        <ul className="gallery__perks">
-          {PERK_IDS.map((id) => (
-            <li key={id} className="gallery__perk">
+        <h2 className="gallery__title">Джокеры</h2>
+        <ul className="gallery__jokers">
+          {JOKER_IDS.map((id) => (
+            <li key={id} className="gallery__joker">
               <TicketFace id={id} wide={false} />
               <TicketFace id={id} wide />
             </li>
@@ -42,8 +42,8 @@ export function GalleryTab() {
         </ul>
         <h3 className="gallery__subtitle">В магазине</h3>
         <div className="shop__shelf">
-          {PERK_IDS.map((id) => (
-            <PerkCard key={id} perkId={id} action={<span className="chip">● {PERKS[id].price}</span>} />
+          {JOKER_IDS.map((id) => (
+            <JokerCard key={id} jokerId={id} action={<span className="chip">● {JOKERS[id].price}</span>} />
           ))}
         </div>
       </section>
