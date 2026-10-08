@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { applyFightAction, createFight, type FightState } from './fight';
 import { c, filler, roundState } from './fixtures';
+import type { JokerId } from './jokers/catalog';
+import type { RoundState } from './types';
 
 function expectOk(result: ReturnType<typeof applyFightAction>): FightState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -30,7 +32,8 @@ describe('createFight', () => {
     expect(base.winner).toBeNull();
     expect(base.hits).toEqual([]);
     expect(base.round.hands.player).toHaveLength(6);
-    expect(base.perks).toEqual([]);
+    expect(base.jokers).toEqual({ player: [], enemy: [] });
+    expect(base.lastScore).toBeNull();
     expect(base.roundTakes).toEqual({ player: 0, enemy: 0 });
     expect(base.fightTakes).toEqual({ player: 0, enemy: 0 });
   });
@@ -105,13 +108,24 @@ describe('rounds and errors', () => {
   });
 });
 
-describe('perks in a fight', () => {
+describe('jokers in a fight', () => {
   const playerTaking = roundState({
     attacker: 'enemy',
     hands: { player: filler(5), enemy: filler(5, 'diamonds') },
     table: [{ attack: c(7, 'clubs'), defense: null }, { attack: c(8, 'clubs'), defense: null }],
     defenderTaking: true,
     deck: filler(6, 'hearts').slice(2),
+  });
+  /** The enemy attacked with one card the player covered; the enemy says «Бито». */
+  const playerBeats = roundState({
+    attacker: 'enemy',
+    hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+    table: [{ attack: c(7, 'clubs'), defense: c(9, 'clubs') }],
+    deck: filler(6, 'hearts').slice(2),
+  });
+  const fightWith = (player: readonly JokerId[], round: RoundState, over: Partial<Parameters<typeof createFight>[0]> = {}) => ({
+    ...createFight({ seed: 1, playerHp: 60, enemyHp: 60, jokers: { player }, ...over }),
+    round,
   });
 
   it('counts takes per round and per fight', () => {
@@ -128,41 +142,52 @@ describe('perks in a fight', () => {
     expect(next.fightTakes).toEqual({ player: 2, enemy: 1 });
   });
 
-  it('Подкидной мастер makes enemy takes cost 1 more', () => {
-    const fight = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['throwMaster'] }), round: takingRound };
+  it('records the scored hit and applies the player jokers', () => {
+    const next = expectOk(applyFightAction(fightWith(['clubs'], takingRound), 'player', { type: 'endAttack' }));
+    expect(next.lastScore).toMatchObject({ target: 'enemy', chips: 5, mult: 1, damage: 5 });
+    expect(next.hp.enemy).toBe(55);
+  });
+
+  it('the enemy tier multiplier scales hits on the player', () => {
+    const fight = fightWith([], playerTaking, { baseMult: { enemy: 3 } });
+    const done = expectOk(applyFightAction(fight, 'enemy', { type: 'endAttack' }));
+    expect(done.hp.player).toBe(54);
+  });
+
+  it('«Бито» charges Копилка ярости and the next hit spends it', () => {
+    const beaten = expectOk(applyFightAction(fightWith(['rage'], playerBeats), 'enemy', { type: 'endAttack' }));
+    expect(beaten.jokerState.player.rage).toBe(4);
+    const hit = expectOk(applyFightAction({ ...beaten, round: takingRound }, 'player', { type: 'endAttack' }));
+    expect(hit.lastScore?.damage).toBe(6);
+    expect(hit.jokerState.player.rage).toBe(0);
+  });
+
+  it('a 0-damage take still counts and still spends the charge', () => {
+    const single = roundState({ ...takingRound, table: [{ attack: c(7, 'clubs'), defense: null }] });
+    const fight = { ...fightWith(['thickSkin'], single), jokers: { player: ['thickSkin'] as const, enemy: ['thickSkin'] as const } };
     const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
-    expect(next.hp.enemy).toBe(7);
-    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
+    expect(next.lastScore?.damage).toBe(0);
+    expect(next.hp.enemy).toBe(60);
+    expect(next.fightTakes.enemy).toBe(1);
   });
 
-  it('Толстая кожа softens only the first player take in a round', () => {
-    const start = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['thickSkin'] }), round: playerTaking };
-    const first = expectOk(applyFightAction(start, 'enemy', { type: 'endAttack' }));
-    expect(first.hp.player).toBe(9);
-    const second = expectOk(applyFightAction({ ...first, round: playerTaking }, 'enemy', { type: 'endAttack' }));
-    expect(second.hp.player).toBe(7);
+  it('Коллекционер grows from enhanced cards the enemy takes', () => {
+    const golden = roundState({ ...takingRound, table: [{ attack: c(7, 'clubs'), defense: null, attackEnh: 'golden' }] });
+    const next = expectOk(applyFightAction(fightWith(['collector'], golden, { collected: 2 }), 'player', { type: 'endAttack' }));
+    expect(next.lastScore).toMatchObject({ chips: 4, mult: 3, damage: 12 });
+    expect(next.jokerState.player.collected).toBe(3);
   });
 
-  it('a zero-damage take still counts as a take', () => {
-    const single = { ...playerTaking, table: [{ attack: c(7, 'clubs'), defense: null }] };
-    const start = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['thickSkin'] }), round: single };
-    const next = expectOk(applyFightAction(start, 'enemy', { type: 'endAttack' }));
-    expect(next.hp.player).toBe(10);
-    expect(next.hits).toEqual([]);
-    expect(next.roundTakes.player).toBe(1);
+  it('a clean deal grows Чистюля', () => {
+    const ended = expectOk(applyFightAction(fightWith(['cleanHands'], endingRound), 'player', { type: 'endAttack' }));
+    const next = expectOk(applyFightAction(ended, 'player', { type: 'nextRound' }));
+    expect(next.jokerState.player.cleanStreak).toBe(1);
   });
 
   it('Длинные руки deals and keeps a 7-card player hand', () => {
-    const fight = createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['longArms'] });
+    const fight = createFight({ seed: 1, playerHp: 60, enemyHp: 60, jokers: { player: ['longArms'] } });
     expect(fight.round.hands.player).toHaveLength(7);
     expect(fight.round.handSizes).toEqual({ player: 7, enemy: 6 });
-    expect(fight.perks).toEqual(['longArms']);
-  });
-
-  it('Козырной charges the enemy for every trump it takes', () => {
-    const fight = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['trumpLover'] }), round: takingRound };
-    const next = expectOk(applyFightAction(fight, 'player', { type: 'endAttack' }));
-    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
   });
 });
 
@@ -224,13 +249,13 @@ describe('enhancements in a fight', () => {
       deck: filler(6, 'hearts').slice(2),
     });
 
-  it('Золотая attack cards cost the taker 1 more each', () => {
+  it('Золотая attack cards add 3 chips to the hit', () => {
     const golden = {
       ...takingRound,
       table: [{ attack: c(7, 'clubs'), defense: null, attackEnh: 'golden' as const }, { attack: c(7, 'hearts'), defense: null }],
     };
     const next = expectOk(applyFightAction({ ...base, round: golden }, 'player', { type: 'endAttack' }));
-    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 5 }]);
   });
 
   it('Монетная pays nothing when the defender covers and then takes the table', () => {
