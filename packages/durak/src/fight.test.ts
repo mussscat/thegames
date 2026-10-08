@@ -189,7 +189,7 @@ describe('bosses in a fight', () => {
   });
 
   it('Фокусник also shuffles on the first «Бито» right after a take', () => {
-    const afterTake = { ...beatenRound, lastBout: { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')], goldenHits: 0 } };
+    const afterTake = { ...beatenRound, lastBout: { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')], takenEnhancements: [null] } };
     const next = expectOk(applyFightAction({ ...shuffler, round: afterTake }, 'player', { type: 'endAttack' }));
     expect(next.round.trumpSuit).not.toBe('hearts');
   });

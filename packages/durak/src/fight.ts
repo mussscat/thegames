@@ -134,7 +134,7 @@ function chargeTake(state: FightState, bout: BoutResult, trumpSuit: Suit): Fight
     boss: state.boss,
     takerTakesThisRound: state.roundTakes[taker],
   });
-  const amount = perkAmount + bout.goldenHits;
+  const amount = perkAmount + bout.takenEnhancements.filter((id) => id === 'golden').length;
   const counted: FightState = {
     ...state,
     roundTakes: increment(state.roundTakes, taker),

@@ -125,7 +125,7 @@ function boutResult(state: RoundState): BoutResult | null {
     ? {
         damaged: defenderOf(state),
         attackCards: state.table.map((pair) => pair.attack),
-        goldenHits: state.table.filter((pair) => pair.attackEnh === 'golden').length,
+        takenEnhancements: state.table.map((pair) => pair.attackEnh ?? null),
       }
     : null;
 }

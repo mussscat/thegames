@@ -197,7 +197,7 @@ describe('bout damage', () => {
     const taking = expectOk(applyRoundAction(start, 'enemy', { type: 'take' }));
     const thrown = expectOk(applyRoundAction(taking, 'player', { type: 'attack', cardId: 'spades-7' }));
     const done = expectOk(applyRoundAction(thrown, 'player', { type: 'endAttack' }));
-    expect(done.lastBout).toEqual({ damaged: 'enemy', attackCards: [c(7, 'clubs'), c(7, 'spades')], goldenHits: 0 });
+    expect(done.lastBout).toEqual({ damaged: 'enemy', attackCards: [c(7, 'clubs'), c(7, 'spades')], takenEnhancements: [null, null] });
   });
 
   it('a fully beaten bout costs nobody anything, even with throw-ins', () => {
@@ -205,17 +205,31 @@ describe('bout damage', () => {
       hands: { player: filler(5), enemy: filler(5, 'diamonds') },
       table: [covered, { attack: c(7, 'hearts'), defense: c(8, 'hearts') }, { attack: c(9, 'hearts'), defense: c(10, 'hearts') }],
       deck: filler(6, 'clubs'),
-      lastBout: { damaged: 'enemy', attackCards: [c(6, 'clubs')], goldenHits: 0 },
+      lastBout: { damaged: 'enemy', attackCards: [c(6, 'clubs')], takenEnhancements: [null] },
     });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
     expect(next.lastBout).toBeNull();
   });
 
   it('non-bout actions keep the previous bout result untouched', () => {
-    const previous = { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')], goldenHits: 0 };
+    const previous = { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')], takenEnhancements: [null] };
     const state = roundState({ hands: { player: [c(7, 'clubs')], enemy: filler(6) }, lastBout: previous });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'attack', cardId: 'clubs-7' }));
     expect(next.lastBout).toBe(previous);
+  });
+
+  it('records the enhancement each taken attack card was played with', () => {
+    const state = roundState({
+      attacker: 'player',
+      table: [
+        { attack: c(7, 'clubs'), defense: null, attackEnh: 'golden' },
+        { attack: c(7, 'spades'), defense: null },
+      ],
+      hands: { player: filler(3), enemy: filler(3, 'diamonds') },
+      defenderTaking: true,
+    });
+    const result = applyRoundAction(state, 'player', { type: 'endAttack' });
+    expect(result.ok && result.value.lastBout?.takenEnhancements).toEqual(['golden', null]);
   });
 });
 

@@ -28,7 +28,7 @@ const round = z.object({
   defenderTaking: z.boolean(),
   discardCount: count,
   outcome: z.object({ loser: player.nullable(), cardsLeft: count }).nullable(),
-  lastBout: z.object({ damaged: player, attackCards: z.array(card), goldenHits: count }).nullable(),
+  lastBout: z.object({ damaged: player, attackCards: z.array(card), takenEnhancements: z.array(enhancement.nullable()) }).nullable(),
   handSizes: perPlayer,
   boss,
   profiles: z.object({ player: profile, enemy: profile }),
