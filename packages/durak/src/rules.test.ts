@@ -1,7 +1,7 @@
 import { createDeck } from '@game/core';
 import { describe, expect, it } from 'vitest';
 import { c, filler, roundState } from './fixtures';
-import { attackLimit, beats, canThrowIn, currentActor, isTrumpCard, legalActions } from './rules';
+import { attackLimit, beats, canBeatWith, canThrowIn, currentActor, isTrumpCard, legalActions } from './rules';
 
 describe('beats', () => {
   it('higher card of the same suit beats lower', () => {
@@ -143,5 +143,36 @@ describe('boss rules', () => {
       table: [{ attack: c(8, 'clubs'), defense: null }],
     });
     expect(legalActions(state, 'player')).toEqual([{ type: 'defend', cardId: 'clubs-10' }, { type: 'take' }]);
+  });
+});
+
+describe('enhancement rules', () => {
+  it('Острая beats any suit when higher, also a trump, and respects the General gap', () => {
+    expect(canBeatWith(c(8, 'clubs'), c(10, 'diamonds'), 'sharp', 'hearts', null, 'enemy')).toBe(true);
+    expect(canBeatWith(c(8, 'hearts'), c(10, 'diamonds'), 'sharp', 'hearts', null, 'enemy')).toBe(true);
+    expect(canBeatWith(c(10, 'clubs'), c(8, 'diamonds'), 'sharp', 'hearts', null, 'enemy')).toBe(false);
+    expect(canBeatWith(c(8, 'clubs'), c(10, 'diamonds'), undefined, 'hearts', null, 'enemy')).toBe(false);
+    expect(canBeatWith(c(8, 'clubs'), c(9, 'diamonds'), 'sharp', 'hearts', 'general', 'player')).toBe(false);
+  });
+
+  it('Тяжёлая defense blocks throw-ins of its rank', () => {
+    const heavy = { attack: c(7, 'clubs'), defense: c(9, 'clubs'), defenseEnh: 'heavy' as const };
+    const state = roundState({ hands: { player: [], enemy: filler(5) }, table: [heavy] });
+    expect(canThrowIn(state, c(9, 'diamonds'))).toBe(false);
+    expect(canThrowIn(state, c(7, 'diamonds'))).toBe(true);
+  });
+
+  it('legal defenses include a Острая card of another suit and split variants when two enhancements exist', () => {
+    const state = roundState({
+      attacker: 'enemy',
+      hands: { player: [c(10, 'diamonds')], enemy: filler(5) },
+      table: [{ attack: c(8, 'clubs'), defense: null }],
+      foreign: { 'diamonds-10': 'enemy' },
+      profiles: { player: { 'diamonds-10': 'coin' }, enemy: { 'diamonds-10': 'sharp' } },
+    });
+    expect(legalActions(state, 'player')).toEqual([
+      { type: 'defend', cardId: 'diamonds-10', use: 'foreign' },
+      { type: 'take' },
+    ]);
   });
 });

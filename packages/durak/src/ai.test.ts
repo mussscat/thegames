@@ -100,3 +100,15 @@ describe('chooseAction under a boss', () => {
     expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'attack', cardId: 'spades-13' });
   });
 });
+
+describe('chooseAction with enhancements', () => {
+  it('defends with a Острая card of another suit when it is the only way', () => {
+    const state = roundState({
+      hands: { player: filler(5), enemy: [c(10, 'diamonds')] },
+      table: [{ attack: c(8, 'clubs'), defense: null }],
+      profiles: { player: {}, enemy: { 'diamonds-10': 'sharp' } },
+      deck: [c(14, 'spades')],
+    });
+    expect(chooseAction(state, 'enemy', 'stingy')).toEqual({ type: 'defend', cardId: 'diamonds-10' });
+  });
+});

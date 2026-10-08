@@ -19,6 +19,10 @@ export function isTrumpCard(card: Card, trump: Suit, boss: BossRule | null = nul
   return card.suit === trump || (boss === 'witch' && card.rank === QUEEN);
 }
 
+export function beatGap(boss: BossRule | null, defender: PlayerId): number {
+  return boss === 'general' && defender === 'player' ? GENERAL_MIN_GAP : 1;
+}
+
 /** `defender` matters only for the General, whose rule binds the player. Two trumps compare by rank. */
 export function beats(
   attack: Card,
@@ -27,7 +31,7 @@ export function beats(
   boss: BossRule | null = null,
   defender: PlayerId = 'enemy',
 ): boolean {
-  const gap = boss === 'general' && defender === 'player' ? GENERAL_MIN_GAP : 1;
+  const gap = beatGap(boss, defender);
   const attackTrump = isTrumpCard(attack, trump, boss);
   const defenseTrump = isTrumpCard(defense, trump, boss);
   if (attackTrump !== defenseTrump) return defenseTrump;
@@ -35,16 +39,17 @@ export function beats(
   return defense.rank - attack.rank >= gap;
 }
 
-/** Plain beating; the enhancement hook (Острая) is added in Task 3. */
+/** Острая also beats any suit (trumps included) when higher by the beat gap. */
 export function canBeatWith(
   attack: Card,
   defense: Card,
-  _enhancement: EnhancementId | undefined,
+  enhancement: EnhancementId | undefined,
   trump: Suit,
   boss: BossRule | null,
   defender: PlayerId,
 ): boolean {
-  return beats(attack, defense, trump, boss, defender);
+  if (beats(attack, defense, trump, boss, defender)) return true;
+  return enhancement === 'sharp' && defense.rank - attack.rank >= beatGap(boss, defender);
 }
 
 export function defenderOf(state: RoundState): PlayerId {
@@ -71,7 +76,7 @@ export function canThrowIn(state: RoundState, card: Card): boolean {
   if (state.table.length === 0) return true;
   if (state.table.length >= attackLimit(state)) return false;
   return state.table.some(
-    (pair) => pair.attack.rank === card.rank || pair.defense?.rank === card.rank,
+    (pair) => pair.attack.rank === card.rank || (pair.defense?.rank === card.rank && pair.defenseEnh !== 'heavy'),
   );
 }
 
