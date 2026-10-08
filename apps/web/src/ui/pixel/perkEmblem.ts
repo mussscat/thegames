@@ -1,7 +1,9 @@
 import type { PerkId } from '@game/durak';
 import { createGrid, ditherIndex, mix, setPixel, stampShaded, toDataUrl, type Grid } from './pixelArt';
 
-export const EMBLEM_SIZE = 16;
+export const EMBLEM_SIZE = 20;
+/** The 7×7 mask at ×2 is 14 px; this margin keeps the tile colour visible around it. */
+const GLYPH_OFFSET = 3;
 
 const INK = '#1b1426';
 const GLYPH = { base: '#f4efe2', light: '#ffffff', dark: '#b8ad98' } as const;
@@ -37,7 +39,7 @@ export function drawPerkEmblem(id: PerkId): Grid {
       setPixel(grid, x, y, edge ? INK : (shades[ditherIndex(y / EMBLEM_SIZE, shades.length, x, y)] ?? top));
     }
   }
-  stampShaded(grid, mask, 1, 1, 2, GLYPH.base, GLYPH.light, GLYPH.dark);
+  stampShaded(grid, mask, GLYPH_OFFSET, GLYPH_OFFSET, 2, GLYPH.base, GLYPH.light, GLYPH.dark);
   return grid;
 }
 

@@ -3,8 +3,9 @@ import '@fontsource/pixelify-sans/700.css';
 import '@fontsource/rubik/700.css';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+/* Base theme first: screen styles imported by the components below must win over it. */
 import './ui/theme.css';
+import { App } from './App';
 
 /** `?lab` opens the card lab — a tuning tool kept out of the main bundle. */
 const CardLab = lazy(() => import('./lab/CardLab').then((module) => ({ default: module.CardLab })));

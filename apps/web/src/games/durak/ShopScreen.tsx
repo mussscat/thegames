@@ -12,6 +12,16 @@ import {
   type ShopState,
 } from '@game/durak';
 
+import { useEffect } from 'react';
+import { PixelButton } from '../../ui/PixelButton';
+import { PixelCard } from '../../ui/PixelCard';
+import { useSettings } from '../../ui/SettingsContext';
+import { usePrevious } from '../../ui/usePrevious';
+import { PerkCard } from './PerkCard';
+import { coinSound } from './sounds';
+import './fight.css';
+import './shop.css';
+
 const CARDS_BY_ID: ReadonlyMap<string, Card> = new Map(createDeck(6).map((card) => [card.id, card]));
 
 function cardLabel(cardId: string): string {
@@ -29,124 +39,146 @@ type ShopScreenProps = {
   readonly onExit: () => void;
 };
 
-export function ShopScreen({ run, shop, reward, error, onAct, onExit }: ShopScreenProps) {
+export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }: ShopScreenProps) {
+  const { play } = useSettings();
+  const previousCoins = usePrevious(run.coins);
+  useEffect(() => {
+    if (previousCoins === undefined) return;
+    const sound = coinSound(previousCoins, run.coins);
+    if (sound) play(sound);
+  }, [run.coins, previousCoins, play]);
+  useEffect(() => {
+    if (errorSeq > 0) play('deny');
+  }, [errorSeq, play]);
   const next = stageEnemy(run, run.stage + 1);
   return (
     <main className="screen shop" data-testid="shop">
       <header className="fight__header">
-        <button type="button" className="btn btn--small" onClick={onExit}>
+        <PixelButton tone="blue" small onClick={onExit}>
           Меню
-        </button>
-        <span className="fight__round">Магазин · круг {stageLabel(run.stage).circle}</span>
+        </PixelButton>
+        <span className="chip">Магазин · круг {stageLabel(run.stage).circle}</span>
+        <span className="shop__coins">● {run.coins}</span>
       </header>
 
-      <section className="shop__panel">
+      <section className="panel shop__reward">
         <h2 className="shop__title">Награда за бой: +{reward.total}</h2>
-        <ul className="shop__reward">
-          <li>За победу: {reward.base}</li>
-          <li>За оставшиеся HP: {reward.hpBonus}</li>
-          <li>Проценты: {reward.interest}</li>
-          {reward.perkBonus > 0 && <li>Перки: {reward.perkBonus}</li>}
-        </ul>
-        <p className="shop__coins">Монеты: {run.coins}</p>
+        <p>
+          Победа {reward.base} · HP {reward.hpBonus} · проценты {reward.interest}
+          {reward.perkBonus > 0 && ` · перки ${reward.perkBonus}`}
+        </p>
       </section>
 
-      <section className="shop__panel">
-        <h3 className="shop__title">
-          Твои перки ({run.perks.length}/{MAX_PERKS})
-        </h3>
-        {run.perks.length === 0 && <p className="shop__empty">Пока нет</p>}
-        {run.perks.map((id) => (
-          <div key={id} className="shop__item">
-            <div>
-              <strong>{PERKS[id].name}</strong>
-              <p>{PERKS[id].description}</p>
-            </div>
-            <button type="button" className="btn btn--small" onClick={() => onAct({ type: 'sellPerk', perkId: id })}>
-              Продать +{sellPrice(id)}
-            </button>
-          </div>
-        ))}
-      </section>
-
-      <section className="shop__panel">
+      <section className="panel">
         <h3 className="shop__title">Товары</h3>
-        {shop.offers.map((offer, index) =>
-          offer ? (
-            <div key={offer.perkId} className="shop__item">
-              <div>
-                <strong>{PERKS[offer.perkId].name}</strong>
-                <p>{PERKS[offer.perkId].description}</p>
-              </div>
-              <button type="button" className="btn btn--small btn--primary" onClick={() => onAct({ type: 'buyPerk', index })}>
-                Купить за {offer.price}
-              </button>
-            </div>
-          ) : (
-            <div key={`sold-${index}`} className="shop__item shop__item--sold">
-              Продано
-            </div>
-          ),
-        )}
-      </section>
-
-      <section className="shop__panel">
-        <h3 className="shop__title">Усиления карт</h3>
-        {shop.enhancementOffers.map((offer, index) =>
-          offer ? (
-            <div key={offer.enhancementId} className="shop__enhancement">
-              <div>
-                <strong>
-                  {ENHANCEMENTS[offer.enhancementId].name} — {offer.price}
-                </strong>
-                <p>{ENHANCEMENTS[offer.enhancementId].description}</p>
-              </div>
-              <div className="shop__cards">
-                {offer.cardIds.map((cardId) => (
-                  <button
-                    key={cardId}
-                    type="button"
-                    className="btn btn--small"
-                    onClick={() => onAct({ type: 'buyEnhancement', index, cardId })}
+        <div className="shop__shelf">
+          {shop.offers.map((offer, index) =>
+            offer ? (
+              <PerkCard
+                key={offer.perkId}
+                perkId={offer.perkId}
+                action={
+                  <PixelButton
+                    tone="orange"
+                    small
+                    onClick={() => onAct({ type: 'buyPerk', index })}
+                    aria-label={`Купить ${PERKS[offer.perkId].name} за ${offer.price}`}
                   >
-                    {cardLabel(cardId)}
-                    {run.profile[cardId] ? ` (заменит ${ENHANCEMENTS[run.profile[cardId]!].short})` : ''}
-                  </button>
-                ))}
+                    ● {offer.price}
+                  </PixelButton>
+                }
+              />
+            ) : (
+              <div key={`sold-${index}`} className="joker joker--sold">
+                Продано
               </div>
-            </div>
-          ) : (
-            <div key={`sold-enh-${index}`} className="shop__item shop__item--sold">
-              Продано
-            </div>
-          ),
-        )}
-      </section>
-
-      <section className="shop__panel">
-        <h3 className="shop__title">Твоя колода</h3>
-        {Object.keys(run.profile).length === 0 && <p className="shop__empty">Усилений пока нет</p>}
-        <div className="shop__cards">
-          {Object.entries(run.profile).map(([cardId, id]) =>
-            id ? (
-              <span key={cardId} className="shop__chip">
-                {cardLabel(cardId)} — {ENHANCEMENTS[id].name}
-              </span>
-            ) : null,
+            ),
           )}
         </div>
       </section>
 
-      <p className="fight__status" role="status">
+      <section className="panel">
+        <h3 className="shop__title">Усиления карт</h3>
+        {shop.enhancementOffers.map((offer, index) =>
+          offer ? (
+            <div key={offer.enhancementId} className="shop__enhancement">
+              <p className="shop__enhancement-text">
+                <strong>{ENHANCEMENTS[offer.enhancementId].name}</strong> · ● {offer.price}
+                <br />
+                {ENHANCEMENTS[offer.enhancementId].description}
+              </p>
+              <div className="shop__cards">
+                {offer.cardIds.map((cardId) => {
+                  const card = CARDS_BY_ID.get(cardId);
+                  const current = run.profile[cardId];
+                  if (!card) return null;
+                  return (
+                    <button
+                      key={cardId}
+                      type="button"
+                      className="shop__card"
+                      onClick={() => onAct({ type: 'buyEnhancement', index, cardId })}
+                      aria-label={`${ENHANCEMENTS[offer.enhancementId].name} на ${cardLabel(cardId)}${current ? `, заменит ${ENHANCEMENTS[current].name}` : ''}`}
+                    >
+                      <PixelCard card={card} width={56} enhancement={offer.enhancementId} idle={false} />
+                      <span className="shop__card-caption">
+                        {cardLabel(cardId)}
+                        {current ? ` (заменит ${ENHANCEMENTS[current].short})` : ''}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p key={`sold-enh-${index}`} className="shop__sold">
+              Продано
+            </p>
+          ),
+        )}
+      </section>
+
+      <section className="panel">
+        <h3 className="shop__title">
+          Твои перки ({run.perks.length}/{MAX_PERKS})
+        </h3>
+        {run.perks.length === 0 && <p className="shop__empty">Пока нет</p>}
+        <div className="shop__shelf">
+          {run.perks.map((id) => (
+            <PerkCard
+              key={id}
+              perkId={id}
+              action={
+                <PixelButton tone="blue" small onClick={() => onAct({ type: 'sellPerk', perkId: id })}>
+                  Продать +{sellPrice(id)}
+                </PixelButton>
+              }
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h3 className="shop__title">Твоя колода</h3>
+        {Object.keys(run.profile).length === 0 && <p className="shop__empty">Усилений пока нет</p>}
+        <div className="shop__deck">
+          {Object.entries(run.profile).map(([cardId, id]) => {
+            const card = CARDS_BY_ID.get(cardId);
+            return card && id ? <PixelCard key={cardId} card={card} width={44} enhancement={id} idle={false} showLabel /> : null;
+          })}
+        </div>
+      </section>
+
+      <p className={error ? 'fight__status panel' : 'fight__status'} role="status">
         {error ?? ''}
       </p>
       <div className="actions">
-        <button type="button" className="btn" onClick={() => onAct({ type: 'reroll' })}>
-          Рерол ({shop.rerollCost})
-        </button>
-        <button type="button" className="btn btn--primary" onClick={() => onAct({ type: 'leaveShop' })}>
+        <PixelButton tone="green" onClick={() => onAct({ type: 'reroll' })}>
+          Рерол · ● {shop.rerollCost}
+        </PixelButton>
+        <PixelButton tone="red" onClick={() => onAct({ type: 'leaveShop' })}>
           В бой: {next.name}
-        </button>
+        </PixelButton>
       </div>
     </main>
   );

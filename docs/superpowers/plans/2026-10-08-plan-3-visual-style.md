@@ -40,7 +40,7 @@
 |---|---|
 | `apps/web/src/ui/pixel/pixelArt.ts` (+test) | Grid, colour mix, Bayer dithering, bevel stamp, outlined icon stamp, canvas → data URL |
 | `apps/web/src/ui/pixel/cardSprite.ts` (+test) | Card front/back sprites, papers, enhancement icons, URL cache |
-| `apps/web/src/ui/pixel/perkEmblem.ts` (+test) | 16×16 perk emblems for shop "jokers" |
+| `apps/web/src/ui/pixel/perkEmblem.ts` (+test) | 20×20 perk emblems for shop "jokers" |
 | `apps/web/src/storage.ts` | `KeyValueStore`, `browserStore()` shared by run save and settings |
 | `apps/web/src/ui/palettes.ts` | Palette ids, names, colours |
 | `apps/web/src/ui/settings.ts` (+test) | Settings type (palette, sound, volume, sway), defaults, zod parse, load/save |
