@@ -1,4 +1,5 @@
 import { createDeck, makeCard, type Card, type Rank, type Suit } from '@game/core';
+import { EMPTY_PROFILES } from './enhancements';
 import { DEFAULT_HAND_SIZES, type RoundState } from './types';
 
 /** Test helpers. Not for production code. */
@@ -24,6 +25,8 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     lastBout: null,
     handSizes: DEFAULT_HAND_SIZES,
     boss: null,
+    profiles: EMPTY_PROFILES,
+    foreign: {},
     ...overrides,
   };
 }

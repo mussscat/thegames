@@ -1,25 +1,30 @@
 import { err, ok, type Card, type Result } from '@game/core';
-import { beats, canThrowIn, currentActor, defenderOf, uncoveredPair } from './rules';
+import type { EnhancementId } from './enhancements';
+import { cardEnhancements, resolveEnhancement } from './origin';
+import { canBeatWith, canThrowIn, currentActor, defenderOf, uncoveredPair } from './rules';
 import {
   opponentOf,
   withHand,
   type BoutResult,
   type DurakError,
+  type EnhancementSource,
+  type Foreign,
   type PlayerId,
   type RoundAction,
   type RoundState,
 } from './types';
 
 type RoundResult = Result<RoundState, DurakError>;
+type Played = { readonly card: Card; readonly enhancement: EnhancementId | undefined };
 
 export function applyRoundAction(state: RoundState, actor: PlayerId, action: RoundAction): RoundResult {
   if (state.outcome) return err('roundOver');
   if (currentActor(state) !== actor) return err('notYourTurn');
   switch (action.type) {
     case 'attack':
-      return attack(state, actor, action.cardId);
+      return attack(state, actor, action.cardId, action.use);
     case 'defend':
-      return defend(state, actor, action.cardId);
+      return defend(state, actor, action.cardId, action.use);
     case 'take':
       return take(state, actor);
     case 'endAttack':
@@ -27,37 +32,50 @@ export function applyRoundAction(state: RoundState, actor: PlayerId, action: Rou
   }
 }
 
-function findCard(hand: readonly Card[], cardId: string): Card | undefined {
-  return hand.find((card) => card.id === cardId);
-}
-
 function withoutCard(hand: readonly Card[], cardId: string): readonly Card[] {
   return hand.filter((card) => card.id !== cardId);
 }
 
-function attack(state: RoundState, actor: PlayerId, cardId: string): RoundResult {
-  if (actor !== state.attacker) return err('notYourTurn');
-  const card = findCard(state.hands[actor], cardId);
-  if (!card) return err('cardNotInHand');
-  if (!canThrowIn(state, card)) return err('cannotThrowIn');
-  return ok({
-    ...state,
-    hands: withHand(state.hands, actor, withoutCard(state.hands[actor], cardId)),
-    table: [...state.table, { attack: card, defense: null }],
-  });
+function withoutForeign(foreign: Foreign, cardIds: readonly string[]): Foreign {
+  return Object.fromEntries(Object.entries(foreign).filter(([id]) => !cardIds.includes(id)));
 }
 
-function defend(state: RoundState, actor: PlayerId, cardId: string): RoundResult {
+/** Finds the card in the actor's hand and resolves which enhancement it is played with. */
+function pick(state: RoundState, actor: PlayerId, cardId: string, use?: EnhancementSource): Result<Played, DurakError> {
+  const card = state.hands[actor].find((candidate) => candidate.id === cardId);
+  if (!card) return err('cardNotInHand');
+  const enhancement = resolveEnhancement(cardEnhancements(state, actor, card), use);
+  return enhancement.ok ? ok({ card, enhancement: enhancement.value }) : enhancement;
+}
+
+/** Removes the played card from hand and from foreign marks. */
+function afterPlay(state: RoundState, actor: PlayerId, card: Card): RoundState {
+  return {
+    ...state,
+    hands: withHand(state.hands, actor, withoutCard(state.hands[actor], card.id)),
+    foreign: withoutForeign(state.foreign, [card.id]),
+  };
+}
+
+function attack(state: RoundState, actor: PlayerId, cardId: string, use?: EnhancementSource): RoundResult {
+  if (actor !== state.attacker) return err('notYourTurn');
+  const played = pick(state, actor, cardId, use);
+  if (!played.ok) return played;
+  const { card, enhancement } = played.value;
+  if (!canThrowIn(state, card)) return err('cannotThrowIn');
+  const pair = { attack: card, defense: null, ...(enhancement ? { attackEnh: enhancement } : {}) };
+  return ok({ ...afterPlay(state, actor, card), table: [...state.table, pair] });
+}
+
+function defend(state: RoundState, actor: PlayerId, cardId: string, use?: EnhancementSource): RoundResult {
   const pair = uncoveredPair(state);
   if (actor !== defenderOf(state) || !pair) return err('notYourTurn');
-  const card = findCard(state.hands[actor], cardId);
-  if (!card) return err('cardNotInHand');
-  if (!beats(pair.attack, card, state.trumpSuit, state.boss, actor)) return err('cannotBeat');
-  return ok({
-    ...state,
-    hands: withHand(state.hands, actor, withoutCard(state.hands[actor], cardId)),
-    table: state.table.map((p) => (p === pair ? { ...p, defense: card } : p)),
-  });
+  const played = pick(state, actor, cardId, use);
+  if (!played.ok) return played;
+  const { card, enhancement } = played.value;
+  if (!canBeatWith(pair.attack, card, enhancement, state.trumpSuit, state.boss, actor)) return err('cannotBeat');
+  const covered = { ...pair, defense: card, ...(enhancement ? { defenseEnh: enhancement } : {}) };
+  return ok({ ...afterPlay(state, actor, card), table: state.table.map((p) => (p === pair ? covered : p)) });
 }
 
 function take(state: RoundState, actor: PlayerId): RoundResult {
@@ -81,10 +99,18 @@ function finishBout(state: RoundState): RoundState {
   return checkRoundEnd({
     ...drawn,
     lastBout: boutResult(state),
+    foreign: state.defenderTaking ? takenForeign(state) : withoutForeign(state.foreign, tableCards.map((card) => card.id)),
     table: [],
     defenderTaking: false,
     attacker: state.defenderTaking ? state.attacker : defender,
   });
+}
+
+/** The defender takes attack cards that bring the attacker's enhancements; its own defense cards bring nothing. */
+function takenForeign(state: RoundState): Foreign {
+  const defenses = state.table.flatMap((pair) => (pair.defense ? [pair.defense.id] : []));
+  const base = withoutForeign(state.foreign, defenses);
+  return state.table.reduce<Foreign>((marks, pair) => ({ ...marks, [pair.attack.id]: state.attacker }), base);
 }
 
 /** Records a take: the defender and every attack card it takes; a beaten bout records nothing. */

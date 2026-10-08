@@ -1,4 +1,5 @@
 import type { Card, Suit } from '@game/core';
+import type { EnhancementId, Profiles } from './enhancements';
 
 export type PlayerId = 'player' | 'enemy';
 
@@ -10,7 +11,19 @@ export type BossRule = (typeof BOSS_RULES)[number];
 export const HAND_SIZE = 6;
 export const MAX_ATTACKS_PER_BOUT = 6;
 
-export type TablePair = { readonly attack: Card; readonly defense: Card | null };
+/** attackEnh/defenseEnh: the enhancement the card was played with (if any). */
+export type TablePair = {
+  readonly attack: Card;
+  readonly defense: Card | null;
+  readonly attackEnh?: EnhancementId;
+  readonly defenseEnh?: EnhancementId;
+};
+
+/** own — the holder's profile; foreign — the profile of whoever played the card before it was taken. */
+export type EnhancementSource = 'own' | 'foreign';
+
+/** cardId → the side whose enhancement the card brought when it was taken from the table. */
+export type Foreign = Readonly<Partial<Record<string, PlayerId>>>;
 
 /** loser === null means both players ran out of cards at once (draw). */
 export type RoundOutcome = { readonly loser: PlayerId | null; readonly cardsLeft: number };
@@ -41,11 +54,13 @@ export type RoundState = {
   readonly lastBout: BoutResult | null;
   readonly handSizes: HandSizes;
   readonly boss: BossRule | null;
+  readonly profiles: Profiles;
+  readonly foreign: Foreign;
 };
 
 export type RoundAction =
-  | { readonly type: 'attack'; readonly cardId: string }
-  | { readonly type: 'defend'; readonly cardId: string }
+  | { readonly type: 'attack'; readonly cardId: string; readonly use?: EnhancementSource }
+  | { readonly type: 'defend'; readonly cardId: string; readonly use?: EnhancementSource }
   | { readonly type: 'take' }
   | { readonly type: 'endAttack' };
 
@@ -55,7 +70,8 @@ export type DurakError =
   | 'cardNotInHand'
   | 'cannotThrowIn'
   | 'cannotBeat'
-  | 'cannotEndAttack';
+  | 'cannotEndAttack'
+  | 'enhancementUnavailable';
 
 export function opponentOf(id: PlayerId): PlayerId {
   return id === 'player' ? 'enemy' : 'player';

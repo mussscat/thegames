@@ -1,8 +1,11 @@
 import type { Card, Rank, Suit } from '@game/core';
+import type { EnhancementId } from './enhancements';
+import { cardEnhancements, enhancementVariants } from './origin';
 import {
   MAX_ATTACKS_PER_BOUT,
   opponentOf,
   type BossRule,
+  type EnhancementSource,
   type PlayerId,
   type RoundAction,
   type RoundState,
@@ -30,6 +33,18 @@ export function beats(
   if (attackTrump !== defenseTrump) return defenseTrump;
   if (!attackTrump && defense.suit !== attack.suit) return false;
   return defense.rank - attack.rank >= gap;
+}
+
+/** Plain beating; the enhancement hook (Острая) is added in Task 3. */
+export function canBeatWith(
+  attack: Card,
+  defense: Card,
+  _enhancement: EnhancementId | undefined,
+  trump: Suit,
+  boss: BossRule | null,
+  defender: PlayerId,
+): boolean {
+  return beats(attack, defense, trump, boss, defender);
 }
 
 export function defenderOf(state: RoundState): PlayerId {
@@ -64,16 +79,26 @@ export function legalActions(state: RoundState, actor: PlayerId): readonly Round
   if (currentActor(state) !== actor) return [];
   const hand = state.hands[actor];
   const pair = uncoveredPair(state);
+  const variants = (card: Card) => enhancementVariants(cardEnhancements(state, actor, card));
 
   if (actor !== state.attacker && pair) {
-    const defends = hand
-      .filter((card) => beats(pair.attack, card, state.trumpSuit, state.boss, actor))
-      .map((card): RoundAction => ({ type: 'defend', cardId: card.id }));
+    const defends = hand.flatMap((card) =>
+      variants(card)
+        .filter((variant) => canBeatWith(pair.attack, card, variant.enhancement, state.trumpSuit, state.boss, actor))
+        .map((variant): RoundAction => withUse({ type: 'defend', cardId: card.id }, variant.use)),
+    );
     return [...defends, { type: 'take' }];
   }
 
   const attacks = hand
     .filter((card) => canThrowIn(state, card))
-    .map((card): RoundAction => ({ type: 'attack', cardId: card.id }));
+    .flatMap((card) => variants(card).map((variant): RoundAction => withUse({ type: 'attack', cardId: card.id }, variant.use)));
   return state.table.length === 0 ? attacks : [...attacks, { type: 'endAttack' }];
+}
+
+function withUse<T extends { readonly type: 'attack' | 'defend'; readonly cardId: string }>(
+  action: T,
+  use: EnhancementSource | undefined,
+): T {
+  return use ? { ...action, use } : action;
 }

@@ -1,4 +1,5 @@
 import { createDeck, shuffle, type Card, type RngState, type Suit } from '@game/core';
+import { EMPTY_PROFILES, type Profiles } from './enhancements';
 import { DEFAULT_HAND_SIZES, type BossRule, type HandSizes, type Hands, type PlayerId, type RoundState } from './types';
 
 const DURAK_MIN_RANK = 6;
@@ -13,6 +14,7 @@ export function dealRound(
   rng: RngState,
   handSizes: HandSizes = DEFAULT_HAND_SIZES,
   boss: BossRule | null = null,
+  profiles: Profiles = EMPTY_PROFILES,
 ): readonly [RoundState, RngState] {
   const [deck, nextRng] = shuffle(createDeck(DURAK_MIN_RANK), rng);
   const dealtCount = handSizes.player + handSizes.enemy;
@@ -35,6 +37,8 @@ export function dealRound(
     lastBout: null,
     handSizes,
     boss,
+    profiles,
+    foreign: {},
   };
   return [round, nextRng];
 }

@@ -7,6 +7,7 @@ const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   cannotThrowIn: 'Эту карту нельзя подкинуть',
   cannotBeat: 'Эта карта не бьёт',
   cannotEndAttack: 'Сначала сходи картой',
+  enhancementUnavailable: 'Этого усиления нет на карте',
   fightOver: 'Бой окончен',
   roundInProgress: 'Раздача ещё идёт',
   noOffer: 'Этот товар уже куплен',

@@ -1,8 +1,8 @@
 import { RANKS, SUITS, type Rank } from '@game/core';
-import { BOSS_RULES, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
+import { BOSS_RULES, ENHANCEMENT_IDS, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
@@ -13,13 +13,17 @@ const card = z.object({ id: z.string(), suit, rank });
 const perPlayer = z.object({ player: count, enemy: count });
 const rng = z.object({ seed: z.number().int() });
 const boss = z.enum(BOSS_RULES).nullable();
+const enhancement = z.enum(ENHANCEMENT_IDS);
+const profile = z.record(z.string(), enhancement);
 
 const round = z.object({
   deck: z.array(card),
   trumpSuit: suit,
   trumpCard: card,
   hands: z.object({ player: z.array(card), enemy: z.array(card) }),
-  table: z.array(z.object({ attack: card, defense: card.nullable() })),
+  table: z.array(
+    z.object({ attack: card, defense: card.nullable(), attackEnh: enhancement.optional(), defenseEnh: enhancement.optional() }),
+  ),
   attacker: player,
   defenderTaking: z.boolean(),
   discardCount: count,
@@ -27,6 +31,8 @@ const round = z.object({
   lastBout: z.object({ damaged: player, attackCards: z.array(card) }).nullable(),
   handSizes: perPlayer,
   boss,
+  profiles: z.object({ player: profile, enemy: profile }),
+  foreign: z.record(z.string(), player),
 });
 
 const fight = z.object({
