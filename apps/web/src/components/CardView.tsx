@@ -2,6 +2,8 @@ import { isRedSuit, rankLabel, SUIT_NAMES, type Card } from '@game/core';
 import { ENHANCEMENTS, type CardEnhancements, type EnhancementId, type EnhancementSource } from '@game/durak';
 import { motion } from 'motion/react';
 import { CardFace } from '../ui/CardFace';
+import { tipLines } from './tipLines';
+import { CardTip, useCardTip } from './CardTip';
 import { FeelBox } from '../ui/FeelBox';
 import { backUrl } from '../ui/pixel/cardSprite';
 
@@ -32,6 +34,9 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
   const label = `${rankLabel(card.rank)} ${SUIT_NAMES[card.suit]}`;
   const own = enhancements?.own;
   const foreign = enhancements?.foreign;
+  const lines = tipLines(enhancements);
+  const tip = useCardTip(lines.length > 0, !onTap && !onTapOption);
+  const bubble = tip.anchor && <CardTip anchor={tip.anchor} lines={lines} />;
 
   if (own && foreign) {
     const halfEnabled = (source: EnhancementSource): boolean => Boolean(onTapOption) && (!legalUses || legalUses.includes(source));
@@ -39,18 +44,27 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
       <button
         type="button"
         className={halfEnabled(source) ? `card__half card__half--${source}` : `card__half card__half--${source} card__half--illegal`}
-        disabled={!halfEnabled(source)}
-        onClick={() => onTapOption?.(source)}
+        aria-disabled={!halfEnabled(source)}
+        onClick={() => {
+          if (halfEnabled(source)) onTapOption?.(source);
+        }}
         aria-label={`${label}: ${ENHANCEMENTS[id].name} (${source === 'own' ? 'твоё' : 'соперника'})`}
       />
     );
     return (
-      <motion.div layoutId={card.id} transition={CARD_SPRING} className={cardClasses(card, playable, trump, 'card--split')} aria-label={label}>
+      <motion.div
+        layoutId={card.id}
+        transition={CARD_SPRING}
+        className={cardClasses(card, playable, trump, 'card--split')}
+        aria-label={label}
+        {...tip.handlers}
+      >
         <FeelBox idle={idle} swayDelay={swayDelay}>
           <CardFace card={card} split={{ own, foreign }} />
           {half('own', own)}
           {half('foreign', foreign)}
         </FeelBox>
+        {bubble}
       </motion.div>
     );
   }
@@ -63,12 +77,14 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
       transition={CARD_SPRING}
       className={cardClasses(card, playable, trump)}
       onClick={onTap}
-      disabled={!onTap}
+      aria-disabled={!onTap}
       aria-label={single ? `${label}: ${ENHANCEMENTS[single].name}` : label}
+      {...tip.handlers}
     >
       <FeelBox idle={idle} swayDelay={swayDelay}>
         <CardFace card={card} enhancement={single} />
       </FeelBox>
+      {bubble}
     </motion.button>
   );
 }

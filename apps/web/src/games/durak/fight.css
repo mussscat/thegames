@@ -13,7 +13,7 @@
   cursor: pointer;
   transition: translate 0.15s ease-out, filter 0.15s;
 }
-.card:disabled { cursor: default; }
+.card[aria-disabled='true'] { cursor: default; }
 .card--playable { translate: 0 -10%; }
 /* Owner-picked: playable cards lift and glow softly; a playable trump also glows gold (on the feel layer, so both
    glows show). A trump you cannot play looks like any other card. Dimming touches only the face. */
@@ -23,7 +23,7 @@
 .card--back { cursor: default; }
 .card--split { cursor: default; }
 .card__half { position: absolute; inset: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
-.card__half:disabled { cursor: default; }
+.card__half[aria-disabled='true'] { cursor: default; }
 .card__half--own { clip-path: polygon(0 0, 100% 0, 100% 100%); }
 .card__half--foreign { clip-path: polygon(0 0, 0 100%, 100% 100%); }
 .card__half--illegal { background: rgb(15 10 25 / 55%); }
@@ -284,3 +284,30 @@
   .hp--player .hp__hit { top: calc(100% + 2px); bottom: auto; }
   .hp__hit { font-size: 1.1em; }
 }
+
+/* ---------- enhancement tooltip ---------- */
+.card { -webkit-touch-callout: none; }
+.card-tip {
+  position: fixed;
+  z-index: 50;
+  width: max-content;
+  max-width: min(18em, 80vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  padding: 0.55em 0.75em;
+  border: 3px solid #000000;
+  border-radius: 8px;
+  background: #fbf6ea;
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: none;
+  box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+  pointer-events: none;
+}
+.card-tip__line { display: flex; flex-direction: column; gap: 0.1em; margin: 0; }
+.card-tip__name { font-weight: 800; }
+.card-tip__owner { font-weight: 600; opacity: 0.7; }
+.card-tip__text { line-height: 1.3; }
