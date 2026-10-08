@@ -96,16 +96,17 @@ export function applyFightAction(
   const result = applyRoundAction(state.round, actor, action);
   if (!result.ok) return result;
   const next: FightState = { ...state, round: result.value, hits: [] };
-  const defense = action.type === 'defend' ? newDefenseEnhancement(state.round, result.value) : undefined;
-  const credited = defense ? creditDefense(next, actor, defense) : next;
   const bout = newBout(state.round, result.value);
-  const charged = bout ? chargeTake(credited, bout, state.round.trumpSuit) : credited;
-  return ok(state.boss === 'shuffler' && endedBeaten(state.round, result.value) ? shuffleTrump(charged) : charged);
+  const charged = bout ? chargeTake(next, bout, state.round.trumpSuit) : next;
+  if (!endedBeaten(state.round, result.value)) return ok(charged);
+  const credited = creditBeatenDefenses(charged, state.round);
+  const roundGoesOn = result.value.outcome === null;
+  return ok(state.boss === 'shuffler' && roundGoesOn ? shuffleTrump(credited) : credited);
 }
 
-/** A bout that ended in «Бито»: the table was cleared, no take was recorded (a take always sets lastBout), and the round goes on. */
+/** A bout that ended in «Бито»: the table was cleared and no take was recorded (a take always sets lastBout). */
 function endedBeaten(previous: RoundState, next: RoundState): boolean {
-  return previous.table.length > 0 && next.table.length === 0 && next.lastBout === null && next.outcome === null;
+  return previous.table.length > 0 && next.table.length === 0 && next.lastBout === null;
 }
 
 /** Фокусник: the trump moves to a random different suit, drawn from the fight RNG. */
@@ -148,10 +149,13 @@ function chargeTake(state: FightState, bout: BoutResult, trumpSuit: Suit): Fight
   return amount > 0 ? applyHit(counted, { target: taker, amount }) : counted;
 }
 
-/** The enhancement of the defense card the last action laid on the table, if any. */
-function newDefenseEnhancement(previous: RoundState, next: RoundState): EnhancementId | undefined {
-  const index = previous.table.findIndex((pair, i) => pair.defense === null && next.table[i]?.defense);
-  return index >= 0 ? next.table[index]?.defenseEnh : undefined;
+/** «Отбился ею» pays only when the bout really ends in «Бито»: covering and then taking earns nothing. */
+function creditBeatenDefenses(state: FightState, beatenRound: RoundState): FightState {
+  const defender = opponentOf(beatenRound.attacker);
+  return beatenRound.table.reduce<FightState>(
+    (current, pair) => (pair.defenseEnh ? creditDefense(current, defender, pair.defenseEnh) : current),
+    state,
+  );
 }
 
 function creditDefense(state: FightState, defender: PlayerId, enhancement: EnhancementId): FightState {

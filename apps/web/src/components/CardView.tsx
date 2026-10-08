@@ -12,13 +12,17 @@ type CardViewProps = {
   readonly onTap?: () => void;
   /** When both enhancements are available, each half of the card plays the card with that enhancement. */
   readonly onTapOption?: (use: EnhancementSource) => void;
+  /** Halves that are a legal move right now; the others are disabled and dimmed. */
+  readonly legalUses?: readonly EnhancementSource[];
 };
 
 function Badge({ source, short }: { readonly source: EnhancementSource; readonly short: string }) {
   return <span className={`card__badge card__badge--${source}`}>{short}</span>;
 }
 
-export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption }: CardViewProps) {
+export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses }: CardViewProps) {
+  const halfEnabled = (source: EnhancementSource): boolean =>
+    Boolean(onTapOption) && (!legalUses || legalUses.includes(source));
   const classes = [
     'card',
     isRedSuit(card.suit) ? 'card--red' : 'card--black',
@@ -43,8 +47,8 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
         {face}
         <button
           type="button"
-          className="card__half card__half--own"
-          disabled={!onTapOption}
+          className={halfEnabled('own') ? 'card__half card__half--own' : 'card__half card__half--own card__half--illegal'}
+          disabled={!halfEnabled('own')}
           onClick={() => onTapOption?.('own')}
           aria-label={`${label}: ${ENHANCEMENTS[own].name} (твоё)`}
         >
@@ -52,8 +56,8 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
         </button>
         <button
           type="button"
-          className="card__half card__half--foreign"
-          disabled={!onTapOption}
+          className={halfEnabled('foreign') ? 'card__half card__half--foreign' : 'card__half card__half--foreign card__half--illegal'}
+          disabled={!halfEnabled('foreign')}
           onClick={() => onTapOption?.('foreign')}
           aria-label={`${label}: ${ENHANCEMENTS[foreign].name} (соперника)`}
         >

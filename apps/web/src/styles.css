@@ -193,3 +193,4 @@ body {
 .shop__enhancement p { margin: 2px 0 0; font-size: 0.8rem; opacity: 0.8; }
 .shop__cards { display: flex; flex-wrap: wrap; gap: 6px; }
 .shop__chip { padding: 4px 8px; border-radius: 8px; background: rgb(37 99 235 / 25%); font-size: 0.85rem; }
+.card__half--illegal { background: rgb(15 23 42 / 35%); }

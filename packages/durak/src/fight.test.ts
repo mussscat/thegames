@@ -240,8 +240,28 @@ describe('enhancements in a fight', () => {
     expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
   });
 
-  it('Крепкая defense gives a charge that softens the next take once', () => {
-    const defended = expectOk(applyFightAction({ ...base, round: playerDefends('sturdy') }, 'player', { type: 'defend', cardId: 'clubs-9' }));
+  const defendAndBeat = (enhancement: 'sturdy' | 'coin') => {
+    const defended = expectOk(applyFightAction({ ...base, round: playerDefends(enhancement) }, 'player', { type: 'defend', cardId: 'clubs-9' }));
+    expect(defended.sturdy).toEqual({ player: 0, enemy: 0 });
+    expect(defended.cardCoins).toEqual({ player: 0, enemy: 0 });
+    return expectOk(applyFightAction(defended, 'enemy', { type: 'endAttack' }));
+  };
+
+  it('Крепкая/Монетная pay nothing when the defender covers and then takes the table', () => {
+    const coveredThenTaking = roundState({
+      attacker: 'enemy',
+      hands: { player: filler(4), enemy: filler(5, 'diamonds') },
+      table: [{ attack: c(7, 'clubs'), defense: c(9, 'clubs'), defenseEnh: 'sturdy' }, { attack: c(7, 'hearts'), defense: null }],
+      deck: filler(6, 'hearts').slice(2),
+    });
+    const taking = expectOk(applyFightAction({ ...base, round: coveredThenTaking }, 'player', { type: 'take' }));
+    const took = expectOk(applyFightAction(taking, 'enemy', { type: 'endAttack' }));
+    expect(took.sturdy).toEqual({ player: 0, enemy: 0 });
+    expect(took.hp.player).toBe(8);
+  });
+
+  it('Крепкая defense gives a charge after «Бито» that softens the next take once', () => {
+    const defended = defendAndBeat('sturdy');
     expect(defended.sturdy).toEqual({ player: 1, enemy: 0 });
     const took = expectOk(applyFightAction({ ...defended, round: playerTaking }, 'enemy', { type: 'endAttack' }));
     expect(took.hp.player).toBe(9);
@@ -258,9 +278,18 @@ describe('enhancements in a fight', () => {
     expect(next.sturdy.player).toBe(0);
   });
 
-  it('Монетная defense earns a card coin', () => {
-    const defended = expectOk(applyFightAction({ ...base, round: playerDefends('coin') }, 'player', { type: 'defend', cardId: 'clubs-9' }));
-    expect(defended.cardCoins).toEqual({ player: 1, enemy: 0 });
+  it('Монетная pays even when that «Бито» ends the round', () => {
+    const lastBout = roundState({
+      hands: { player: [], enemy: [c(10, 'spades')] },
+      table: [{ attack: c(7, 'clubs'), defense: c(9, 'clubs'), defenseEnh: 'coin' }],
+    });
+    const next = expectOk(applyFightAction({ ...base, round: lastBout }, 'player', { type: 'endAttack' }));
+    expect(next.round.outcome).not.toBeNull();
+    expect(next.cardCoins).toEqual({ player: 0, enemy: 1 });
+  });
+
+  it('Монетная defense earns a card coin after «Бито»', () => {
+    expect(defendAndBeat('coin').cardCoins).toEqual({ player: 1, enemy: 0 });
   });
 
   it('createFight passes profiles into every round', () => {

@@ -33,9 +33,10 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
   const { round } = fight;
   const myTurn = !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
-  const playableIds = new Set(
-    legalActions(round, 'player').flatMap((action) => ('cardId' in action ? [action.cardId] : [])),
-  );
+  const legal = legalActions(round, 'player');
+  const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
+  const legalUses = (cardId: string): readonly EnhancementSource[] =>
+    legal.flatMap((action) => ('cardId' in action && action.cardId === cardId && action.use ? [action.use] : []));
 
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
@@ -89,6 +90,7 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
                 trump={isTrumpCard(card, round.trumpSuit, round.boss)}
                 onTap={myTurn && !split ? () => play(card) : undefined}
                 onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
+                legalUses={myTurn && split ? legalUses(card.id) : undefined}
               />
             );
           })}
