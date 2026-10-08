@@ -1,4 +1,6 @@
 import '@fontsource/handjet/500.css';
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/700.css';
 import '@fontsource/handjet/700.css';
 import '@fontsource/nunito/600.css';
 import '@fontsource/nunito/800.css';

@@ -15,14 +15,10 @@
 }
 .card:disabled { cursor: default; }
 .card--playable { translate: 0 -10%; }
-.card--playable .face { outline: 3px solid #ffffff; outline-offset: 1px; box-shadow: 0 0 0 6px rgb(0 0 0 / 55%); }
-.card--trump .face::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border: 2px dashed var(--gold);
-  pointer-events: none;
-}
+/* Owner-picked in the lab: soft glow for playable cards, gold glow for trumps, other cards dimmed on your turn. */
+.card--playable { filter: drop-shadow(0 0 3px var(--glow-playable)) drop-shadow(0 0 1px var(--glow-playable)); }
+.card--trump:not(.card--playable) { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
+.hand--player:not(.hand--waiting) .card:not(.card--playable, .card--trump) { filter: brightness(0.6) saturate(0.7); }
 .card--back { cursor: default; }
 .card__tag {
   position: absolute;
@@ -67,9 +63,13 @@
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
 .deck { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; text-align: center; }
-.deck__pile { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; margin: 0 calc(var(--card-w) * 0.45) calc(var(--card-w) * 0.3) 0; }
-.deck__layer { position: absolute; inset: 0; }
-.deck__trump-card { position: absolute; left: 30%; top: 22%; transform: rotate(90deg); }
+.deck__pile { position: relative; width: calc(var(--card-w) * 1.8); height: calc(var(--card-w) * 1.4); }
+.deck__layer { position: absolute; left: 0; top: 0; width: var(--card-w); z-index: 1; }
+/* Variant Б from the lab: the trump lies across under the deck and peeks out with its rank and suit corner. */
+.deck__trump-card { position: absolute; left: calc(var(--card-w) * 0.62); top: calc(var(--card-w) * 0.2); rotate: 90deg; }
+.deck__trump { display: inline-flex; align-items: center; gap: 4px; }
+.deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
+.deck__suit--red { color: #ff5a4a; }
 
 /* ---------- fight layout ---------- */
 .fight__header { display: flex; justify-content: space-between; align-items: center; }
@@ -94,8 +94,8 @@
   top: calc(100% + 2px);
   z-index: 2;
   text-align: center;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-family: var(--font-head);
+  font-size: 1rem;
   color: #ff5a4a;
   text-shadow: 3px 3px 0 #000000;
   pointer-events: none;
@@ -115,4 +115,4 @@
 }
 .overlay__panel { width: min(100%, 360px); display: flex; flex-direction: column; gap: 12px; padding: 20px; text-align: center; }
 .overlay__panel p { margin: 0; }
-.overlay__title { margin: 0; font-size: 1.8rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }
+.overlay__title { margin: 0; font-size: 1.1rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }

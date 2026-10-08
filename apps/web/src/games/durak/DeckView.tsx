@@ -1,4 +1,4 @@
-import { SUIT_SYMBOLS } from '@game/core';
+import { isRedSuit, SUIT_SYMBOLS } from '@game/core';
 import { isTrumpCard, type RoundState } from '@game/durak';
 import { CardBack, CardView } from '../../components/CardView';
 
@@ -24,7 +24,7 @@ export function DeckView({ round, revealTop }: DeckViewProps) {
       </div>
       <span className="chip deck__count">{round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
       <span className="chip deck__trump">
-        Козырь {SUIT_SYMBOLS[round.trumpSuit]}
+        Козырь <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}>{SUIT_SYMBOLS[round.trumpSuit]}</span>
         {round.boss === 'witch' && ' + дамы'}
         {round.boss === 'shuffler' && ' (меняется)'}
       </span>

@@ -1,8 +1,8 @@
 .menu { justify-content: center; align-items: stretch; text-align: center; }
 .menu__title {
   margin: 0;
-  font-size: 2.3rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.5;
   color: var(--gold);
   text-shadow: 3px 3px 0 #000000, 6px 6px 0 rgb(0 0 0 / 35%);
 }
@@ -14,7 +14,7 @@
 .run-over p { margin: 4px 0; }
 
 .settings { display: flex; flex-direction: column; gap: 12px; text-align: left; }
-.settings__label { margin: 0; font-size: 1rem; }
+.settings__label { margin: 0; font-size: 0.75rem; }
 .settings__palettes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .settings__palette {
   font: inherit;

@@ -8,9 +8,9 @@ const RULES =
 
 /** Real game copy in candidate fonts: title, rules, a perk card, buttons, status and HP. */
 export function FontTab() {
-  const [body, setBody] = useState<FontId>('rubik');
-  const [head, setHead] = useState<FontId>('pixelify');
-  const [scale, setScale] = useState(1);
+  const [body, setBody] = useState<FontId>('nunito');
+  const [head, setHead] = useState<FontId>('press');
+  const [scale, setScale] = useState(1.1);
   const style = { '--lab-body': fontFamily(body), '--lab-head': fontFamily(head), fontSize: `${scale}rem` } as CSSProperties;
 
   return (

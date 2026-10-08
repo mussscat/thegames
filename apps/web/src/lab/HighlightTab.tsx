@@ -33,8 +33,8 @@ type TrumpMark = (typeof TRUMP_MARKS)[number]['id'];
 export function HighlightTab() {
   const [mode, setMode] = useState<Mode>('glow');
   const [trumpMark, setTrumpMark] = useState<TrumpMark>('gold');
-  const [color, setColor] = useState('#ffffff');
-  const [strength, setStrength] = useState(10);
+  const [color, setColor] = useState('#b09b9b');
+  const [strength, setStrength] = useState(3);
   const [dimOthers, setDimOthers] = useState(true);
   const style = { '--hl-c': color, '--hl-s': `${strength}px` } as CSSProperties;
 
