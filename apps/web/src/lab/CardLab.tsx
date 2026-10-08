@@ -2,18 +2,16 @@ import { makeCard, type Card } from '@game/core';
 import { ENHANCEMENT_IDS, ENHANCEMENTS, type EnhancementId } from '@game/durak';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
-import '@fontsource/rubik/700.css';
-import './lab.css';
-import { PixelCard, type CardFeel, type RankFont } from './PixelCard';
+import { BACKGROUND_SPEED } from '../ui/Backdrop';
+import { FEEL, type Feel } from '../ui/FeelBox';
+import { PALETTE_IDS, PALETTES, type PaletteId } from '../ui/palettes';
+import { PixelCard } from '../ui/PixelCard';
 import { playSound, setVolume } from '../ui/sound';
-import { PALETTES, SwirlBackground } from './SwirlBackground';
+import { SwirlBackground } from '../ui/SwirlBackground';
+import './lab.css';
 
 const HERO: Card = makeCard('hearts', 12);
 const HAND: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('diamonds', 14), makeCard('hearts', 9), makeCard('spades', 13)];
-/** Tuned by the user in the lab, 2026-10-08. */
-const DEFAULT_FEEL: CardFeel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4 };
 
 type SliderProps = { readonly label: string; readonly value: number; readonly min: number; readonly max: number; readonly step?: number; readonly onChange: (v: number) => void };
 
@@ -29,9 +27,9 @@ function Slider({ label, value, min, max, step = 1, onChange }: SliderProps) {
 }
 
 export function CardLab() {
-  const [feel, setFeel] = useState<CardFeel>(DEFAULT_FEEL);
-  const [paletteIndex, setPaletteIndex] = useState(2);
-  const [speed, setSpeed] = useState(0.6);
+  const [feel, setFeel] = useState<Feel>(FEEL);
+  const [paletteId, setPaletteId] = useState<PaletteId>('neon');
+  const [speed, setSpeed] = useState(BACKGROUND_SPEED);
   const [volume, setVolumeState] = useState(0.35);
   const [sound, setSound] = useState(true);
   const [faceDown, setFaceDown] = useState(false);
@@ -39,9 +37,8 @@ export function CardLab() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [played, setPlayed] = useState(false);
   const [panel, setPanel] = useState(false);
-  const [rankFont, setRankFont] = useState<RankFont>('rubik');
-  const palette = PALETTES[paletteIndex] ?? PALETTES[0]!;
-  const tune = (patch: Partial<CardFeel>): void => setFeel((f) => ({ ...f, ...patch }));
+  const palette = PALETTES[paletteId];
+  const tune = (patch: Partial<Feel>): void => setFeel((f) => ({ ...f, ...patch }));
 
   const toggle = (card: Card): void => {
     const isSelected = selected.has(card.id);
@@ -61,8 +58,8 @@ export function CardLab() {
 
   return (
     <div className="lab">
-      <SwirlBackground palette={palette} pixel={feel.pixel * 2} speed={speed} />
-      <div className="lab__crt" aria-hidden="true" />
+      <SwirlBackground colors={palette.colors} pixel={feel.pixel * 2} speed={speed} />
+      <div className="crt" aria-hidden="true" />
       <main className="lab__stage">
         <h1 className="lab__title">Лаборатория карты</h1>
         <div className="lab__hero">
@@ -72,7 +69,7 @@ export function CardLab() {
                 <PixelCard
                   card={HERO}
                   feel={feel}
-                  rankFont={rankFont}
+                 
                   width={150}
                   enhancement={enhancement}
                   faceDown={faceDown}
@@ -97,13 +94,13 @@ export function CardLab() {
         <div className="lab__hand">
           {HAND.map((card, i) => (
             <div key={card.id} className="lab__hand-slot" style={{ transform: `rotate(${(i - 2) * 5}deg) translateY(${Math.abs(i - 2) * 6}px)` }}>
-              <PixelCard card={card} feel={feel} rankFont={rankFont} width={64} selected={selected.has(card.id)} swayDelay={i * 0.4} onTap={() => toggle(card)} />
+              <PixelCard card={card} feel={feel} width={64} selected={selected.has(card.id)} swayDelay={i * 0.4} onTap={() => toggle(card)} />
             </div>
           ))}
         </div>
         <div className="lab__gallery">
           {ENHANCEMENT_IDS.map((id, i) => (
-            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} rankFont={rankFont} width={66} enhancement={id} swayDelay={i * 0.3} onTap={() => playSound('select', sound)} />
+            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} swayDelay={i * 0.3} showLabel onTap={() => playSound('select', sound)} />
           ))}
         </div>
       </main>
@@ -134,20 +131,12 @@ export function CardLab() {
             />
             <label className="lab__slider">
               <span>Палитра</span>
-              <select value={paletteIndex} onChange={(e) => setPaletteIndex(Number(e.target.value))}>
-                {PALETTES.map((p, i) => (
-                  <option key={p.name} value={i}>
-                    {p.name}
+              <select value={paletteId} onChange={(e) => setPaletteId(e.target.value as PaletteId)}>
+                {PALETTE_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {PALETTES[id].name}
                   </option>
                 ))}
-              </select>
-            </label>
-            <label className="lab__slider">
-              <span>Шрифт ранга</span>
-              <select value={rankFont} onChange={(e) => setRankFont(e.target.value as RankFont)}>
-                <option value="pixelify">Pixelify Sans</option>
-                <option value="rubik">Rubik</option>
-                <option value="sprite">Пиксельный (спрайт)</option>
               </select>
             </label>
             <label className="lab__slider">
@@ -164,7 +153,7 @@ export function CardLab() {
             <label className="lab__check">
               <input type="checkbox" checked={sound} onChange={(e) => setSound(e.target.checked)} /> Звук
             </label>
-            <button type="button" className="pbtn pbtn--small" onClick={() => setFeel(DEFAULT_FEEL)}>
+            <button type="button" className="pbtn pbtn--small" onClick={() => setFeel(FEEL)}>
               Сбросить
             </button>
             <pre className="lab__dump">{JSON.stringify({ ...feel, palette: palette.name, speed }, null, 0)}</pre>

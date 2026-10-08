@@ -1,13 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-export type Palette = { readonly name: string; readonly colors: readonly [string, string, string] };
-
-export const PALETTES: readonly Palette[] = [
-  { name: 'Балатро', colors: ['#3b1c32', '#b4282d', '#f2994a'] },
-  { name: 'Сукно', colors: ['#0b2a22', '#1f6b4a', '#d9b44a'] },
-  { name: 'Неон', colors: ['#1d2b53', '#7e2553', '#29adff'] },
-];
-
 const VERTEX = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
 const FRAGMENT = `
 precision mediump float;
@@ -42,8 +34,10 @@ function compile(gl: WebGLRenderingContext, type: number, source: string): WebGL
   return shader;
 }
 
-/** Balatro-like pixelated swirl drawn with a tiny WebGL shader; falls back to the CSS background. */
-export function SwirlBackground({ palette, pixel, speed }: { readonly palette: Palette; readonly pixel: number; readonly speed: number }) {
+/** Balatro-like pixelated swirl drawn with a tiny WebGL shader; without WebGL the backdrop gradient shows through. */
+type SwirlBackgroundProps = { readonly colors: readonly [string, string, string]; readonly pixel: number; readonly speed: number };
+
+export function SwirlBackground({ colors, pixel, speed }: SwirlBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -64,9 +58,10 @@ export function SwirlBackground({ palette, pixel, speed }: { readonly palette: P
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const uniform = (name: string) => gl.getUniformLocation(program, name);
-    palette.colors.forEach((hex, i) => gl.uniform3fv(uniform(`c${i + 1}`), hexToRgb(hex)));
+    colors.forEach((hex, i) => gl.uniform3fv(uniform(`c${i + 1}`), hexToRgb(hex)));
     gl.uniform1f(uniform('px'), pixel * window.devicePixelRatio);
 
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     let frame = 0;
     const start = performance.now();
     const draw = (): void => {
@@ -80,11 +75,11 @@ export function SwirlBackground({ palette, pixel, speed }: { readonly palette: P
       gl.uniform2f(uniform('res'), width, height);
       gl.uniform1f(uniform('t'), ((performance.now() - start) / 1000) * speed);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      frame = requestAnimationFrame(draw);
+      if (!still) frame = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(frame);
-  }, [palette, pixel, speed]);
+  }, [colors, pixel, speed]);
 
-  return <canvas ref={canvasRef} className="lab__bg" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="swirl" aria-hidden="true" />;
 }
