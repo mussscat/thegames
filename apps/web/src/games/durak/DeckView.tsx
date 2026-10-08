@@ -1,5 +1,5 @@
 import { isRedSuit, SUIT_SYMBOLS } from '@game/core';
-import { isTrumpCard, type RoundState } from '@game/durak';
+import type { RoundState } from '@game/durak';
 import { CardBack, CardView } from '../../components/CardView';
 
 type DeckViewProps = { readonly round: RoundState; readonly revealTop: boolean };
@@ -13,7 +13,7 @@ export function DeckView({ round, revealTop }: DeckViewProps) {
       <div className="deck__pile">
         {round.deck.length > 0 && (
           <div className="deck__trump-card">
-            <CardView card={round.trumpCard} trump={isTrumpCard(round.trumpCard, round.trumpSuit, round.boss)} />
+            <CardView card={round.trumpCard} />
           </div>
         )}
         {Array.from({ length: stack }, (_, i) => (

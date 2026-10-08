@@ -15,11 +15,10 @@
 }
 .card:disabled { cursor: default; }
 .card--playable { translate: 0 -10%; }
-/* Owner-picked in the lab, layered so the effects never cancel each other:
-   dimming darkens only the face, the gold trump glow sits on the feel layer (always visible, even when dimmed),
-   and the playable glow + lift sit on the card itself. */
+/* Owner-picked: playable cards lift and glow softly; a playable trump also glows gold (on the feel layer, so both
+   glows show). A trump you cannot play looks like any other card. Dimming touches only the face. */
 .card--playable { filter: drop-shadow(0 0 3px var(--glow-playable)) drop-shadow(0 0 1px var(--glow-playable)); }
-.card--trump .feel { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
+.card--trump.card--playable .feel { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
 .hand--player:not(.hand--waiting) .card:not(.card--playable) .face { filter: brightness(0.6) saturate(0.7); }
 .card--back { cursor: default; }
 .card__tag {
