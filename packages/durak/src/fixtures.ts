@@ -26,7 +26,7 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     handSizes: DEFAULT_HAND_SIZES,
     boss: null,
     profiles: EMPTY_PROFILES,
-    foreign: {},
+    carried: {},
     ...overrides,
   };
 }

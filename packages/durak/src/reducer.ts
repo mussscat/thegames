@@ -8,7 +8,7 @@ import {
   type BoutResult,
   type DurakError,
   type EnhancementSource,
-  type Foreign,
+  type Carried,
   type PlayerId,
   type RoundAction,
   type RoundState,
@@ -36,8 +36,8 @@ function withoutCard(hand: readonly Card[], cardId: string): readonly Card[] {
   return hand.filter((card) => card.id !== cardId);
 }
 
-function withoutForeign(foreign: Foreign, cardIds: readonly string[]): Foreign {
-  return Object.fromEntries(Object.entries(foreign).filter(([id]) => !cardIds.includes(id)));
+function withoutCarried(carried: Carried, cardIds: readonly string[]): Carried {
+  return Object.fromEntries(Object.entries(carried).filter(([id]) => !cardIds.includes(id)));
 }
 
 /** Finds the card in the actor's hand and resolves which enhancement it is played with. */
@@ -48,12 +48,12 @@ function pick(state: RoundState, actor: PlayerId, cardId: string, use?: Enhancem
   return enhancement.ok ? ok({ card, enhancement: enhancement.value }) : enhancement;
 }
 
-/** Removes the played card from hand and from foreign marks. */
+/** Removes the played card from hand; its enhancement now lives on the table pair. */
 function afterPlay(state: RoundState, actor: PlayerId, card: Card): RoundState {
   return {
     ...state,
     hands: withHand(state.hands, actor, withoutCard(state.hands[actor], card.id)),
-    foreign: withoutForeign(state.foreign, [card.id]),
+    carried: withoutCarried(state.carried, [card.id]),
   };
 }
 
@@ -101,18 +101,20 @@ function finishBout(state: RoundState): RoundState {
   return checkRoundEnd({
     ...drawn,
     lastBout: boutResult(state),
-    foreign: state.defenderTaking ? takenForeign(state) : withoutForeign(state.foreign, tableCards.map((card) => card.id)),
+    carried: state.defenderTaking ? takenCarried(state) : withoutCarried(state.carried, tableCards.map((card) => card.id)),
     table: [],
     defenderTaking: false,
     attacker: state.defenderTaking ? state.attacker : defender,
   });
 }
 
-/** The defender takes attack cards that bring the attacker's enhancements; its own defense cards bring nothing. */
-function takenForeign(state: RoundState): Foreign {
-  const defenses = state.table.flatMap((pair) => (pair.defense ? [pair.defense.id] : []));
-  const base = withoutForeign(state.foreign, defenses);
-  return state.table.reduce<Foreign>((marks, pair) => ({ ...marks, [pair.attack.id]: state.attacker }), base);
+/** Every taken card keeps the enhancement it was played with — attacks and the taker's own defenses alike. */
+function takenCarried(state: RoundState): Carried {
+  const tableIds = state.table.flatMap((pair) => (pair.defense ? [pair.attack.id, pair.defense.id] : [pair.attack.id]));
+  return state.table.reduce<Carried>((carried, pair) => {
+    const withAttack = pair.attackEnh ? { ...carried, [pair.attack.id]: pair.attackEnh } : carried;
+    return pair.defense && pair.defenseEnh ? { ...withAttack, [pair.defense.id]: pair.defenseEnh } : withAttack;
+  }, withoutCarried(state.carried, tableIds));
 }
 
 /** Records a take: the defender and every attack card it takes; a beaten bout records nothing. */

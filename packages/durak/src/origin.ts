@@ -6,11 +6,11 @@ export type CardEnhancements = { readonly own?: EnhancementId; readonly foreign?
 
 export type EnhancementVariant = { readonly use?: EnhancementSource; readonly enhancement?: EnhancementId };
 
-/** Own enhancement always; a brought one only if the card was taken from someone else's play. */
+/** Own enhancement always; plus the one the card carried in when taken from the table (if it differs). */
 export function cardEnhancements(state: RoundState, holder: PlayerId, card: Card): CardEnhancements {
   const own = state.profiles[holder][card.id];
-  const from = state.foreign[card.id];
-  const foreign = from && from !== holder ? state.profiles[from][card.id] : undefined;
+  const carried = state.carried[card.id];
+  const foreign = carried && carried !== own ? carried : undefined;
   return { ...(own ? { own } : {}), ...(foreign ? { foreign } : {}) };
 }
 

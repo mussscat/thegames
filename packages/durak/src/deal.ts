@@ -38,7 +38,7 @@ export function dealRound(
     handSizes,
     boss,
     profiles,
-    foreign: {},
+    carried: {},
   };
   return [round, nextRng];
 }

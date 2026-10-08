@@ -75,11 +75,11 @@ describe('dealRound with a boss', () => {
 });
 
 describe('dealRound with profiles', () => {
-  it('stores profiles and starts with no foreign marks', () => {
+  it('stores profiles and starts with no carried enhancements', () => {
     const profiles = { player: { 'clubs-7': 'golden' as const }, enemy: {} };
     const [round] = dealRound(createRng(7), undefined, null, profiles);
     expect(round.profiles).toEqual(profiles);
-    expect(round.foreign).toEqual({});
+    expect(round.carried).toEqual({});
     expect(dealRound(createRng(7))[0].profiles).toEqual({ player: {}, enemy: {} });
   });
 });

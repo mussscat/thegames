@@ -246,19 +246,18 @@ describe('enhancements and card origin', () => {
     const state = roundState({
       hands: { player: filler(5), enemy: [c(9, 'clubs')] },
       table: [uncovered],
-      foreign: { 'clubs-9': 'player' },
-      profiles: { player: { 'clubs-9': 'coin' }, enemy: {} },
+      carried: { 'clubs-9': 'coin' },
     });
     const next = expectOk(applyRoundAction(state, 'enemy', { type: 'defend', cardId: 'clubs-9' }));
     expect(next.table[0]?.defenseEnh).toBe('coin');
-    expect(next.foreign).toEqual({});
+    expect(next.carried).toEqual({});
   });
 
   it('with two enhancements the default is own and use picks the other', () => {
     const state = roundState({
       hands: { player: [c(7, 'clubs')], enemy: filler(6) },
-      foreign: { 'clubs-7': 'enemy' },
-      profiles: { player: { 'clubs-7': 'heavy' }, enemy: { 'clubs-7': 'golden' } },
+      carried: { 'clubs-7': 'golden' },
+      profiles: { player: { 'clubs-7': 'heavy' }, enemy: {} },
     });
     const own = expectOk(applyRoundAction(state, 'player', { type: 'attack', cardId: 'clubs-7' }));
     expect(own.table[0]?.attackEnh).toBe('heavy');
@@ -278,25 +277,43 @@ describe('enhancements and card origin', () => {
     });
   });
 
-  it('taking marks attack cards as brought by the attacker and clears marks on defenses', () => {
+  it('a take keeps the enhancement every card was played with, including the taker own defenses', () => {
     const state = roundState({
       hands: { player: filler(5), enemy: filler(4, 'diamonds') },
-      table: [covered, { attack: c(7, 'spades'), defense: null }],
+      table: [
+        { attack: c(7, 'clubs'), defense: c(9, 'clubs'), attackEnh: 'golden', defenseEnh: 'coin' },
+        { attack: c(7, 'spades'), defense: null },
+      ],
       defenderTaking: true,
-      foreign: { 'clubs-9': 'player' },
     });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
-    expect(next.foreign).toEqual({ 'clubs-7': 'player', 'spades-7': 'player' });
+    expect(next.carried).toEqual({ 'clubs-7': 'golden', 'clubs-9': 'coin' });
+  });
+
+  it('a card played with a brought enhancement and taken back keeps that enhancement', () => {
+    const start = roundState({
+      attacker: 'enemy',
+      hands: { player: [c(10, 'diamonds'), c(13, 'hearts')], enemy: [c(8, 'hearts'), ...filler(4)] },
+      table: [{ attack: c(8, 'clubs'), defense: null }],
+      carried: { 'diamonds-10': 'sharp' },
+    });
+    const defended = expectOk(applyRoundAction(start, 'player', { type: 'defend', cardId: 'diamonds-10' }));
+    expect(defended.table[0]?.defenseEnh).toBe('sharp');
+    const thrown = expectOk(applyRoundAction(defended, 'enemy', { type: 'attack', cardId: 'hearts-8' }));
+    const taking = expectOk(applyRoundAction(thrown, 'player', { type: 'take' }));
+    const done = expectOk(applyRoundAction(taking, 'enemy', { type: 'endAttack' }));
+    expect(done.hands.player).toContainEqual(c(10, 'diamonds'));
+    expect(done.carried).toEqual({ 'diamonds-10': 'sharp' });
   });
 
   it('«Бито» clears marks of every table card', () => {
     const state = roundState({
       hands: { player: filler(5), enemy: filler(5, 'diamonds') },
       table: [covered],
-      foreign: { 'clubs-7': 'enemy', 'hearts-6': 'enemy' },
+      carried: { 'clubs-7': 'golden', 'hearts-6': 'sharp' },
       deck: filler(6, 'hearts').slice(2),
     });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
-    expect(next.foreign).toEqual({ 'hearts-6': 'enemy' });
+    expect(next.carried).toEqual({ 'hearts-6': 'sharp' });
   });
 });

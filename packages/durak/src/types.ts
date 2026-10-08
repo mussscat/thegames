@@ -19,11 +19,11 @@ export type TablePair = {
   readonly defenseEnh?: EnhancementId;
 };
 
-/** own — the holder's profile; foreign — the profile of whoever played the card before it was taken. */
+/** own — the holder's profile; foreign — the enhancement a taken card carried in from the table. */
 export type EnhancementSource = 'own' | 'foreign';
 
-/** cardId → the side whose enhancement the card brought when it was taken from the table. */
-export type Foreign = Readonly<Partial<Record<string, PlayerId>>>;
+/** cardId → the enhancement a card was played with when it was taken from the table; it stays with the card. */
+export type Carried = Readonly<Partial<Record<string, EnhancementId>>>;
 
 /** loser === null means both players ran out of cards at once (draw). */
 export type RoundOutcome = { readonly loser: PlayerId | null; readonly cardsLeft: number };
@@ -57,7 +57,7 @@ export type RoundState = {
   readonly handSizes: HandSizes;
   readonly boss: BossRule | null;
   readonly profiles: Profiles;
-  readonly foreign: Foreign;
+  readonly carried: Carried;
 };
 
 export type RoundAction =

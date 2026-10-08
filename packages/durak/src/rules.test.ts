@@ -167,8 +167,8 @@ describe('enhancement rules', () => {
       attacker: 'enemy',
       hands: { player: [c(10, 'diamonds')], enemy: filler(5) },
       table: [{ attack: c(8, 'clubs'), defense: null }],
-      foreign: { 'diamonds-10': 'enemy' },
-      profiles: { player: { 'diamonds-10': 'coin' }, enemy: { 'diamonds-10': 'sharp' } },
+      carried: { 'diamonds-10': 'sharp' },
+      profiles: { player: { 'diamonds-10': 'coin' }, enemy: {} },
     });
     expect(legalActions(state, 'player')).toEqual([
       { type: 'defend', cardId: 'diamonds-10', use: 'foreign' },
@@ -197,5 +197,16 @@ describe('Козырная', () => {
       table: [{ attack: c(7, 'clubs'), defense: null, attackEnh: 'trump' }],
     });
     expect(legalActions(state, 'player')).toEqual([{ type: 'defend', cardId: 'hearts-8' }, { type: 'take' }]);
+  });
+});
+
+describe('carried enhancement equal to own', () => {
+  it('is offered once, without a split choice', () => {
+    const state = roundState({
+      hands: { player: [c(7, 'clubs')], enemy: filler(6) },
+      carried: { 'clubs-7': 'coin' },
+      profiles: { player: { 'clubs-7': 'coin' }, enemy: {} },
+    });
+    expect(legalActions(state, 'player')).toEqual([{ type: 'attack', cardId: 'clubs-7' }]);
   });
 });
