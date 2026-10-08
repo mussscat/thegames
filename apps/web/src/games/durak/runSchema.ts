@@ -2,7 +2,7 @@ import { RANKS, SUITS, type Rank } from '@game/core';
 import { BOSS_RULES, ENHANCEMENT_IDS, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
@@ -48,7 +48,6 @@ const fight = z.object({
   roundTakes: perPlayer,
   fightTakes: perPlayer,
   boss,
-  sturdy: perPlayer,
   cardCoins: perPlayer,
 });
 

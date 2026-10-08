@@ -73,7 +73,9 @@ function defend(state: RoundState, actor: PlayerId, cardId: string, use?: Enhanc
   const played = pick(state, actor, cardId, use);
   if (!played.ok) return played;
   const { card, enhancement } = played.value;
-  if (!canBeatWith(pair.attack, card, enhancement, state.trumpSuit, state.boss, actor)) return err('cannotBeat');
+  if (!canBeatWith(pair.attack, card, enhancement, state.trumpSuit, state.boss, actor, pair.attackEnh)) {
+    return err('cannotBeat');
+  }
   const covered = { ...pair, defense: card, ...(enhancement ? { defenseEnh: enhancement } : {}) };
   return ok({ ...afterPlay(state, actor, card), table: state.table.map((p) => (p === pair ? covered : p)) });
 }

@@ -112,3 +112,13 @@ describe('chooseAction with enhancements', () => {
     expect(chooseAction(state, 'enemy', 'stingy')).toEqual({ type: 'defend', cardId: 'diamonds-10' });
   });
 });
+
+describe('chooseAction with a Козырная card', () => {
+  it('does not lead with its own Козырная card as if it were cheap', () => {
+    const state = roundState({
+      hands: { player: [c(6, 'clubs'), c(9, 'spades')], enemy: filler(6, 'diamonds') },
+      profiles: { player: { 'clubs-6': 'trump' }, enemy: {} },
+    });
+    expect(chooseAction(state, 'player', 'stingy')).toEqual({ type: 'attack', cardId: 'spades-9' });
+  });
+});

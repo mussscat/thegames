@@ -51,8 +51,6 @@ export type FightState = {
   readonly fightTakes: PerPlayer;
   /** The boss rule of this fight, if any. */
   readonly boss: BossRule | null;
-  /** Крепкая charges: each softens the owner's next take by 1. */
-  readonly sturdy: PerPlayer;
   /** Coins earned by Монетная defenses. */
   readonly cardCoins: PerPlayer;
 };
@@ -81,7 +79,6 @@ export function createFight(config: FightConfig): FightState {
     roundTakes: NO_TAKES,
     fightTakes: NO_TAKES,
     boss,
-    sturdy: NO_TAKES,
     cardCoins: NO_TAKES,
   };
 }
@@ -137,14 +134,11 @@ function chargeTake(state: FightState, bout: BoutResult, trumpSuit: Suit): Fight
     boss: state.boss,
     takerTakesThisRound: state.roundTakes[taker],
   });
-  const charges = state.sturdy[taker];
-  const withGold = perkAmount + bout.goldenHits;
-  const amount = charges > 0 ? Math.max(0, withGold - 1) : withGold;
+  const amount = perkAmount + bout.goldenHits;
   const counted: FightState = {
     ...state,
     roundTakes: increment(state.roundTakes, taker),
     fightTakes: increment(state.fightTakes, taker),
-    sturdy: charges > 0 ? decrement(state.sturdy, taker) : state.sturdy,
   };
   return amount > 0 ? applyHit(counted, { target: taker, amount }) : counted;
 }
@@ -159,13 +153,8 @@ function creditBeatenDefenses(state: FightState, beatenRound: RoundState): Fight
 }
 
 function creditDefense(state: FightState, defender: PlayerId, enhancement: EnhancementId): FightState {
-  if (enhancement === 'sturdy') return { ...state, sturdy: increment(state.sturdy, defender) };
   if (enhancement === 'coin') return { ...state, cardCoins: increment(state.cardCoins, defender) };
   return state;
-}
-
-function decrement(counts: PerPlayer, id: PlayerId): PerPlayer {
-  return id === 'player' ? { ...counts, player: counts.player - 1 } : { ...counts, enemy: counts.enemy - 1 };
 }
 
 function increment(counts: PerPlayer, id: PlayerId): PerPlayer {

@@ -39,7 +39,10 @@ export function beats(
   return defense.rank - attack.rank >= gap;
 }
 
-/** Острая also beats any suit (trumps included) when higher by the beat gap. */
+/**
+ * Beating with enhancements: a card played as Козырная counts as a trump (attack or defense);
+ * Острая also beats any suit (trumps included) when higher by the beat gap.
+ */
 export function canBeatWith(
   attack: Card,
   defense: Card,
@@ -47,9 +50,14 @@ export function canBeatWith(
   trump: Suit,
   boss: BossRule | null,
   defender: PlayerId,
+  attackEnhancement?: EnhancementId,
 ): boolean {
-  if (beats(attack, defense, trump, boss, defender)) return true;
-  return enhancement === 'sharp' && defense.rank - attack.rank >= beatGap(boss, defender);
+  const gap = beatGap(boss, defender);
+  const higher = defense.rank - attack.rank >= gap;
+  const attackTrump = attackEnhancement === 'trump' || isTrumpCard(attack, trump, boss);
+  const defenseTrump = enhancement === 'trump' || isTrumpCard(defense, trump, boss);
+  const plain = attackTrump !== defenseTrump ? defenseTrump : (attackTrump || defense.suit === attack.suit) && higher;
+  return plain || (enhancement === 'sharp' && higher);
 }
 
 export function defenderOf(state: RoundState): PlayerId {
@@ -89,7 +97,9 @@ export function legalActions(state: RoundState, actor: PlayerId): readonly Round
   if (actor !== state.attacker && pair) {
     const defends = hand.flatMap((card) =>
       variants(card)
-        .filter((variant) => canBeatWith(pair.attack, card, variant.enhancement, state.trumpSuit, state.boss, actor))
+        .filter((variant) =>
+          canBeatWith(pair.attack, card, variant.enhancement, state.trumpSuit, state.boss, actor, pair.attackEnh),
+        )
         .map((variant): RoundAction => withUse({ type: 'defend', cardId: card.id }, variant.use)),
     );
     return [...defends, { type: 'take' }];

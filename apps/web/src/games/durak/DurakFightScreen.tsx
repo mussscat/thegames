@@ -87,7 +87,9 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
                 card={card}
                 enhancements={enhancements}
                 playable={myTurn && playableIds.has(card.id)}
-                trump={isTrumpCard(card, round.trumpSuit, round.boss)}
+                trump={
+                  isTrumpCard(card, round.trumpSuit, round.boss) || enhancements.own === 'trump' || enhancements.foreign === 'trump'
+                }
                 onTap={myTurn && !split ? () => play(card) : undefined}
                 onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
                 legalUses={myTurn && split ? legalUses(card.id) : undefined}

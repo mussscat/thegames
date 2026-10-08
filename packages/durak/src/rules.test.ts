@@ -176,3 +176,26 @@ describe('enhancement rules', () => {
     ]);
   });
 });
+
+describe('Козырная', () => {
+  it('a Козырная defense is a trump: beats any non-trump, and a trump only by rank', () => {
+    expect(canBeatWith(c(14, 'spades'), c(7, 'clubs'), 'trump', 'hearts', null, 'enemy')).toBe(true);
+    expect(canBeatWith(c(9, 'hearts'), c(7, 'clubs'), 'trump', 'hearts', null, 'enemy')).toBe(false);
+    expect(canBeatWith(c(6, 'hearts'), c(7, 'clubs'), 'trump', 'hearts', null, 'enemy')).toBe(true);
+  });
+
+  it('a Козырная attack can only be beaten by a higher trump', () => {
+    expect(canBeatWith(c(7, 'clubs'), c(9, 'clubs'), undefined, 'hearts', null, 'enemy', 'trump')).toBe(false);
+    expect(canBeatWith(c(7, 'clubs'), c(6, 'hearts'), undefined, 'hearts', null, 'enemy', 'trump')).toBe(false);
+    expect(canBeatWith(c(7, 'clubs'), c(8, 'hearts'), undefined, 'hearts', null, 'enemy', 'trump')).toBe(true);
+  });
+
+  it('legal defenses respect a Козырная attack', () => {
+    const state = roundState({
+      attacker: 'enemy',
+      hands: { player: [c(9, 'clubs'), c(8, 'hearts')], enemy: filler(5) },
+      table: [{ attack: c(7, 'clubs'), defense: null, attackEnh: 'trump' }],
+    });
+    expect(legalActions(state, 'player')).toEqual([{ type: 'defend', cardId: 'hearts-8' }, { type: 'take' }]);
+  });
+});

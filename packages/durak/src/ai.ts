@@ -1,4 +1,5 @@
 import type { Card } from '@game/core';
+import { cardEnhancements } from './origin';
 import { isTrumpCard, legalActions } from './rules';
 import type { PlayerId, RoundAction, RoundState } from './types';
 
@@ -24,12 +25,13 @@ export function chooseAction(state: RoundState, me: PlayerId, style: AiStyle): R
   return cheapest && wantsToThrow(state, cheapest.card, style) ? cheapest.action : END_ATTACK;
 }
 
-function isTrump(state: RoundState, card: Card): boolean {
-  return isTrumpCard(card, state.trumpSuit, state.boss);
+/** Boss trumps count, and so does a card the AI holds as Козырная in its own profile. */
+function isTrump(state: RoundState, card: Card, holder: PlayerId): boolean {
+  return isTrumpCard(card, state.trumpSuit, state.boss) || cardEnhancements(state, holder, card).own === 'trump';
 }
 
-function cardCost(state: RoundState, card: Card): number {
-  return card.rank + (isTrump(state, card) ? TRUMP_COST_PENALTY : 0);
+function cardCost(state: RoundState, card: Card, holder: PlayerId): number {
+  return card.rank + (isTrump(state, card, holder) ? TRUMP_COST_PENALTY : 0);
 }
 
 function cheapestCandidate(state: RoundState, me: PlayerId, legal: readonly RoundAction[]): Candidate | null {
@@ -39,13 +41,14 @@ function cheapestCandidate(state: RoundState, me: PlayerId, legal: readonly Roun
     const card = hand.find((c) => c.id === action.cardId);
     return card ? [{ action, card }] : [];
   });
-  const sorted = [...candidates].sort((a, b) => cardCost(state, a.card) - cardCost(state, b.card));
+  const sorted = [...candidates].sort((a, b) => cardCost(state, a.card, me) - cardCost(state, b.card, me));
   return sorted[0] ?? null;
 }
 
 function chooseDefense(state: RoundState, style: AiStyle, best: Candidate | null): RoundAction {
   if (!best) return TAKE;
-  return isTrump(state, best.card) && !shouldSpendTrump(state, style) ? TAKE : best.action;
+  const defender = state.attacker === 'player' ? 'enemy' : 'player';
+  return isTrump(state, best.card, defender) && !shouldSpendTrump(state, style) ? TAKE : best.action;
 }
 
 function shouldSpendTrump(state: RoundState, style: AiStyle): boolean {
@@ -59,7 +62,8 @@ function shouldSpendTrump(state: RoundState, style: AiStyle): boolean {
 /** Throw-ins are free (a beaten bout costs nothing), so the only cost is giving away good cards. */
 function wantsToThrow(state: RoundState, card: Card, style: AiStyle): boolean {
   if (state.deck.length === 0) return true;
-  const affordable = !isTrump(state, card) || state.deck.length <= LATE_GAME_DECK_SIZE;
+  const trump = isTrump(state, card, state.attacker);
+  const affordable = !trump || state.deck.length <= LATE_GAME_DECK_SIZE;
   if (state.defenderTaking || style === 'aggressive') return affordable;
-  return !isTrump(state, card) && card.rank <= STINGY_MAX_THROW_RANK;
+  return !trump && card.rank <= STINGY_MAX_THROW_RANK;
 }
