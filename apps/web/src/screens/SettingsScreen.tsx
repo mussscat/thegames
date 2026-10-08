@@ -3,6 +3,7 @@ import { RANK_ORDERS, TRUMP_PLACES, type HandSort } from '../ui/handSort';
 import { PALETTE_IDS, PALETTES } from '../ui/palettes';
 import { PixelButton } from '../ui/PixelButton';
 import { useSettings } from '../ui/SettingsContext';
+import { SortPreview } from './SortPreview';
 import './menu.css';
 
 const RANK_NAMES: Readonly<Record<HandSort['rank'], string>> = { asc: 'Сначала младшие', desc: 'Сначала старшие' };
@@ -99,6 +100,7 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
               ))}
             </select>
           </label>
+          <SortPreview sort={settings.sort} />
         </fieldset>
       </section>
       <PixelButton tone="blue" onClick={onBack}>

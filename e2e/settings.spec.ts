@@ -47,3 +47,15 @@ test('the hand is sorted by suit with trumps on the right, and the order is conf
   await expect(cards.nth(1)).toHaveAccessibleName('Т бубны');
   await expect(cards.last()).toHaveAccessibleName('8 червы');
 });
+
+test('the sort preview reorders as the sort settings change', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  const preview = page.getByTestId('sort-preview').getByRole('img');
+  await expect(preview).toHaveCount(7);
+  await expect(preview.last()).toHaveAccessibleName('К червы, козырь');
+  await page.getByLabel('Козыри').selectOption('first');
+  await expect(preview.first()).toHaveAccessibleName('6 червы, козырь');
+  await page.getByLabel('По рангу').selectOption('desc');
+  await expect(preview.first()).toHaveAccessibleName('К червы, козырь');
+});
