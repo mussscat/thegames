@@ -13,7 +13,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "dev": "npm run dev -w @game/web",
     "build": "npm run build -w @game/web",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "simulate": "SIM=1 vitest run packages/durak/src/sim/report.test.ts --silent=false"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -15,19 +15,19 @@ export type EnemySpec = {
 };
 
 /** Multiplier of the enemy's hits on the player, by tier. */
-export const TIER_MULT: Readonly<Record<EnemyTier, number>> = { normal: 1, strong: 2, boss: 3 };
+export const TIER_MULT: Readonly<Record<EnemyTier, number>> = { normal: 1, strong: 1.25, boss: 1.5 };
 
 /** 2 circles × (normal → strong → boss). HP is tuned by the balance simulation. */
 export const RUN_SCHEDULE: readonly EnemySpec[] = [
   { name: 'Скупой', tier: 'normal', hp: 30, style: 'stingy', profile: { 'diamonds-6': 'trump' }, jokers: [] },
-  { name: 'Задира', tier: 'strong', hp: 50, style: 'aggressive', profile: { 'clubs-13': 'golden', 'spades-12': 'sharp' }, jokers: ['gloat'] },
+  { name: 'Задира', tier: 'strong', hp: 40, style: 'aggressive', profile: { 'clubs-13': 'golden', 'spades-12': 'sharp' }, jokers: ['clubs'] },
   {
     name: 'Босс круга 1',
     tier: 'boss',
-    hp: 80,
+    hp: 45,
     style: 'aggressive',
     profile: { 'hearts-14': 'golden', 'spades-14': 'sharp', 'clubs-11': 'heavy' },
-    jokers: ['serial', 'trumpAce'],
+    jokers: ['small', 'hearts'],
   },
   {
     name: 'Скряга',

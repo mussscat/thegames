@@ -8,7 +8,7 @@ import { BOSS_RULES, type BossRule, type PlayerId } from '../types';
 import { fightReward, type FightReward } from './economy';
 import { buyEnhancement, buyJoker, createShop, moveJoker, rerollShop, sellJoker, type ShopError, type ShopState, type Wallet } from './shop';
 
-export const PLAYER_HP = 60;
+export const PLAYER_HP = 100;
 export const FIGHTS_PER_CIRCLE = 3;
 const FIGHT_SEED_RANGE = 0x100000000;
 const CIRCLES = RUN_SCHEDULE.length / FIGHTS_PER_CIRCLE;
