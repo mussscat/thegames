@@ -189,7 +189,7 @@ describe('bosses in a fight', () => {
   });
 
   it('Фокусник also shuffles on the first «Бито» right after a take', () => {
-    const afterTake = { ...beatenRound, lastBout: { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')] } };
+    const afterTake = { ...beatenRound, lastBout: { damaged: 'enemy' as const, attackCards: [c(6, 'clubs')], goldenHits: 0 } };
     const next = expectOk(applyFightAction({ ...shuffler, round: afterTake }, 'player', { type: 'endAttack' }));
     expect(next.round.trumpSuit).not.toBe('hearts');
   });
@@ -211,5 +211,63 @@ describe('bosses in a fight', () => {
     const plain = { ...beatenRound, boss: null };
     const next = expectOk(applyFightAction({ ...base, round: plain }, 'player', { type: 'endAttack' }));
     expect(next.round.trumpSuit).toBe('hearts');
+  });
+});
+
+describe('enhancements in a fight', () => {
+  const playerDefends = (enhancement: 'sturdy' | 'coin') =>
+    roundState({
+      attacker: 'enemy',
+      hands: { player: [c(9, 'clubs'), ...filler(4)], enemy: filler(5, 'diamonds') },
+      table: [{ attack: c(7, 'clubs'), defense: null }],
+      profiles: { player: { 'clubs-9': enhancement }, enemy: {} },
+      deck: filler(6, 'hearts').slice(2),
+    });
+  const playerTaking = roundState({
+    attacker: 'enemy',
+    hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+    table: [{ attack: c(7, 'clubs'), defense: null }, { attack: c(8, 'clubs'), defense: null }],
+    defenderTaking: true,
+    deck: filler(6, 'hearts').slice(2),
+  });
+
+  it('Золотая attack cards cost the taker 1 more each', () => {
+    const golden = {
+      ...takingRound,
+      table: [{ attack: c(7, 'clubs'), defense: null, attackEnh: 'golden' as const }, { attack: c(7, 'hearts'), defense: null }],
+    };
+    const next = expectOk(applyFightAction({ ...base, round: golden }, 'player', { type: 'endAttack' }));
+    expect(next.hits).toEqual([{ target: 'enemy', amount: 3 }]);
+  });
+
+  it('Крепкая defense gives a charge that softens the next take once', () => {
+    const defended = expectOk(applyFightAction({ ...base, round: playerDefends('sturdy') }, 'player', { type: 'defend', cardId: 'clubs-9' }));
+    expect(defended.sturdy).toEqual({ player: 1, enemy: 0 });
+    const took = expectOk(applyFightAction({ ...defended, round: playerTaking }, 'enemy', { type: 'endAttack' }));
+    expect(took.hp.player).toBe(9);
+    expect(took.sturdy.player).toBe(0);
+    const again = expectOk(applyFightAction({ ...took, round: playerTaking }, 'enemy', { type: 'endAttack' }));
+    expect(again.hp.player).toBe(7);
+  });
+
+  it('a Крепкая charge never pushes damage below zero', () => {
+    const single = { ...playerTaking, table: [{ attack: c(7, 'clubs'), defense: null }] };
+    const fight = { ...createFight({ seed: 1, playerHp: 10, enemyHp: 10, perks: ['thickSkin'] }), sturdy: { player: 1, enemy: 0 }, round: single };
+    const next = expectOk(applyFightAction(fight, 'enemy', { type: 'endAttack' }));
+    expect(next.hp.player).toBe(10);
+    expect(next.sturdy.player).toBe(0);
+  });
+
+  it('Монетная defense earns a card coin', () => {
+    const defended = expectOk(applyFightAction({ ...base, round: playerDefends('coin') }, 'player', { type: 'defend', cardId: 'clubs-9' }));
+    expect(defended.cardCoins).toEqual({ player: 1, enemy: 0 });
+  });
+
+  it('createFight passes profiles into every round', () => {
+    const profiles = { player: { 'clubs-7': 'golden' as const }, enemy: {} };
+    const fight = createFight({ seed: 1, playerHp: 10, enemyHp: 10, profiles });
+    expect(fight.round.profiles).toEqual(profiles);
+    expect(fight.sturdy).toEqual({ player: 0, enemy: 0 });
+    expect(fight.cardCoins).toEqual({ player: 0, enemy: 0 });
   });
 });

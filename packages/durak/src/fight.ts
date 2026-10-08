@@ -1,5 +1,6 @@
 import { createRng, err, nextInt, ok, SUITS, type Result, type RngState, type Suit } from '@game/core';
 import { dealRound } from './deal';
+import { EMPTY_PROFILES, type EnhancementId, type Profiles } from './enhancements';
 import { perkHandSizes, perkTakeDamage, type PerkId } from './perks';
 import { applyRoundAction } from './reducer';
 import {
@@ -18,6 +19,7 @@ export type FightConfig = {
   readonly enemyHp: number;
   readonly perks?: readonly PerkId[];
   readonly boss?: BossRule | null;
+  readonly profiles?: Profiles;
 };
 
 export const DEFAULT_FIGHT_CONFIG = { playerHp: 10, enemyHp: 7 } as const;
@@ -49,6 +51,10 @@ export type FightState = {
   readonly fightTakes: PerPlayer;
   /** The boss rule of this fight, if any. */
   readonly boss: BossRule | null;
+  /** Крепкая charges: each softens the owner's next take by 1. */
+  readonly sturdy: PerPlayer;
+  /** Coins earned by Монетная defenses. */
+  readonly cardCoins: PerPlayer;
 };
 
 export type FightAction = RoundAction | { readonly type: 'nextRound' };
@@ -60,7 +66,7 @@ const NO_TAKES: PerPlayer = { player: 0, enemy: 0 };
 export function createFight(config: FightConfig): FightState {
   const perks = config.perks ?? [];
   const boss = config.boss ?? null;
-  const [round, rng] = dealRound(createRng(config.seed), perkHandSizes(perks), boss);
+  const [round, rng] = dealRound(createRng(config.seed), perkHandSizes(perks), boss, config.profiles ?? EMPTY_PROFILES);
   const hp = { player: config.playerHp, enemy: config.enemyHp };
   return {
     round,
@@ -75,6 +81,8 @@ export function createFight(config: FightConfig): FightState {
     roundTakes: NO_TAKES,
     fightTakes: NO_TAKES,
     boss,
+    sturdy: NO_TAKES,
+    cardCoins: NO_TAKES,
   };
 }
 
@@ -88,8 +96,10 @@ export function applyFightAction(
   const result = applyRoundAction(state.round, actor, action);
   if (!result.ok) return result;
   const next: FightState = { ...state, round: result.value, hits: [] };
+  const defense = action.type === 'defend' ? newDefenseEnhancement(state.round, result.value) : undefined;
+  const credited = defense ? creditDefense(next, actor, defense) : next;
   const bout = newBout(state.round, result.value);
-  const charged = bout ? chargeTake(next, bout, state.round.trumpSuit) : next;
+  const charged = bout ? chargeTake(credited, bout, state.round.trumpSuit) : credited;
   return ok(state.boss === 'shuffler' && endedBeaten(state.round, result.value) ? shuffleTrump(charged) : charged);
 }
 
@@ -107,7 +117,7 @@ function shuffleTrump(state: FightState): FightState {
 
 function nextRound(state: FightState): Result<FightState, FightError> {
   if (!state.round.outcome) return err('roundInProgress');
-  const [round, rng] = dealRound(state.rng, perkHandSizes(state.perks), state.boss);
+  const [round, rng] = dealRound(state.rng, perkHandSizes(state.perks), state.boss, state.round.profiles);
   return ok({ ...state, round, rng, roundNumber: state.roundNumber + 1, hits: [], roundTakes: NO_TAKES });
 }
 
@@ -119,19 +129,39 @@ function newBout(previous: RoundState, next: RoundState): BoutResult | null {
 /** Only taking the table hurts; perks adjust the amount, and every take is counted even at 0 damage. */
 function chargeTake(state: FightState, bout: BoutResult, trumpSuit: Suit): FightState {
   const taker = bout.damaged;
-  const amount = perkTakeDamage(state.perks, {
+  const perkAmount = perkTakeDamage(state.perks, {
     taker,
     attackCards: bout.attackCards,
     trumpSuit,
     boss: state.boss,
     takerTakesThisRound: state.roundTakes[taker],
   });
+  const charges = state.sturdy[taker];
+  const withGold = perkAmount + bout.goldenHits;
+  const amount = charges > 0 ? Math.max(0, withGold - 1) : withGold;
   const counted: FightState = {
     ...state,
     roundTakes: increment(state.roundTakes, taker),
     fightTakes: increment(state.fightTakes, taker),
+    sturdy: charges > 0 ? decrement(state.sturdy, taker) : state.sturdy,
   };
   return amount > 0 ? applyHit(counted, { target: taker, amount }) : counted;
+}
+
+/** The enhancement of the defense card the last action laid on the table, if any. */
+function newDefenseEnhancement(previous: RoundState, next: RoundState): EnhancementId | undefined {
+  const index = previous.table.findIndex((pair, i) => pair.defense === null && next.table[i]?.defense);
+  return index >= 0 ? next.table[index]?.defenseEnh : undefined;
+}
+
+function creditDefense(state: FightState, defender: PlayerId, enhancement: EnhancementId): FightState {
+  if (enhancement === 'sturdy') return { ...state, sturdy: increment(state.sturdy, defender) };
+  if (enhancement === 'coin') return { ...state, cardCoins: increment(state.cardCoins, defender) };
+  return state;
+}
+
+function decrement(counts: PerPlayer, id: PlayerId): PerPlayer {
+  return id === 'player' ? { ...counts, player: counts.player - 1 } : { ...counts, enemy: counts.enemy - 1 };
 }
 
 function increment(counts: PerPlayer, id: PlayerId): PerPlayer {

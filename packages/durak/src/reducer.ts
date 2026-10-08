@@ -116,7 +116,11 @@ function takenForeign(state: RoundState): Foreign {
 /** Records a take: the defender and every attack card it takes; a beaten bout records nothing. */
 function boutResult(state: RoundState): BoutResult | null {
   return state.defenderTaking
-    ? { damaged: defenderOf(state), attackCards: state.table.map((pair) => pair.attack) }
+    ? {
+        damaged: defenderOf(state),
+        attackCards: state.table.map((pair) => pair.attack),
+        goldenHits: state.table.filter((pair) => pair.attackEnh === 'golden').length,
+      }
     : null;
 }
 

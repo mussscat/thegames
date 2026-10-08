@@ -32,6 +32,8 @@ export type RoundOutcome = { readonly loser: PlayerId | null; readonly cardsLeft
 export type BoutResult = {
   readonly damaged: PlayerId;
   readonly attackCards: readonly Card[];
+  /** Attack cards played with Золотая. */
+  readonly goldenHits: number;
 };
 
 export type Hands = Readonly<Record<PlayerId, readonly Card[]>>;
