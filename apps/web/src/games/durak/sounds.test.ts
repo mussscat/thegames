@@ -1,6 +1,6 @@
 import { createFight, type FightState } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { coinSound, fightSound } from './sounds';
+import { coinSound, fightSound, isNewError } from './sounds';
 
 const base = createFight({ seed: 7, playerHp: 10, enemyHp: 7 });
 const attack = base.round.hands[base.round.attacker][0]!;
@@ -42,5 +42,14 @@ describe('coinSound', () => {
     expect(coinSound(5, 5)).toBeNull();
     expect(coinSound(5, 2)).toBe('coin');
     expect(coinSound(2, 4)).toBe('coin');
+  });
+});
+
+describe('isNewError', () => {
+  it('fires only when the error counter grows after the first render', () => {
+    expect(isNewError(undefined, 3)).toBe(false);
+    expect(isNewError(3, 3)).toBe(false);
+    expect(isNewError(3, 4)).toBe(true);
+    expect(isNewError(0, 1)).toBe(true);
   });
 });

@@ -20,3 +20,8 @@ export function fightSound(prev: FightState, next: FightState): SoundName | null
 export function coinSound(prev: number, next: number): SoundName | null {
   return prev === next ? null : 'coin';
 }
+
+/** True only when a new failed action happened since the last render — not on mount, not on unrelated re-renders. */
+export function isNewError(previousSeq: number | undefined, seq: number): boolean {
+  return previousSeq !== undefined && seq > previousSeq;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { canvasSize } from './canvasSize';
 
 const VERTEX = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
 const FRAGMENT = `
@@ -65,8 +66,7 @@ export function SwirlBackground({ colors, pixel, speed }: SwirlBackgroundProps) 
     let frame = 0;
     const start = performance.now();
     const draw = (): void => {
-      const width = canvas.clientWidth * window.devicePixelRatio;
-      const height = canvas.clientHeight * window.devicePixelRatio;
+      const { width, height } = canvasSize(canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio);
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;

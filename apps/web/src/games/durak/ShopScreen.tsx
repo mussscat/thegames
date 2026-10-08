@@ -18,7 +18,7 @@ import { PixelCard } from '../../ui/PixelCard';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
 import { PerkCard } from './PerkCard';
-import { coinSound } from './sounds';
+import { coinSound, isNewError } from './sounds';
 import './fight.css';
 import './shop.css';
 
@@ -47,9 +47,10 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
     const sound = coinSound(previousCoins, run.coins);
     if (sound) play(sound);
   }, [run.coins, previousCoins, play]);
+  const previousErrorSeq = usePrevious(errorSeq);
   useEffect(() => {
-    if (errorSeq > 0) play('deny');
-  }, [errorSeq, play]);
+    if (isNewError(previousErrorSeq, errorSeq)) play('deny');
+  }, [errorSeq, previousErrorSeq, play]);
   const next = stageEnemy(run, run.stage + 1);
   return (
     <main className="screen shop" data-testid="shop">

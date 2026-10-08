@@ -21,7 +21,7 @@ import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { FightOverlay } from './FightOverlay';
 import { hitLabelFor } from './hits';
-import { fightSound } from './sounds';
+import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
 import './fight.css';
@@ -58,9 +58,10 @@ export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction
     const sound = fightSound(previous, fight);
     if (sound) playSfx(sound);
   }, [fight, previous, playSfx]);
+  const previousErrorSeq = usePrevious(errorSeq);
   useEffect(() => {
-    if (errorSeq > 0) playSfx('deny');
-  }, [errorSeq, playSfx]);
+    if (isNewError(previousErrorSeq, errorSeq)) playSfx('deny');
+  }, [errorSeq, previousErrorSeq, playSfx]);
   const myTurn = !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
   const legal = legalActions(round, 'player');
