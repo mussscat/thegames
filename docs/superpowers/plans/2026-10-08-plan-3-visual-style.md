@@ -16,6 +16,7 @@
 - Card feel (owner-tuned): tilt 16°, sway 2°, spring stiffness 490 / damping 9, shadow pixel 4.
 - Ranks: Rubik 700 text over the sprite, coloured like the suit. UI font: Pixelify Sans (400/700). Fonts bundled locally via @fontsource (offline PWA).
 - Sound: sine waves only, attack 25 ms, master low-pass 900 Hz, default volume 0.35; on/off + volume in settings.
+- Idle card sway can be switched off in settings («Покачивание карт», default on).
 - No shine/glare on cards.
 - Palettes: Балатро `['#3b1c32','#b4282d','#f2994a']`, Сукно `['#0b2a22','#1f6b4a','#d9b44a']`, Неон `['#1d2b53','#7e2553','#29adff']`; default Неон; background speed 0.6; without WebGL — static palette gradient.
 - Buttons: blue = neutral, red = main fight action, orange = purchases, green = reroll/continue.
@@ -42,7 +43,7 @@
 | `apps/web/src/ui/pixel/perkEmblem.ts` (+test) | 16×16 perk emblems for shop "jokers" |
 | `apps/web/src/storage.ts` | `KeyValueStore`, `browserStore()` shared by run save and settings |
 | `apps/web/src/ui/palettes.ts` | Palette ids, names, colours |
-| `apps/web/src/ui/settings.ts` (+test) | Settings type, defaults, zod parse, load/save |
+| `apps/web/src/ui/settings.ts` (+test) | Settings type (palette, sound, volume, sway), defaults, zod parse, load/save |
 | `apps/web/src/ui/sound.ts` | WebAudio synth (moved from lab, + `hit`, `win`) |
 | `apps/web/src/ui/SettingsContext.tsx` | Provider, `useSettings()` (settings, update, play) |
 | `apps/web/src/ui/fan.ts` (+test) | Hand fan angle/drop and overlap |
@@ -166,7 +167,7 @@ describe('stampOutlinedIcon', () => {
 - [ ] **Step 3: Run the tests**
 
 Run: `npx vitest run apps/web/src/ui/pixel`
-Expected: PASS (8 tests). These pin behaviour the lab already has; if any fails, the lab code is wrong — debug before going on.
+Expected: PASS (9 tests). These pin behaviour the lab already has; if any fails, the lab code is wrong — debug before going on.
 
 - [ ] **Step 4: Typecheck and commit**
 
@@ -435,7 +436,7 @@ git commit -m "feat: pixel perk emblems"
 - Produces:
   - `storage.ts`: `type KeyValueStore`, `browserStore(): KeyValueStore | null` (moved; `runStorage.ts` re-exports both so existing imports keep working).
   - `palettes.ts`: `PALETTE_IDS = ['balatro','felt','neon'] as const`, `type PaletteId`, `type Palette`, `PALETTES: Record<PaletteId, Palette>`.
-  - `settings.ts`: `type Settings = { palette: PaletteId; sound: boolean; volume: number }`, `DEFAULT_SETTINGS`, `SETTINGS_STORAGE_KEY = 'thegame.settings'`, `parseSettings(raw: unknown): Settings`, `loadSettings(store: KeyValueStore | null): Settings`, `saveSettings(store, settings): boolean`.
+  - `settings.ts`: `type Settings = { palette: PaletteId; sound: boolean; volume: number; sway: boolean }`, `DEFAULT_SETTINGS`, `SETTINGS_STORAGE_KEY = 'thegame.settings'`, `parseSettings(raw: unknown): Settings`, `loadSettings(store: KeyValueStore | null): Settings`, `saveSettings(store, settings): boolean`.
   - `sound.ts`: `SOUNDS` (+ `hit`, `win`), `type SoundName`, `playSound(name, enabled)`, `setVolume(v)`.
   - `SettingsContext.tsx`: `SettingsProvider`, `useSettings(): { settings; update(patch: Partial<Settings>): void; play(name: SoundName): void }`.
 
@@ -470,18 +471,18 @@ const brokenStore: KeyValueStore = {
 };
 
 describe('parseSettings', () => {
-  it('defaults to the Неон palette, sound on, volume 0.35', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ palette: 'neon', sound: true, volume: 0.35 });
+  it('defaults to the Неон palette, sound on, volume 0.35, sway on', () => {
+    expect(DEFAULT_SETTINGS).toEqual({ palette: 'neon', sound: true, volume: 0.35, sway: true });
     expect(parseSettings(undefined)).toEqual(DEFAULT_SETTINGS);
   });
 
   it('keeps valid values', () => {
-    const settings = { palette: 'felt', sound: false, volume: 0.5 };
+    const settings = { palette: 'felt', sound: false, volume: 0.5, sway: false };
     expect(parseSettings(settings)).toEqual(settings);
   });
 
   it('replaces each invalid field with its default', () => {
-    expect(parseSettings({ palette: 'pink', sound: 'yes', volume: 7 })).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings({ palette: 'pink', sound: 'yes', volume: 7, sway: 'no' })).toEqual(DEFAULT_SETTINGS);
     expect(parseSettings({ palette: 'balatro', volume: -1 })).toEqual({ ...DEFAULT_SETTINGS, palette: 'balatro' });
   });
 
@@ -494,7 +495,7 @@ describe('parseSettings', () => {
 describe('loadSettings / saveSettings', () => {
   it('round-trips through the store', () => {
     const store = memoryStore();
-    const settings = { palette: 'balatro', sound: false, volume: 0.8 } as const;
+    const settings = { palette: 'balatro', sound: false, volume: 0.8, sway: false } as const;
     expect(saveSettings(store, settings)).toBe(true);
     expect(loadSettings(store)).toEqual(settings);
   });
@@ -564,9 +565,15 @@ import { z } from 'zod';
 import type { KeyValueStore } from '../storage';
 import { PALETTE_IDS, type PaletteId } from './palettes';
 
-export type Settings = { readonly palette: PaletteId; readonly sound: boolean; readonly volume: number };
+export type Settings = {
+  readonly palette: PaletteId;
+  readonly sound: boolean;
+  readonly volume: number;
+  /** Idle sway of the cards in hand. */
+  readonly sway: boolean;
+};
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35 };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -575,6 +582,7 @@ const schema = z.object({
   palette: z.enum(PALETTE_IDS).catch(DEFAULT_SETTINGS.palette),
   sound: z.boolean().catch(DEFAULT_SETTINGS.sound),
   volume: z.number().min(0).max(1).catch(DEFAULT_SETTINGS.volume),
+  sway: z.boolean().catch(DEFAULT_SETTINGS.sway),
 });
 
 export function parseSettings(raw: unknown): Settings {
@@ -1322,6 +1330,15 @@ test('sound can be switched off and the volume slider follows it', async ({ page
   await page.getByRole('button', { name: 'Назад' }).click();
   await expect(page.getByRole('heading', { name: 'Карточный рогалик' })).toBeVisible();
 });
+
+test('card sway can be switched off and stays off after a reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await page.getByLabel('Покачивание карт').uncheck();
+  await page.reload();
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByLabel('Покачивание карт')).not.toBeChecked();
+});
 ```
 
 - [ ] **Step 2: Run to see it fail**
@@ -1371,6 +1388,10 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
         <label className="settings__row">
           <input type="checkbox" checked={settings.sound} onChange={(event) => update({ sound: event.target.checked })} />
           Звук
+        </label>
+        <label className="settings__row">
+          <input type="checkbox" checked={settings.sway} onChange={(event) => update({ sway: event.target.checked })} />
+          Покачивание карт
         </label>
         <label className="settings__row settings__row--column">
           <span>Громкость: {Math.round(settings.volume * 100)}%</span>
@@ -1523,7 +1544,7 @@ Imports: `SettingsProvider` from `'./ui/SettingsContext'`, `Backdrop` from `'./u
 - [ ] **Step 7: Verify**
 
 Run: `npm run typecheck && npx vitest run` — Expected: clean, all pass.
-Run: `npx playwright test e2e/settings.spec.ts` — Expected: PASS (2 tests).
+Run: `npx playwright test e2e/settings.spec.ts` — Expected: PASS (3 tests).
 Run: `npx playwright test e2e/durak.spec.ts` — Expected: PASS (6 tests; styles do not affect selectors). A failure here is fixed now, not deferred.
 
 - [ ] **Step 8: Commit**
@@ -1648,7 +1669,7 @@ export function CardBack({ layoutId }: CardBackProps) {
 
 - [ ] **Step 2: Fanned hands in `DurakFightScreen.tsx`**
 
-Add imports `import type { CSSProperties } from 'react';`, `import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';`, `import './fight.css';`. Add at module level:
+Add imports `import type { CSSProperties } from 'react';`, `import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';`, `import { useSettings } from '../../ui/SettingsContext';`, `import './fight.css';`, and inside the component `const { settings, play: playSfx } = useSettings();` (Task 8 uses `playSfx`). Add at module level:
 
 ```tsx
 /** Later cards sit on top; a big hand overlaps so it never leaves the screen. */
@@ -1689,7 +1710,7 @@ Replace the two hand blocks (keep `data-testid`s):
                   onTap={myTurn && !split ? () => play(card) : undefined}
                   onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
                   legalUses={myTurn && split ? legalUses(card.id) : undefined}
-                  idle
+                  idle={settings.sway}
                   swayDelay={index * 0.4}
                 />
               </div>
@@ -1966,10 +1987,9 @@ Add `const [errorSeq, setErrorSeq] = useState(0);`; in the failure branch of `ac
 
 - [ ] **Step 5: Sounds in the fight screen**
 
-In `DurakFightScreen` (imports: `useEffect` from react, `useSettings`, `usePrevious`, `fightSound`, `PixelButton`):
+In `DurakFightScreen` (imports: `useEffect` from react, `usePrevious`, `fightSound`, `PixelButton`; `playSfx` comes from the `useSettings()` call added in Task 7):
 
 ```tsx
-  const { play: playSfx } = useSettings();
   const previous = usePrevious(fight);
   useEffect(() => {
     if (!previous || previous === fight) return;
@@ -2127,7 +2147,7 @@ Append to `fight.css`:
 - [ ] **Step 9: Verify**
 
 Run: `npm run typecheck && npx vitest run` — Expected: clean, all pass.
-Run: `npx playwright test` — Expected: PASS (8 tests).
+Run: `npx playwright test` — Expected: PASS (9 tests).
 Manual: a take shakes the HP bar and pops «−N взял»; sounds: card play, take thud, «Бито» sweep, illegal tap deny (twice in a row → two sounds), win arpeggio; sound off in settings → silence.
 
 - [ ] **Step 10: Commit**
@@ -2377,7 +2397,7 @@ JSX:
 - [ ] **Step 4: Verify**
 
 Run: `npm run typecheck && npx vitest run` — Expected: clean, all pass.
-Run: `npx playwright test` — Expected: PASS (8 tests).
+Run: `npx playwright test` — Expected: PASS (9 tests).
 Manual: win a fight — jokers with emblems, mini enhanced cards per offer, coins ring on buy/sell, deny on a failed buy, «Твоя колода» shows mini cards with labels.
 
 - [ ] **Step 5: Commit**
@@ -2410,11 +2430,11 @@ Under the web app section add: `?lab` opens the card lab (feel/palette tuning); 
 - [ ] **Step 4: Full verification**
 
 Run: `npm run typecheck && npm run coverage && npm run build && npx playwright test`
-Expected: no type errors; all unit tests pass with coverage thresholds met; build succeeds; 8 e2e pass.
+Expected: no type errors; all unit tests pass with coverage thresholds met; build succeeds; 9 e2e pass.
 
 - [ ] **Step 5: Manual check (412px phone width and laptop)**
 
-Menu → settings (each palette, sound off/on, volume) → new run → fight (fan, lift, split card, take, «Бито», hit pop, overlay) → shop (buy perk, buy enhancement, sell, reroll) → run over; `?lab` still works. Start Chrome with `--disable-webgl` and emulate `prefers-reduced-motion: reduce` — gradient backdrop shows, no console errors.
+Menu → settings (each palette, sound off/on, volume, sway off/on) → new run → fight (fan, lift, split card, take, «Бито», hit pop, overlay) → shop (buy perk, buy enhancement, sell, reroll) → run over; `?lab` still works. Start Chrome with `--disable-webgl` and emulate `prefers-reduced-motion: reduce` — gradient backdrop shows, no console errors.
 
 - [ ] **Step 6: Commit**
 
