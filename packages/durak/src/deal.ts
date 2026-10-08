@@ -39,6 +39,7 @@ export function dealRound(
     boss,
     profiles,
     carried: {},
+    fixed: { player: {}, enemy: {} },
   };
   return [round, nextRng];
 }

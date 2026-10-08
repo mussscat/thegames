@@ -6,9 +6,9 @@ export type CardEnhancements = { readonly own?: EnhancementId; readonly foreign?
 
 export type EnhancementVariant = { readonly use?: EnhancementSource; readonly enhancement?: EnhancementId };
 
-/** Own enhancement always; plus the one the card carried in when taken from the table (if it differs). */
+/** Own = what this side fixed for the card this round, else its profile; plus a different enhancement the card carried in. */
 export function cardEnhancements(state: RoundState, holder: PlayerId, card: Card): CardEnhancements {
-  const own = state.profiles[holder][card.id];
+  const own = state.fixed[holder][card.id] ?? state.profiles[holder][card.id];
   const carried = state.carried[card.id];
   const foreign = carried && carried !== own ? carried : undefined;
   return { ...(own ? { own } : {}), ...(foreign ? { foreign } : {}) };

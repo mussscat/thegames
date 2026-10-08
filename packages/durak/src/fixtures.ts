@@ -27,6 +27,7 @@ export function roundState(overrides: Partial<RoundState> = {}): RoundState {
     boss: null,
     profiles: EMPTY_PROFILES,
     carried: {},
+    fixed: { player: {}, enemy: {} },
     ...overrides,
   };
 }

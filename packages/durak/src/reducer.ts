@@ -48,12 +48,14 @@ function pick(state: RoundState, actor: PlayerId, cardId: string, use?: Enhancem
   return enhancement.ok ? ok({ card, enhancement: enhancement.value }) : enhancement;
 }
 
-/** Removes the played card from hand; its enhancement now lives on the table pair. */
-function afterPlay(state: RoundState, actor: PlayerId, card: Card): RoundState {
+/** Removes the played card from hand; the enhancement it was played with is fixed for the actor this round. */
+function afterPlay(state: RoundState, actor: PlayerId, card: Card, enhancement: EnhancementId | undefined): RoundState {
+  const fixed = enhancement ? { ...state.fixed, [actor]: { ...state.fixed[actor], [card.id]: enhancement } } : state.fixed;
   return {
     ...state,
     hands: withHand(state.hands, actor, withoutCard(state.hands[actor], card.id)),
     carried: withoutCarried(state.carried, [card.id]),
+    fixed,
   };
 }
 
@@ -64,7 +66,7 @@ function attack(state: RoundState, actor: PlayerId, cardId: string, use?: Enhanc
   const { card, enhancement } = played.value;
   if (!canThrowIn(state, card)) return err('cannotThrowIn');
   const pair = { attack: card, defense: null, ...(enhancement ? { attackEnh: enhancement } : {}) };
-  return ok({ ...afterPlay(state, actor, card), table: [...state.table, pair] });
+  return ok({ ...afterPlay(state, actor, card, enhancement), table: [...state.table, pair] });
 }
 
 function defend(state: RoundState, actor: PlayerId, cardId: string, use?: EnhancementSource): RoundResult {
@@ -77,7 +79,7 @@ function defend(state: RoundState, actor: PlayerId, cardId: string, use?: Enhanc
     return err('cannotBeat');
   }
   const covered = { ...pair, defense: card, ...(enhancement ? { defenseEnh: enhancement } : {}) };
-  return ok({ ...afterPlay(state, actor, card), table: state.table.map((p) => (p === pair ? covered : p)) });
+  return ok({ ...afterPlay(state, actor, card, enhancement), table: state.table.map((p) => (p === pair ? covered : p)) });
 }
 
 function take(state: RoundState, actor: PlayerId): RoundResult {

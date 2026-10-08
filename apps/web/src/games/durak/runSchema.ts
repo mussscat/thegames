@@ -2,7 +2,7 @@ import { RANKS, SUITS, type Rank } from '@game/core';
 import { BOSS_RULES, ENHANCEMENT_IDS, MAX_PERKS, PERK_IDS, RUN_SCHEDULE, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
@@ -33,6 +33,7 @@ const round = z.object({
   boss,
   profiles: z.object({ player: profile, enemy: profile }),
   carried: z.record(z.string(), enhancement),
+  fixed: z.object({ player: profile, enemy: profile }),
 });
 
 const fight = z.object({

@@ -1,5 +1,5 @@
 import type { Card, Suit } from '@game/core';
-import type { EnhancementId, Profiles } from './enhancements';
+import type { DeckProfile, EnhancementId, Profiles } from './enhancements';
 
 export type PlayerId = 'player' | 'enemy';
 
@@ -58,6 +58,8 @@ export type RoundState = {
   readonly boss: BossRule | null;
   readonly profiles: Profiles;
   readonly carried: Carried;
+  /** Enhancements a side played a card with this round; they override that side's profile until the next deal. */
+  readonly fixed: Readonly<Record<PlayerId, DeckProfile>>;
 };
 
 export type RoundAction =

@@ -1,7 +1,9 @@
+import { createRng } from '@game/core';
 import { describe, expect, it } from 'vitest';
+import { dealRound } from './deal';
 import { c, filler, roundState } from './fixtures';
 import { applyRoundAction } from './reducer';
-import { currentActor } from './rules';
+import { currentActor, legalActions } from './rules';
 import type { RoundState } from './types';
 
 function expectOk(result: ReturnType<typeof applyRoundAction>): RoundState {
@@ -315,5 +317,40 @@ describe('enhancements and card origin', () => {
     });
     const next = expectOk(applyRoundAction(state, 'player', { type: 'endAttack' }));
     expect(next.carried).toEqual({ 'hearts-6': 'sharp' });
+  });
+});
+
+describe('chosen enhancement is fixed for the round', () => {
+  it('after choosing the brought enhancement, the own profile one no longer comes back for that card', () => {
+    const start = roundState({
+      hands: { player: [c(7, 'clubs')], enemy: filler(5, 'diamonds') },
+      carried: { 'clubs-7': 'golden' },
+      profiles: { player: { 'clubs-7': 'heavy' }, enemy: {} },
+    });
+    const played = expectOk(applyRoundAction(start, 'player', { type: 'attack', cardId: 'clubs-7', use: 'foreign' }));
+    expect(played.fixed.player).toEqual({ 'clubs-7': 'golden' });
+    const takenBack = {
+      ...played,
+      table: [],
+      hands: { ...played.hands, player: [c(7, 'clubs')] },
+      carried: { 'clubs-7': 'golden' as const },
+    };
+    expect(legalActions(takenBack, 'player')).toEqual([{ type: 'attack', cardId: 'clubs-7' }]);
+    const again = expectOk(applyRoundAction(takenBack, 'player', { type: 'attack', cardId: 'clubs-7' }));
+    expect(again.table[0]?.attackEnh).toBe('golden');
+  });
+
+  it('the bot choice is fixed for the bot too', () => {
+    const start = roundState({
+      attacker: 'enemy',
+      hands: { player: filler(5), enemy: [c(7, 'clubs')] },
+      profiles: { player: {}, enemy: { 'clubs-7': 'coin' } },
+    });
+    const played = expectOk(applyRoundAction(start, 'enemy', { type: 'attack', cardId: 'clubs-7' }));
+    expect(played.fixed.enemy).toEqual({ 'clubs-7': 'coin' });
+  });
+
+  it('a new round starts with nothing fixed', () => {
+    expect(dealRound(createRng(3))[0].fixed).toEqual({ player: {}, enemy: {} });
   });
 });
