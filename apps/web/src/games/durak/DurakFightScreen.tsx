@@ -10,22 +10,28 @@ import {
   type FightState,
 } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
 import { HpBar } from '../../components/HpBar';
 import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';
+import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
+import { usePrevious } from '../../ui/usePrevious';
 import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { FightOverlay } from './FightOverlay';
 import { hitLabelFor } from './hits';
+import { fightSound } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
 import './fight.css';
 
+/** Card widths a hand may take: leaves room for the fan's rotation at the screen edges. */
+const HAND_FIT = 6;
+
 /** Later cards sit on top; a big hand overlaps so it never leaves the screen. */
 function slotStyle(index: number, count: number, fan: boolean): CSSProperties {
-  const overlap = handOverlap(count);
+  const overlap = handOverlap(count, HAND_FIT);
   return {
     marginLeft: index === 0 ? 0 : `calc(var(--slot-w) * ${-overlap})`,
     transform: fan ? `translateY(${fanDrop(index, count)}px) rotate(${fanAngle(index, count)}deg)` : undefined,
@@ -36,15 +42,25 @@ function slotStyle(index: number, count: number, fan: boolean): CSSProperties {
 type DurakFightScreenProps = {
   readonly fight: FightState;
   readonly error: string | null;
+  readonly errorSeq: number;
   readonly header: ReactNode;
   readonly onFightAction: (action: FightAction) => void;
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
 };
 
-export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
+  const previous = usePrevious(fight);
+  useEffect(() => {
+    if (!previous || previous === fight) return;
+    const sound = fightSound(previous, fight);
+    if (sound) playSfx(sound);
+  }, [fight, previous, playSfx]);
+  useEffect(() => {
+    if (errorSeq > 0) playSfx('deny');
+  }, [errorSeq, playSfx]);
   const myTurn = !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
   const legal = legalActions(round, 'player');
@@ -61,10 +77,10 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
     <LayoutGroup>
       <main className="screen fight">
         <header className="fight__header">
-          <button type="button" className="btn btn--small" onClick={onExit}>
+          <PixelButton tone="blue" small onClick={onExit}>
             Меню
-          </button>
-          <span className="fight__round">Раздача {fight.roundNumber}</span>
+          </PixelButton>
+          <span className="chip">Раздача {fight.roundNumber}</span>
         </header>
         {header}
 
@@ -88,7 +104,7 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
           <TableView table={round.table} attacker={round.attacker} />
         </div>
 
-        <p className="fight__status" role="status">
+        <p className="fight__status panel" role="status">
           {error ?? statusText(fight)}
         </p>
         <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />

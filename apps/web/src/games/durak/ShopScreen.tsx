@@ -24,6 +24,7 @@ type ShopScreenProps = {
   readonly shop: ShopState;
   readonly reward: FightReward;
   readonly error: string | null;
+  readonly errorSeq: number;
   readonly onAct: (action: RunAction) => void;
   readonly onExit: () => void;
 };

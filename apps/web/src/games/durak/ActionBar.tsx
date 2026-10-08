@@ -1,3 +1,4 @@
+import { PixelButton } from '../../ui/PixelButton';
 import type { FightAction, RoundState } from '@game/durak';
 
 type ActionBarProps = {
@@ -13,17 +14,17 @@ export function ActionBar({ round, myTurn, onAct }: ActionBarProps) {
   if (round.attacker === 'enemy') {
     return (
       <div className="actions">
-        <button type="button" className="btn" onClick={() => onAct({ type: 'take' })}>
+        <PixelButton tone="blue" onClick={() => onAct({ type: 'take' })}>
           Беру
-        </button>
+        </PixelButton>
       </div>
     );
   }
   return (
     <div className="actions">
-      <button type="button" className="btn btn--primary" onClick={() => onAct({ type: 'endAttack' })}>
+      <PixelButton tone="red" onClick={() => onAct({ type: 'endAttack' })}>
         {round.defenderTaking ? 'Готово' : 'Бито'}
-      </button>
+      </PixelButton>
     </div>
   );
 }

@@ -1,24 +1,27 @@
 import { AnimatePresence, motion } from 'motion/react';
+import { hpSegments } from './hpSegments';
 
-const HIT_FLOAT_PX = -4;
+const SHAKE = { x: [0, -5, 5, -3, 3, 0] };
+const POP = { scale: [0.3, 1.35, 1], opacity: 1, y: -6 };
 
 type HpBarProps = {
   readonly label: string;
   readonly hp: number;
   readonly maxHp: number;
-  /** Damage label to float above the bar; `hitKey` changes on every new hit to replay the animation. */
+  /** Damage label to pop near the bar; `hitKey` changes on every new hit to replay the animation. */
   readonly hitLabel?: string | null;
   readonly hitKey?: number;
 };
 
 export function HpBar({ label, hp, maxHp, hitLabel = null, hitKey = 0 }: HpBarProps) {
-  const percent = maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0;
   return (
-    <div className="hp" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
+    <div className="hp panel" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
       <span className="hp__label">{label}</span>
-      <div className="hp__track">
-        <motion.div className="hp__fill" initial={false} animate={{ width: `${percent}%` }} />
-      </div>
+      <motion.div key={hitLabel ? hitKey : 'still'} className="hp__track" animate={hitLabel ? SHAKE : {}} transition={{ duration: 0.35 }}>
+        {hpSegments(hp, maxHp).map((full, i) => (
+          <span key={i} className={full ? 'hp__seg hp__seg--full' : 'hp__seg'} />
+        ))}
+      </motion.div>
       <span className="hp__value">
         {hp}/{maxHp}
       </span>
@@ -28,9 +31,10 @@ export function HpBar({ label, hp, maxHp, hitLabel = null, hitKey = 0 }: HpBarPr
             key={hitKey}
             className="hp__hit"
             data-testid={`hit-${label}`}
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: HIT_FLOAT_PX }}
+            initial={{ scale: 0.3, opacity: 0, y: 0 }}
+            animate={POP}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
           >
             {hitLabel}
           </motion.span>

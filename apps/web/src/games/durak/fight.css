@@ -67,6 +67,52 @@
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
 .deck { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; text-align: center; }
-.deck__pile { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; margin-bottom: calc(var(--card-w) * 0.3); }
+.deck__pile { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; margin: 0 calc(var(--card-w) * 0.45) calc(var(--card-w) * 0.3) 0; }
 .deck__layer { position: absolute; inset: 0; }
 .deck__trump-card { position: absolute; left: 30%; top: 22%; transform: rotate(90deg); }
+
+/* ---------- fight layout ---------- */
+.fight__header { display: flex; justify-content: space-between; align-items: center; }
+.fight__status { margin: 0; min-height: 1.4em; padding: 6px 10px; text-align: center; }
+.actions { display: flex; justify-content: center; gap: 12px; min-height: 52px; }
+
+.run-header { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; text-align: center; }
+.run-header__boss { color: #ff8a80; }
+.run-header__meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.run-header__coins { color: var(--gold); }
+
+/* ---------- HP ---------- */
+.hp { position: relative; display: grid; grid-template-columns: 5.5em 1fr 3em; align-items: center; gap: 8px; padding: 6px 10px; font-size: 0.9rem; }
+.hp__track { display: flex; gap: 2px; height: 14px; }
+.hp__seg { flex: 1; background: rgb(0 0 0 / 55%); box-shadow: inset 0 -3px 0 rgb(0 0 0 / 35%); }
+.hp__seg--full { background: #e24a3b; box-shadow: inset 0 3px 0 #ff8a73, inset 0 -3px 0 #a12a1f; }
+.hp__value { text-align: right; }
+.hp__hit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 2;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ff5a4a;
+  text-shadow: 3px 3px 0 #000000;
+  pointer-events: none;
+}
+.hand--player + .hp .hp__hit { top: auto; bottom: calc(100% + 2px); }
+
+/* ---------- round / fight overlay ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 55%);
+}
+.overlay__panel { width: min(100%, 360px); display: flex; flex-direction: column; gap: 12px; padding: 20px; text-align: center; }
+.overlay__panel p { margin: 0; }
+.overlay__title { margin: 0; font-size: 1.8rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }

@@ -6,13 +6,14 @@ export function RunHeader({ run }: { readonly run: RunState }) {
   const { circle, fight } = stageLabel(run.stage);
   const enemy = stageEnemy(run, run.stage);
   return (
-    <div className="run-header" data-testid="run-header">
+    <div className="run-header panel" data-testid="run-header">
       <span>
         Круг {circle} · бой {fight}/{FIGHTS_PER_CIRCLE} — {enemy.name} ({TIER_LABELS[enemy.tier]})
       </span>
       {enemy.boss && <span className="run-header__boss">Правило: {BOSSES[enemy.boss].description}</span>}
-      <span>
-        Монеты: {run.coins} · Перки: {run.perks.length > 0 ? run.perks.map((id) => PERKS[id].name).join(', ') : '—'}
+      <span className="run-header__meta">
+        <span className="chip run-header__coins">● {run.coins}</span>
+        <span className="chip">Перки: {run.perks.length > 0 ? run.perks.map((id) => PERKS[id].name).join(', ') : '—'}</span>
       </span>
     </div>
   );

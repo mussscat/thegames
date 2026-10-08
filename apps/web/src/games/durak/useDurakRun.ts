@@ -8,12 +8,15 @@ const ENEMY_DELAY_MS = 700;
 export type DurakRun = {
   readonly run: RunState;
   readonly error: string | null;
+  /** Increments on every failed action, so the same error twice still gives feedback. */
+  readonly errorSeq: number;
   readonly act: (action: RunAction) => void;
 };
 
 export function useDurakRun(initial: RunState): DurakRun {
   const [run, setRun] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const [errorSeq, setErrorSeq] = useState(0);
 
   const act = (action: RunAction): void => {
     const result = applyRunAction(run, action);
@@ -22,6 +25,7 @@ export function useDurakRun(initial: RunState): DurakRun {
       setError(null);
     } else {
       setError(errorMessage(result.error));
+      setErrorSeq((n) => n + 1);
     }
   };
 
@@ -49,5 +53,5 @@ export function useDurakRun(initial: RunState): DurakRun {
     return () => window.clearTimeout(timer);
   }, [run]);
 
-  return { run, error, act };
+  return { run, error, errorSeq, act };
 }

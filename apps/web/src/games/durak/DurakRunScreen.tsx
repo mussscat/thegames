@@ -12,7 +12,7 @@ type DurakRunScreenProps = {
 };
 
 export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenProps) {
-  const { run, error, act } = useDurakRun(initialRun);
+  const { run, error, errorSeq, act } = useDurakRun(initialRun);
   const { phase } = run;
   switch (phase.kind) {
     case 'fight':
@@ -20,6 +20,7 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
         <DurakFightScreen
           fight={phase.fight}
           error={error}
+          errorSeq={errorSeq}
           header={<RunHeader run={run} />}
           onFightAction={(action) => act({ type: 'fight', actor: 'player', action })}
           onLeaveFight={() => act({ type: 'leaveFight' })}
@@ -27,7 +28,9 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
         />
       );
     case 'shop':
-      return <ShopScreen run={run} shop={phase.shop} reward={phase.reward} error={error} onAct={act} onExit={onExit} />;
+      return (
+        <ShopScreen run={run} shop={phase.shop} reward={phase.reward} error={error} errorSeq={errorSeq} onAct={act} onExit={onExit} />
+      );
     case 'over':
       return <RunOverScreen run={run} won={phase.won} onNewRun={onNewRun} onExit={onExit} />;
   }
