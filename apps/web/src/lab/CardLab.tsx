@@ -6,12 +6,13 @@ import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
 import './lab.css';
 import { PixelCard, type CardFeel } from './PixelCard';
-import { playSound } from './sound';
+import { playSound, setVolume } from './sound';
 import { PALETTES, SwirlBackground } from './SwirlBackground';
 
 const HERO: Card = makeCard('hearts', 12);
 const HAND: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('diamonds', 14), makeCard('hearts', 9), makeCard('spades', 13)];
-const DEFAULT_FEEL: CardFeel = { tilt: 18, sway: 2, stiffness: 260, damping: 16, pixel: 3, shine: true };
+/** Tuned by the user in the lab, 2026-10-08. */
+const DEFAULT_FEEL: CardFeel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4, shine: true };
 
 type SliderProps = { readonly label: string; readonly value: number; readonly min: number; readonly max: number; readonly step?: number; readonly onChange: (v: number) => void };
 
@@ -28,8 +29,9 @@ function Slider({ label, value, min, max, step = 1, onChange }: SliderProps) {
 
 export function CardLab() {
   const [feel, setFeel] = useState<CardFeel>(DEFAULT_FEEL);
-  const [paletteIndex, setPaletteIndex] = useState(0);
-  const [speed, setSpeed] = useState(1);
+  const [paletteIndex, setPaletteIndex] = useState(2);
+  const [speed, setSpeed] = useState(0.6);
+  const [volume, setVolumeState] = useState(0.5);
   const [sound, setSound] = useState(true);
   const [faceDown, setFaceDown] = useState(false);
   const [enhancement, setEnhancement] = useState<EnhancementId | undefined>('golden');
@@ -110,6 +112,18 @@ export function CardLab() {
             <Slider label="Затухание" value={feel.damping} min={5} max={40} onChange={(damping) => tune({ damping })} />
             <Slider label="Пиксель" value={feel.pixel} min={1} max={6} onChange={(pixel) => tune({ pixel })} />
             <Slider label="Скорость фона" value={speed} min={0} max={3} step={0.1} onChange={setSpeed} />
+            <Slider
+              label="Громкость"
+              value={volume}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(v) => {
+                setVolumeState(v);
+                setVolume(v);
+                playSound('select', sound);
+              }}
+            />
             <label className="lab__slider">
               <span>Палитра</span>
               <select value={paletteIndex} onChange={(e) => setPaletteIndex(Number(e.target.value))}>

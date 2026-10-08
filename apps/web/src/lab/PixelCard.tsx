@@ -1,8 +1,8 @@
-import { isRedSuit, rankLabel, type Card } from '@game/core';
+import type { Card } from '@game/core';
 import { ENHANCEMENTS, type EnhancementId } from '@game/durak';
 import { motion, useSpring } from 'motion/react';
-import { useRef, useState, type PointerEvent } from 'react';
-import { PixelSuit } from './PixelSuit';
+import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { backPixels, frontPixels, SpriteSvg } from './CardSprite';
 
 export type CardFeel = {
   /** Max tilt in degrees while the pointer is over the card. */
@@ -28,8 +28,7 @@ type PixelCardProps = {
   readonly onHover?: () => void;
 };
 
-const INK = '#1b1426';
-const RED = '#c2292e';
+const BACK = backPixels();
 
 export function PixelCard({ card, feel, width, enhancement, faceDown = false, selected = false, swayDelay = 0, onTap, onHover }: PixelCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,8 +36,7 @@ export function PixelCard({ card, feel, width, enhancement, faceDown = false, se
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squash, setSquash] = useState(0);
-  const color = isRedSuit(card.suit) ? RED : INK;
-  const label = rankLabel(card.rank);
+  const front = useMemo(() => frontPixels(card, enhancement), [card, enhancement]);
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
     const rect = ref.current?.getBoundingClientRect();
@@ -91,26 +89,18 @@ export function PixelCard({ card, feel, width, enhancement, faceDown = false, se
               animate={squash ? { scaleX: [1, 1.14, 0.94, 1.03, 1], scaleY: [1, 0.86, 1.07, 0.98, 1] } : {}}
               transition={{ duration: 0.38, ease: 'easeOut' }}
             >
-              <div className={enhancement ? 'pcard__face pcard__front pcard__front--enhanced' : 'pcard__face pcard__front'}>
-                <span className="pcard__corner" style={{ color }}>
-                  {label}
-                  <PixelSuit suit={card.suit} size={width * 0.16} color={color} />
-                </span>
-                <span className="pcard__center">
-                  <PixelSuit suit={card.suit} size={width * 0.46} color={color} />
-                </span>
-                <span className="pcard__corner pcard__corner--bottom" style={{ color }}>
-                  {label}
-                  <PixelSuit suit={card.suit} size={width * 0.16} color={color} />
-                </span>
-                {enhancement && <span className="pcard__badge">{ENHANCEMENTS[enhancement].name}</span>}
+              <div className="pcard__face pcard__front">
+                <SpriteSvg pixels={front} />
                 {enhancement && feel.shine && <span className="pcard__shine" />}
               </div>
-              <div className="pcard__face pcard__back" />
+              <div className="pcard__face pcard__back">
+                <SpriteSvg pixels={BACK} />
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>
       </motion.div>
+      {enhancement && <span className="pcard__label">{ENHANCEMENTS[enhancement].name}</span>}
     </motion.div>
   );
 }

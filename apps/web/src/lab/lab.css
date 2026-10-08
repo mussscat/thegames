@@ -39,7 +39,7 @@
 .pcard::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 3% 3%;
   transform: translate(calc(var(--px) * 2), calc(var(--px) * 4));
   background: rgb(0 0 0 / 45%);
   clip-path: var(--edge);
@@ -54,16 +54,9 @@
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  clip-path: var(--edge);
-  border: var(--px) solid #1b1426;
 }
-.pcard__front {
-  display: grid;
-  place-items: center;
-  background: #f4efe2;
-  box-shadow: inset 0 calc(var(--px) * -2) 0 rgb(0 0 0 / 10%);
-  font-weight: 700;
-}
+.sprite { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.pcard__front { background: transparent; }
 .pcard__front--enhanced { background: linear-gradient(180deg, #fff6d6, #f1d98a); }
 .pcard__corner {
   position: absolute;
@@ -146,3 +139,21 @@
 .lab__slider input, .lab__slider select { accent-color: #f39c32; font: inherit; }
 .lab__check { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
 .lab__dump { grid-column: 1 / -1; margin: 0; font-size: 0.65rem; white-space: pre-wrap; opacity: 0.7; }
+
+.pcard__label {
+  position: absolute;
+  left: 50%;
+  top: 103%;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  background: #1b1426;
+  color: #f2c94c;
+  font-size: 0.5em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 50%);
+}
+.pcard__shine {
+  background: linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 55%) 40% 48%, transparent 48%) !important;
+  background-size: 260% 100% !important;
+  animation: pcard-shine 2.8s steps(18) infinite !important;
+}
