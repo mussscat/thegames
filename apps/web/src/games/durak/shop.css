@@ -51,8 +51,8 @@
     grid-template-areas:
       'header header'
       'offers reward'
-      'offers perks'
-      'enh perks'
+      'offers owned'
+      'enh owned'
       'enh mydeck'
       'enh status'
       'enh actions';
@@ -64,8 +64,13 @@
   .shop > .shop__offers { grid-area: offers; }
   .shop > .shop__reward { grid-area: reward; }
   .shop > .shop__enh { grid-area: enh; align-self: start; }
-  .shop > .shop__perks { grid-area: perks; }
+  .shop > .shop__owned { grid-area: owned; }
   .shop > .shop__mydeck { grid-area: mydeck; }
   .shop > .fight__status { grid-area: status; }
   .shop > .actions { grid-area: actions; justify-content: flex-end; }
 }
+
+.joker__actions { display: flex; gap: 4px; }
+.joker--rare { border-color: #22509c; }
+.joker--legendary { border-color: #7e3fbf; }
+.joker__rarity { font-size: 0.65rem; opacity: 0.8; }

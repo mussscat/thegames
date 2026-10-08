@@ -20,8 +20,10 @@ export function HpBar({ label, hp, maxHp, hitLabel = null, hitKey = 0, className
     <div className={`hp panel ${className}`} role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
       <span className="hp__label">{label}</span>
       <motion.div key={hitLabel ? hitKey : 'still'} className="hp__track" animate={hitLabel ? SHAKE : {}} transition={{ duration: 0.35 }}>
-        {hpSegments(hp, maxHp).map((full, i) => (
-          <span key={i} className={full ? 'hp__seg hp__seg--full' : 'hp__seg'} />
+        {hpSegments(hp, maxHp).map((fill, i) => (
+          <span key={i} className="hp__seg">
+            {fill > 0 && <span className="hp__seg-fill" style={{ width: `${fill * 100}%` }} />}
+          </span>
         ))}
       </motion.div>
       <span className="hp__value">

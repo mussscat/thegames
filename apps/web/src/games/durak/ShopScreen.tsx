@@ -1,8 +1,8 @@
 import { createDeck, rankLabel, SUIT_SYMBOLS, type Card } from '@game/core';
 import {
   ENHANCEMENTS,
-  MAX_PERKS,
-  PERKS,
+  JOKERS,
+  MAX_JOKERS,
   sellPrice,
   stageEnemy,
   stageLabel,
@@ -17,7 +17,7 @@ import { PixelButton } from '../../ui/PixelButton';
 import { PixelCard } from '../../ui/PixelCard';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
-import { PerkCard } from './PerkCard';
+import { JokerCard } from './JokerCard';
 import { coinSound, isNewError } from './sounds';
 import './fight.css';
 import './shop.css';
@@ -66,7 +66,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         <h2 className="shop__title">Награда за бой: +{reward.total}</h2>
         <p>
           Победа {reward.base} · HP {reward.hpBonus} · проценты {reward.interest}
-          {reward.perkBonus > 0 && ` · перки ${reward.perkBonus}`}
+          {reward.jokerBonus > 0 && ` · джокеры ${reward.jokerBonus}`}
         </p>
       </section>
 
@@ -75,15 +75,15 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         <div className="shop__shelf">
           {shop.offers.map((offer, index) =>
             offer ? (
-              <PerkCard
-                key={offer.perkId}
-                perkId={offer.perkId}
+              <JokerCard
+                key={offer.jokerId}
+                jokerId={offer.jokerId}
                 action={
                   <PixelButton
                     tone="orange"
                     small
-                    onClick={() => onAct({ type: 'buyPerk', index })}
-                    aria-label={`Купить ${PERKS[offer.perkId].name} за ${offer.price}`}
+                    onClick={() => onAct({ type: 'buyJoker', index })}
+                    aria-label={`Купить ${JOKERS[offer.jokerId].name} за ${offer.price}`}
                   >
                     ● {offer.price}
                   </PixelButton>
@@ -139,20 +139,40 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         )}
       </section>
 
-      <section className="panel shop__perks">
+      <section className="panel shop__owned" data-testid="owned-jokers">
         <h3 className="shop__title">
-          Твои перки ({run.perks.length}/{MAX_PERKS})
+          Твои джокеры ({run.jokers.length}/{MAX_JOKERS})
         </h3>
-        {run.perks.length === 0 && <p className="shop__empty">Пока нет</p>}
+        {run.jokers.length === 0 && <p className="shop__empty">Пока нет</p>}
         <div className="shop__shelf">
-          {run.perks.map((id) => (
-            <PerkCard
+          {run.jokers.map((id, i) => (
+            <JokerCard
               key={id}
-              perkId={id}
+              jokerId={id}
               action={
-                <PixelButton tone="blue" small onClick={() => onAct({ type: 'sellPerk', perkId: id })}>
-                  Продать +{sellPrice(id)}
-                </PixelButton>
+                <span className="joker__actions">
+                  <PixelButton
+                    tone="blue"
+                    small
+                    disabled={i === 0}
+                    aria-label={`${JOKERS[id].name} левее`}
+                    onClick={() => onAct({ type: 'moveJoker', from: i, to: i - 1 })}
+                  >
+                    ◀
+                  </PixelButton>
+                  <PixelButton tone="blue" small onClick={() => onAct({ type: 'sellJoker', jokerId: id })}>
+                    Продать +{sellPrice(id)}
+                  </PixelButton>
+                  <PixelButton
+                    tone="blue"
+                    small
+                    disabled={i === run.jokers.length - 1}
+                    aria-label={`${JOKERS[id].name} правее`}
+                    onClick={() => onAct({ type: 'moveJoker', from: i, to: i + 1 })}
+                  >
+                    ▶
+                  </PixelButton>
+                </span>
               }
             />
           ))}
