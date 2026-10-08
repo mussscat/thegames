@@ -126,12 +126,27 @@
 .stats__value { font-family: var(--font-head); font-size: 0.8rem; white-space: nowrap; }
 .stats__value--gold { color: var(--gold); }
 
-.perk-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.perk-row__tray { display: flex; gap: 6px; }
-.perk-row__perk { display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 2px; border: 2px solid #000000; border-radius: 6px; background: #2c1f3d; }
-.perk-row__emblem { width: 1.6em; height: 1.6em; }
-.perk-row__name { font-size: 0.75em; white-space: nowrap; }
-.perk-row__count { font-size: 0.75em; opacity: 0.8; white-space: nowrap; }
+.perks { grid-area: perks; display: flex; flex-direction: column; gap: 0.5em; min-height: 0; }
+.perks--empty { display: none; }
+.perks__head { position: relative; display: flex; justify-content: center; align-items: baseline; }
+.perks__title { margin: 0; font-size: 0.8rem; }
+.perks__count { position: absolute; right: 0; bottom: 0; font-size: 0.85em; opacity: 0.85; }
+.perks__list { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0; padding: 0; list-style: none; }
+.perks__card {
+  flex: 1 1 10em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 0.5em 0.7em;
+  border: 3px solid #000000;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fbf6ea, #ddd3bd);
+  color: var(--ink);
+  text-shadow: none;
+  box-shadow: 0 3px 0 rgb(0 0 0 / 45%);
+}
+.perks__name { font-weight: 800; }
+.perks__text { font-size: 0.8em; line-height: 1.3; }
 .hand__count { align-self: center; margin-left: 8px; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
 
 /* ---------- screen layout ----------
@@ -161,14 +176,12 @@
 .fight .run-header { grid-area: run; }
 .hp--enemy { grid-area: ehp; }
 .hp--player { grid-area: php; }
-.perk-row { grid-area: perks; }
 .hand--enemy { grid-area: ehand; }
 .fight .deck { grid-area: deck; align-self: center; }
 .fight .table { grid-area: table; }
 .fight__status { grid-area: status; }
 .fight .actions { grid-area: actions; }
 .hand--player { grid-area: hand; }
-.perk-row:has(.perk-row__tray:empty) { display: none; }
 /* In portrait the player's HP sits under the hand, so the hit pops upwards. */
 .hp--player .hp__hit { top: auto; bottom: calc(100% + 2px); }
 
@@ -187,8 +200,8 @@
     grid-area: side;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto 1fr auto;
-    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'stats stats' '. .' 'menu actions';
+    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'stats stats' 'perks perks' 'menu actions';
     gap: 0.5em;
     padding: max(0.6em, env(safe-area-inset-top)) 0.6em max(0.6em, env(safe-area-inset-bottom)) max(0.6em, env(safe-area-inset-left));
     background: rgb(20 14 30 / 82%);
@@ -200,7 +213,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto minmax(0, 1fr) auto auto;
-    /* Perks (left) and the enemy hand (right) share the top row, so the enemy hand never widens the deck column. */
+    /* The enemy hand spans the top row, so it never widens the deck column. */
     grid-template-areas: 'top top' 'table table' 'status status' 'hand deck';
     gap: 0.5em 1em;
     min-height: 0;
@@ -221,9 +234,12 @@
   .fight__menu, .fight .actions .pbtn { width: 100%; padding: 0.7em 0.4em; font-size: 1em; }
   .fight__menu { justify-self: stretch; align-self: end; }
   .fight .actions { min-height: 0; align-items: flex-end; }
-  .perk-row { grid-area: top; justify-self: start; align-self: start; font-size: 1em; }
-  .perk-row:has(.perk-row__tray:empty) { display: flex; }
-  .hand--enemy { grid-area: top; justify-self: end; min-height: 0; }
+  /* Sidebar perk slot list (owner sketch): always framed, empty when there are no perks. */
+  .perks, .perks--empty { display: flex; overflow-y: auto; }
+  .perks__title { font-size: 1em; }
+  .perks__list { flex-direction: column; flex-wrap: nowrap; }
+  .perks__card { flex: none; }
+  .hand--enemy { grid-area: top; justify-self: center; min-height: 0; }
   .fight .table { min-height: 0; grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
   .fight__status { align-self: end; justify-self: center; min-width: 60%; font-size: 1em; }
   .hand--player { min-height: calc(var(--card-w) * 1.45); padding: 4px 0 10px; }

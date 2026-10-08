@@ -18,7 +18,7 @@ import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
-import { PerkRow } from './PerkRow';
+import { PerkPanel } from './PerkPanel';
 import { RunHeader } from './RunHeader';
 import { hitLabelFor } from './hits';
 import { fightSound, isNewError } from './sounds';
@@ -79,13 +79,13 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
             hitKey={fight.hitSeq}
           />
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
+          <PerkPanel perks={fight.perks} />
           <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
             Меню
           </PixelButton>
           <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
         </aside>
         <section className="fight__board">
-          <PerkRow perks={fight.perks} />
           <EnemyHand cards={round.hands.enemy} />
           <TableView table={round.table} attacker={round.attacker} />
           <p className="fight__status panel" role="status">
