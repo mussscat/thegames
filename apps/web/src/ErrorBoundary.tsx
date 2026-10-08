@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <main className="screen menu">
         <h1 className="menu__title">Что-то сломалось</h1>
-        <button type="button" className="btn btn--primary" onClick={this.reset}>
+        <button type="button" className="pbtn pbtn--red" onClick={this.reset}>
           Вернуться в меню
         </button>
       </main>

@@ -4,9 +4,15 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { DurakRunScreen } from './games/durak/DurakRunScreen';
 import { browserStore, clearRun, loadRun, type LoadResult } from './games/durak/runStorage';
 import { MenuScreen } from './screens/MenuScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import { randomSeed, seedFromUrl } from './seed';
+import { Backdrop } from './ui/Backdrop';
+import { SettingsProvider } from './ui/SettingsContext';
 
-type Screen = { readonly name: 'menu' } | { readonly name: 'run'; readonly run: RunState; readonly key: number };
+type Screen =
+  | { readonly name: 'menu' }
+  | { readonly name: 'settings' }
+  | { readonly name: 'run'; readonly run: RunState; readonly key: number };
 
 function loadSaved(): LoadResult {
   const store = browserStore();
@@ -32,20 +38,28 @@ export function App() {
     setScreen({ name: 'menu' });
   };
 
+  const renderScreen = () => {
+    if (screen.name === 'run') {
+      return <DurakRunScreen key={screen.key} initialRun={screen.run} onExit={toMenu} onNewRun={() => startNewRun(randomSeed())} />;
+    }
+    if (screen.name === 'settings') return <SettingsScreen onBack={() => setScreen({ name: 'menu' })} />;
+    return (
+      <MenuScreen
+        canContinue={saved.status === 'ok'}
+        saveInvalid={saved.status === 'invalid'}
+        onNewRun={() => startNewRun(seedFromUrl(window.location.search))}
+        onContinue={() => {
+          if (saved.status === 'ok') openRun(saved.run);
+        }}
+        onSettings={() => setScreen({ name: 'settings' })}
+      />
+    );
+  };
+
   return (
-    <ErrorBoundary onReset={toMenu}>
-      {screen.name === 'run' ? (
-        <DurakRunScreen key={screen.key} initialRun={screen.run} onExit={toMenu} onNewRun={() => startNewRun(randomSeed())} />
-      ) : (
-        <MenuScreen
-          canContinue={saved.status === 'ok'}
-          saveInvalid={saved.status === 'invalid'}
-          onNewRun={() => startNewRun(seedFromUrl(window.location.search))}
-          onContinue={() => {
-            if (saved.status === 'ok') openRun(saved.run);
-          }}
-        />
-      )}
-    </ErrorBoundary>
+    <SettingsProvider>
+      <Backdrop />
+      <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+    </SettingsProvider>
   );
 }

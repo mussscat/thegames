@@ -5,7 +5,6 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './ui/theme.css';
-import './styles.css';
 
 /** `?lab` opens the card lab — a tuning tool kept out of the main bundle. */
 const CardLab = lazy(() => import('./lab/CardLab').then((module) => ({ default: module.CardLab })));
