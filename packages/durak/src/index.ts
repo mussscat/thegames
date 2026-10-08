@@ -10,3 +10,4 @@ export * from './run/shop';
 export * from './content/enemies';
 export * from './run/run';
 export * from './content/bosses';
+export * from './enhancements';
