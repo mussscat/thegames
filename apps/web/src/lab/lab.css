@@ -1,0 +1,158 @@
+.lab {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  color: #ffffff;
+  -webkit-font-smoothing: none;
+  user-select: none;
+}
+.lab__bg { position: absolute; inset: 0; width: 100%; height: 100%; background: #3b1c32; }
+.lab__crt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 14%) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 55%));
+}
+.lab__stage {
+  position: relative;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 16px 90px;
+}
+.lab__title { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-shadow: 3px 3px 0 #000; }
+.lab__hero { height: 240px; display: flex; align-items: center; justify-content: center; }
+.lab__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.lab__hand { display: flex; gap: 2px; padding-top: 24px; }
+.lab__hand-slot { transform-origin: 50% 120%; }
+
+/* ---------- pixel card ---------- */
+.pcard { position: relative; aspect-ratio: 5 / 7; --edge: polygon(var(--px) 0, calc(100% - var(--px)) 0, 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, 0 calc(100% - var(--px)), 0 var(--px)); }
+.pcard::before {
+  content: '';
+  position: absolute;
+  inset: 3% 3%;
+  transform: translate(calc(var(--px) * 2), calc(var(--px) * 4));
+  background: rgb(0 0 0 / 45%);
+  clip-path: var(--edge);
+}
+.pcard__sway,
+.pcard__tilt,
+.pcard__flip,
+.pcard__squash { width: 100%; height: 100%; transform-style: preserve-3d; }
+.pcard__tilt { cursor: pointer; perspective: 700px; }
+.pcard__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.sprite { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.pcard__front { background: transparent; }
+.pcard__front--enhanced { background: linear-gradient(180deg, #fff6d6, #f1d98a); }
+.pcard__corner {
+  position: absolute;
+  top: 3%;
+  left: 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.pcard__corner--bottom { top: auto; left: auto; bottom: 3%; right: 6%; transform: rotate(180deg); }
+.pcard__center { display: grid; place-items: center; }
+.pcard__badge {
+  position: absolute;
+  top: 70%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 4px;
+  background: #1b1426;
+  color: #f2c94c;
+  font-size: 0.45em;
+  white-space: nowrap;
+}
+.pcard__back {
+  transform: rotateY(180deg);
+  background: conic-gradient(#c2292e 25%, #9c1f25 0 50%, #c2292e 0 75%, #9c1f25 0) 0 0 / calc(var(--px) * 4) calc(var(--px) * 4);
+  box-shadow: inset 0 0 0 var(--px) #f4efe2, inset 0 0 0 calc(var(--px) * 2) #1b1426;
+}
+
+/* ---------- Balatro-style buttons ---------- */
+.pbtn {
+  --c: #4a4a6a;
+  --d: #2a2a40;
+  font: inherit;
+  font-size: 1rem;
+  color: #ffffff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--c);
+  box-shadow: 0 4px 0 var(--d);
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 35%);
+  cursor: pointer;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.pbtn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--d); }
+.pbtn--blue { --c: #3a7bd5; --d: #22509c; }
+.pbtn--red { --c: #e24a3b; --d: #a12a1f; }
+.pbtn--orange { --c: #f39c32; --d: #b46a10; }
+.pbtn--small { padding: 6px 10px; font-size: 0.85rem; }
+
+/* ---------- tuning panel ---------- */
+.lab__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: rgb(20 12 28 / 90%);
+  border-top: 3px solid #000000;
+}
+.lab__panel--closed { max-height: none; background: transparent; border: none; }
+.lab__controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 8px; max-width: 480px; }
+.lab__slider { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; }
+.lab__slider input, .lab__slider select { accent-color: #f39c32; font: inherit; }
+.lab__check { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+.lab__dump { grid-column: 1 / -1; margin: 0; font-size: 0.65rem; white-space: pre-wrap; opacity: 0.7; }
+
+.pcard__label {
+  position: absolute;
+  left: 50%;
+  top: 103%;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  background: #1b1426;
+  color: #f2c94c;
+  font-size: 0.5em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 50%);
+}
+.lab__gallery { display: flex; gap: 6px; padding-top: 6px; }
+
+/* Rank as text over the sprite: readable at any size, coloured like the suit. */
+.pcard__rank {
+  position: absolute;
+  top: 3%;
+  left: 8%;
+  font-size: 1.4em;
+  line-height: 1;
+  color: #1b1426;
+  text-shadow: 0.05em 0.05em 0 rgb(255 255 255 / 55%);
+  pointer-events: none;
+}
+.pcard__rank--red { color: #c2292e; }
+.pcard__rank--pixelify { font-family: 'Pixelify Sans', ui-monospace, monospace; font-weight: 700; }
+.pcard__rank--rubik { font-family: 'Rubik', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.04em; }
+.pcard__rank--bottom { top: auto; left: auto; bottom: 3%; right: 8%; transform: rotate(180deg); }
