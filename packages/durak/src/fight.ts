@@ -93,9 +93,9 @@ export function applyFightAction(
   return ok(state.boss === 'shuffler' && endedBeaten(state.round, result.value) ? shuffleTrump(charged) : charged);
 }
 
-/** A bout that ended in «Бито»: the table was cleared without a take, and the round goes on. */
+/** A bout that ended in «Бито»: the table was cleared, no take was recorded (a take always sets lastBout), and the round goes on. */
 function endedBeaten(previous: RoundState, next: RoundState): boolean {
-  return previous.table.length > 0 && next.table.length === 0 && next.lastBout === previous.lastBout && next.outcome === null;
+  return previous.table.length > 0 && next.table.length === 0 && next.lastBout === null && next.outcome === null;
 }
 
 /** Фокусник: the trump moves to a random different suit, drawn from the fight RNG. */
@@ -123,6 +123,7 @@ function chargeTake(state: FightState, bout: BoutResult, trumpSuit: Suit): Fight
     taker,
     attackCards: bout.attackCards,
     trumpSuit,
+    boss: state.boss,
     takerTakesThisRound: state.roundTakes[taker],
   });
   const counted: FightState = {

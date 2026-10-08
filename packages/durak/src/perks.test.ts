@@ -15,6 +15,7 @@ const enemyTakes: TakeContext = {
   taker: 'enemy',
   attackCards: [c(7, 'clubs'), c(7, 'hearts')],
   trumpSuit: 'hearts',
+  boss: null,
   takerTakesThisRound: 0,
 };
 const playerTakes: TakeContext = { ...enemyTakes, taker: 'player' };
@@ -47,6 +48,10 @@ describe('perkTakeDamage', () => {
   it('Козырной adds 1 per trump attack card taken by the enemy', () => {
     expect(perkTakeDamage(['trumpLover'], enemyTakes)).toBe(3);
     expect(perkTakeDamage(['trumpLover'], playerTakes)).toBe(2);
+  });
+  it('Козырной counts the Witch queens as trumps', () => {
+    const witchTake = { ...enemyTakes, attackCards: [c(12, 'clubs')], boss: 'witch' as const };
+    expect(perkTakeDamage(['trumpLover'], witchTake)).toBe(2);
   });
   it('never goes below zero', () => {
     expect(perkTakeDamage(['thickSkin'], { ...playerTakes, attackCards: [] })).toBe(0);

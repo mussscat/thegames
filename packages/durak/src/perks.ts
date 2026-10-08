@@ -1,5 +1,6 @@
 import type { Card, Suit } from '@game/core';
-import { DEFAULT_HAND_SIZES, type HandSizes, type PlayerId } from './types';
+import { isTrumpCard } from './rules';
+import { DEFAULT_HAND_SIZES, type BossRule, type HandSizes, type PlayerId } from './types';
 
 export const PERK_IDS = [
   'throwMaster',
@@ -19,6 +20,7 @@ export type TakeContext = {
   readonly taker: PlayerId;
   readonly attackCards: readonly Card[];
   readonly trumpSuit: Suit;
+  readonly boss: BossRule | null;
   readonly takerTakesThisRound: number;
 };
 
@@ -98,7 +100,7 @@ export const PERKS: Readonly<Record<PerkId, PerkDef>> = {
     price: 6,
     hooks: {
       takeDamage: (damage, ctx) =>
-        ctx.taker === 'enemy' ? damage + ctx.attackCards.filter((card) => card.suit === ctx.trumpSuit).length : damage,
+        ctx.taker === 'enemy' ? damage + ctx.attackCards.filter((card) => isTrumpCard(card, ctx.trumpSuit, ctx.boss)).length : damage,
     },
   },
   cleanHands: {
