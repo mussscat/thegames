@@ -144,3 +144,31 @@ describe('bosses', () => {
     expect(run.phase.kind === 'fight' && run.phase.fight.boss).toBeNull();
   });
 });
+
+describe('deck profiles in a run', () => {
+  it('starts with an empty player profile and gives every enemy its own profile', () => {
+    const run = createRun(1);
+    expect(run.profile).toEqual({});
+    expect(run.phase.kind === 'fight' && run.phase.fight.round.profiles).toEqual({ player: {}, enemy: enemyAt(0).profile });
+    expect(Object.keys(enemyAt(5).profile).length).toBeGreaterThan(Object.keys(enemyAt(0).profile).length);
+  });
+
+  it('a bought enhancement lands in the profile and in the next fight', () => {
+    const shop = { ...inShop(createRun(1)), coins: 20 };
+    if (shop.phase.kind !== 'shop') throw new Error('not in shop');
+    const offer = shop.phase.shop.enhancementOffers[0]!;
+    const cardId = offer.cardIds[1]!;
+    const bought = expectOk(applyRunAction(shop, { type: 'buyEnhancement', index: 0, cardId }));
+    expect(bought.profile).toEqual({ [cardId]: offer.enhancementId });
+    expect(bought.coins).toBe(20 - offer.price);
+    const next = expectOk(applyRunAction(bought, { type: 'leaveShop' }));
+    expect(next.phase.kind === 'fight' && next.phase.fight.round.profiles.player).toEqual({ [cardId]: offer.enhancementId });
+  });
+
+  it('cannot buy enhancements during a fight', () => {
+    expect(applyRunAction(createRun(1), { type: 'buyEnhancement', index: 0, cardId: 'clubs-7' })).toEqual({
+      ok: false,
+      error: 'wrongPhase',
+    });
+  });
+});

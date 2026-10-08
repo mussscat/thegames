@@ -2,10 +2,11 @@ import { createRng, err, nextInt, ok, shuffle, type Result, type RngState } from
 import { BOSSES } from '../content/bosses';
 import { RUN_SCHEDULE, type EnemySpec } from '../content/enemies';
 import { applyFightAction, createFight, type FightAction, type FightError, type FightState } from '../fight';
+import type { DeckProfile } from '../enhancements';
 import type { PerkId } from '../perks';
 import { BOSS_RULES, type BossRule, type PlayerId } from '../types';
 import { fightReward, type FightReward } from './economy';
-import { buyPerk, createShop, rerollShop, sellPerk, type ShopError, type ShopState, type Wallet } from './shop';
+import { buyEnhancement, buyPerk, createShop, rerollShop, sellPerk, type ShopError, type ShopState, type Wallet } from './shop';
 
 export const PLAYER_HP = 10;
 export const FIGHTS_PER_CIRCLE = 3;
@@ -24,6 +25,8 @@ export type RunState = {
   readonly stage: number;
   readonly coins: number;
   readonly perks: readonly PerkId[];
+  /** The player's version of the shared deck. */
+  readonly profile: DeckProfile;
   /** One boss rule per circle, all different. */
   readonly bosses: readonly BossRule[];
   readonly phase: RunPhase;
@@ -34,6 +37,7 @@ export type RunAction =
   | { readonly type: 'leaveFight' }
   | { readonly type: 'buyPerk'; readonly index: number }
   | { readonly type: 'sellPerk'; readonly perkId: PerkId }
+  | { readonly type: 'buyEnhancement'; readonly index: number; readonly cardId: string }
   | { readonly type: 'reroll' }
   | { readonly type: 'leaveShop' };
 
@@ -56,7 +60,7 @@ export function createRun(seed: number): RunState {
   const start = createRng(seed);
   const [order, rng] = shuffle(BOSS_RULES, start);
   const bosses = order.slice(0, CIRCLES);
-  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, perks: [], bosses, phase: { kind: 'over', won: false } });
+  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, perks: [], profile: {}, bosses, phase: { kind: 'over', won: false } });
 }
 
 export type StageEnemy = EnemySpec & { readonly boss: BossRule | null };
@@ -84,6 +88,13 @@ export function applyRunAction(state: RunState, action: RunAction): RunResult {
       return inShop(state, () => {
         const result = sellPerk(wallet(state), action.perkId);
         return result.ok ? ok({ ...state, ...result.value }) : result;
+      });
+    case 'buyEnhancement':
+      return inShop(state, (phase) => {
+        const result = buyEnhancement(phase.shop, state.coins, state.profile, action.index, action.cardId);
+        if (!result.ok) return result;
+        const { shop, coins, profile } = result.value;
+        return ok({ ...state, coins, profile, phase: { ...phase, shop } });
       });
     case 'reroll':
       return inShop(state, (phase) => {
@@ -113,6 +124,7 @@ function startFight(state: RunState): RunState {
     enemyHp: enemyAt(state.stage).hp,
     perks: state.perks,
     boss: stageEnemy(state, state.stage).boss,
+    profiles: { player: state.profile, enemy: enemyAt(state.stage).profile },
   });
   return { ...state, rng, phase: { kind: 'fight', fight } };
 }

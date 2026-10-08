@@ -71,6 +71,7 @@ const run = z.object({
   stage: z.number().int().min(0).max(RUN_SCHEDULE.length - 1),
   coins: count,
   perks: z.array(perk).max(MAX_PERKS),
+  profile,
   bosses: z.array(z.enum(BOSS_RULES)).max(RUN_SCHEDULE.length),
   phase,
 });
