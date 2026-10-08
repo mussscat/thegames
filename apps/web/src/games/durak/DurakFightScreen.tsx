@@ -5,9 +5,10 @@ import {
   type EnhancementSource,
   type FightAction,
   type FightState,
+  type RunState,
 } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
@@ -16,6 +17,9 @@ import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
+import { FightStats } from './FightStats';
+import { PerkRow } from './PerkRow';
+import { RunHeader } from './RunHeader';
 import { hitLabelFor } from './hits';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
@@ -26,13 +30,13 @@ type DurakFightScreenProps = {
   readonly fight: FightState;
   readonly error: string | null;
   readonly errorSeq: number;
-  readonly header: ReactNode;
+  readonly run: RunState;
   readonly onFightAction: (action: FightAction) => void;
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
 };
 
-export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -57,13 +61,7 @@ export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction
       <main className="screen fight">
         {/* Portrait: both wrappers are `display: contents` and a grid places each child; landscape: two columns. */}
         <aside className="fight__side">
-          <header className="fight__header">
-            <PixelButton tone="blue" small onClick={onExit}>
-              Меню
-            </PixelButton>
-            <span className="chip">Раздача {fight.roundNumber}</span>
-          </header>
-          {header}
+          <RunHeader run={run} />
           <HpBar
             label="Соперник"
             className="hp--enemy"
@@ -72,7 +70,6 @@ export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction
             hitLabel={hitLabelFor(fight.hits, 'enemy')}
             hitKey={fight.hitSeq}
           />
-          <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
           <HpBar
             label="Ты"
             className="hp--player"
@@ -81,15 +78,21 @@ export function DurakFightScreen({ fight, error, errorSeq, header, onFightAction
             hitLabel={hitLabelFor(fight.hits, 'player')}
             hitKey={fight.hitSeq}
           />
+          <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
+          <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
+            Меню
+          </PixelButton>
           <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
         </aside>
         <section className="fight__board">
+          <PerkRow perks={fight.perks} />
           <EnemyHand cards={round.hands.enemy} />
           <TableView table={round.table} attacker={round.attacker} />
           <p className="fight__status panel" role="status">
             {error ?? statusText(fight)}
           </p>
           <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} onPlay={play} />
+          <DeckView round={round} revealTop={revealsTopCard(fight.perks)} />
         </section>
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />

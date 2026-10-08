@@ -75,10 +75,6 @@
 .fight__status { margin: 0; min-height: 1.4em; padding: 6px 10px; text-align: center; }
 .actions { display: flex; justify-content: center; gap: 12px; min-height: 52px; }
 
-.run-header { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; text-align: center; }
-.run-header__boss { color: #ff8a80; }
-.run-header__meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
-.run-header__coins { color: var(--gold); }
 
 /* ---------- HP ---------- */
 .hp { position: relative; display: grid; grid-template-columns: 5.5em 1fr 3em; align-items: center; gap: 8px; padding: 6px 10px; font-size: 0.9rem; }
@@ -115,63 +111,123 @@
 .overlay__panel p { margin: 0; }
 .overlay__title { margin: 0; font-size: 1.1rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }
 
+/* ---------- run banner, stats, perks ---------- */
+.run-header { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.run-header--normal { background: #2a4a8c; }
+.run-header--strong { background: #a8611a; }
+.run-header--boss { background: #9c2a2a; }
+.run-header__name { margin: 0; font-size: 0.85rem; color: #ffffff; text-shadow: 2px 2px 0 #000000; }
+.run-header__stage { font-size: 0.85rem; }
+.run-header__boss { font-size: 0.8rem; color: #ffd9d2; }
+
+.stats { display: flex; justify-content: flex-end; gap: 6px; }
+.stats__tile { display: flex; align-items: baseline; gap: 6px; padding: 4px 10px; }
+.stats__label { font-size: 0.75rem; opacity: 0.85; }
+.stats__value { font-family: var(--font-head); font-size: 0.8rem; white-space: nowrap; }
+.stats__value--gold { color: var(--gold); }
+
+.perk-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.perk-row__tray { display: flex; gap: 6px; }
+.perk-row__perk { display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 2px; border: 2px solid #000000; border-radius: 6px; background: #2c1f3d; }
+.perk-row__emblem { width: 1.6em; height: 1.6em; }
+.perk-row__name { font-size: 0.75em; white-space: nowrap; }
+.perk-row__count { font-size: 0.75em; opacity: 0.8; white-space: nowrap; }
+.hand__count { align-self: center; margin-left: 8px; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
+
 /* ---------- screen layout ----------
-   Portrait: the side and board wrappers are `display: contents`, so one grid places every piece in reading order.
-   Wide screens and landscape (owner-picked "table in the centre"): two independent columns. */
+   Portrait: side and board are `display: contents`, so one grid places every piece in reading order.
+   Wide screens and landscape (owner-picked, Balatro-like): a sidebar of big tiles and a board; sizes follow the
+   viewport height so everything stays large and readable. Grid-area names are shared by both containers. */
 .fight {
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto auto auto 1fr auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto 1fr auto auto auto auto;
   grid-template-areas:
-    'header header'
+    'menu stats'
     'run run'
     'ehp ehp'
+    'perks perks'
     'ehand ehand'
     'deck table'
     'status status'
     'actions actions'
     'hand hand'
     'php php';
-  gap: 10px 12px;
+  gap: 8px 12px;
 }
 .fight__side, .fight__board { display: contents; }
-.fight__header { grid-area: header; }
+.fight__menu { grid-area: menu; justify-self: start; padding: 6px 12px; font-size: 0.9rem; }
+.fight .stats { grid-area: stats; }
 .fight .run-header { grid-area: run; }
 .hp--enemy { grid-area: ehp; }
+.hp--player { grid-area: php; }
+.perk-row { grid-area: perks; }
 .hand--enemy { grid-area: ehand; }
 .fight .deck { grid-area: deck; align-self: center; }
 .fight .table { grid-area: table; }
 .fight__status { grid-area: status; }
 .fight .actions { grid-area: actions; }
 .hand--player { grid-area: hand; }
-.hp--player { grid-area: php; }
+.perk-row:has(.perk-row__tray:empty) { display: none; }
 /* In portrait the player's HP sits under the hand, so the hit pops upwards. */
 .hp--player .hp__hit { top: auto; bottom: calc(100% + 2px); }
 
 @media (min-aspect-ratio: 5/4) {
   .fight {
-    --card-w: clamp(44px, 11vh, 84px);
-    max-width: 1280px;
-    grid-template-columns: minmax(210px, 26%) 1fr;
-    grid-template-rows: 1fr;
+    --card-w: clamp(44px, min(13vh, 8.5vw), 150px);
+    font-size: clamp(13px, 2.3vh, 28px);
+    max-width: none;
+    padding: 0 max(1.2em, env(safe-area-inset-right)) 0 0;
+    grid-template-columns: minmax(15em, 26%) minmax(0, 1fr);
+    grid-template-rows: 100%;
     grid-template-areas: 'side board';
-    gap: 16px;
+    gap: 1.2em;
   }
-  .fight__side, .fight__board { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-  .fight__side { grid-area: side; }
-  .fight__board { grid-area: board; }
-  .fight .run-header { font-size: 0.75rem; }
-  .fight { padding-block: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-bottom)); }
-  .fight__side { gap: 6px; }
-  .fight .run-header { padding: 6px 8px; }
-  /* Deck beside its labels, so the side column fits a 412 px tall phone. */
-  .fight .deck { flex: 1; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-content: center; justify-content: center; column-gap: 8px; }
-  .fight .deck__pile { grid-row: span 2; }
-  .fight .actions { min-height: 0; }
-  .fight .actions .pbtn { padding: 8px 16px; }
+  .fight__side {
+    grid-area: side;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto 1fr auto;
+    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'stats stats' '. .' 'menu actions';
+    gap: 0.5em;
+    padding: max(0.6em, env(safe-area-inset-top)) 0.6em max(0.6em, env(safe-area-inset-bottom)) max(0.6em, env(safe-area-inset-left));
+    background: rgb(20 14 30 / 82%);
+    border-right: 4px solid #000000;
+    box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
+  }
+  .fight__board {
+    grid-area: board;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    /* Perks (left) and the enemy hand (right) share the top row, so the enemy hand never widens the deck column. */
+    grid-template-areas: 'top top' 'table table' 'status status' 'hand deck';
+    gap: 0.5em 1em;
+    min-height: 0;
+    padding-block: max(0.6em, env(safe-area-inset-top)) max(0.4em, env(safe-area-inset-bottom));
+  }
+  .fight .run-header { padding: 0.5em; }
+  .run-header__name { font-size: 1.1em; }
+  .run-header__stage, .run-header__boss { font-size: 0.8em; }
+  /* Label and value on top, a full-width bar below: readable in a narrow sidebar. */
+  .fight .hp { grid-template-columns: 1fr auto; grid-template-areas: 'label value' 'track track'; row-gap: 0.35em; font-size: 1em; padding: 0.5em 0.7em; }
+  .fight .hp__label { grid-area: label; }
+  .fight .hp__value { grid-area: value; font-family: var(--font-head); font-size: 0.8em; }
+  .fight .hp__track { grid-area: track; height: 0.9em; }
+  .fight .stats { justify-content: stretch; }
+  .fight .stats__tile { flex: 1; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.4em; }
+  .fight .stats__label { font-size: 0.8em; }
+  .fight .stats__value { font-size: 1.3em; }
+  .fight__menu, .fight .actions .pbtn { width: 100%; padding: 0.7em 0.4em; font-size: 1em; }
+  .fight__menu { justify-self: stretch; align-self: end; }
+  .fight .actions { min-height: 0; align-items: flex-end; }
+  .perk-row { grid-area: top; justify-self: start; align-self: start; font-size: 1em; }
+  .perk-row:has(.perk-row__tray:empty) { display: flex; }
+  .hand--enemy { grid-area: top; justify-self: end; min-height: 0; }
+  .fight .table { min-height: 0; grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
+  .fight__status { align-self: end; justify-self: center; min-width: 60%; font-size: 1em; }
   .hand--player { min-height: calc(var(--card-w) * 1.45); padding: 4px 0 10px; }
-  .fight .table { flex: 1; min-height: 0; grid-template-columns: repeat(6, var(--card-w)); }
-  .fight .hp { grid-template-columns: 4.5em 1fr 2.6em; font-size: 0.8rem; }
-  .hand--enemy { min-height: 0; }
+  .fight .deck { align-self: end; display: flex; flex-direction: column; font-size: 0.85em; }
   .hp--player .hp__hit { top: calc(100% + 2px); bottom: auto; }
+  .hp__hit { font-size: 1.1em; }
 }

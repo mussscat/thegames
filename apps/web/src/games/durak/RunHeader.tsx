@@ -1,20 +1,18 @@
-import { BOSSES, FIGHTS_PER_CIRCLE, PERKS, stageEnemy, stageLabel, type RunState } from '@game/durak';
+import { BOSSES, FIGHTS_PER_CIRCLE, stageEnemy, stageLabel, type RunState } from '@game/durak';
 
 const TIER_LABELS = { normal: 'соперник', strong: 'сильный соперник', boss: 'босс' } as const;
 
+/** The opponent banner, coloured by tier like Balatro's blind banner. */
 export function RunHeader({ run }: { readonly run: RunState }) {
   const { circle, fight } = stageLabel(run.stage);
   const enemy = stageEnemy(run, run.stage);
   return (
-    <div className="run-header panel" data-testid="run-header">
-      <span>
-        Круг {circle} · бой {fight}/{FIGHTS_PER_CIRCLE} — {enemy.name} ({TIER_LABELS[enemy.tier]})
+    <div className={`run-header panel run-header--${enemy.tier}`} data-testid="run-header">
+      <h2 className="run-header__name">{enemy.name}</h2>
+      <span className="run-header__stage">
+        Круг {circle} · бой {fight}/{FIGHTS_PER_CIRCLE} · {TIER_LABELS[enemy.tier]}
       </span>
-      {enemy.boss && <span className="run-header__boss">Правило: {BOSSES[enemy.boss].description}</span>}
-      <span className="run-header__meta">
-        <span className="chip run-header__coins">● {run.coins}</span>
-        <span className="chip">Перки: {run.perks.length > 0 ? run.perks.map((id) => PERKS[id].name).join(', ') : '—'}</span>
-      </span>
+      {enemy.boss && <span className="run-header__boss">{BOSSES[enemy.boss].description}</span>}
     </div>
   );
 }

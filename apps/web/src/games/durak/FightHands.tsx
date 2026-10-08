@@ -25,6 +25,7 @@ export function EnemyHand({ cards }: { readonly cards: readonly Card[] }) {
           <CardBack layoutId={card.id} />
         </div>
       ))}
+      <span className="hand__count">{cards.length}</span>
     </div>
   );
 }

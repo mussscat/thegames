@@ -1,6 +1,5 @@
 import type { RunState } from '@game/durak';
 import { DurakFightScreen } from './DurakFightScreen';
-import { RunHeader } from './RunHeader';
 import { RunOverScreen } from './RunOverScreen';
 import { ShopScreen } from './ShopScreen';
 import { useDurakRun } from './useDurakRun';
@@ -21,7 +20,7 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
           fight={phase.fight}
           error={error}
           errorSeq={errorSeq}
-          header={<RunHeader run={run} />}
+          run={run}
           onFightAction={(action) => act({ type: 'fight', actor: 'player', action })}
           onLeaveFight={() => act({ type: 'leaveFight' })}
           onExit={onExit}
