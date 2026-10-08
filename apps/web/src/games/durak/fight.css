@@ -124,7 +124,7 @@
 .ticket--placeholder { width: calc(2.6em + 1.2em + 4px); height: calc(2.6em + 0.7em + 4px); border: 2px dashed rgb(255 255 255 / 25%); border-radius: 4px; filter: none; }
 .jokers__list--wide { display: flex; flex-direction: column; }
 
-/* ---------- perk tickets (lottery-ticket style) ---------- */
+/* ---------- joker tickets (lottery-ticket style) ---------- */
 .jokers__list { position: relative; }
 /* Static slots: the compact pop-up is laid out against the whole ticket row, so it never leaves the screen. */
 .ticket-slot { position: static; }

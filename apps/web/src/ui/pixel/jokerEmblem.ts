@@ -10,7 +10,7 @@ const INK = '#1b1426';
 
 export type JokerIcon = { readonly rows: readonly string[]; readonly palette: Readonly<Record<string, string>> };
 
-/** A small picture of what each perk does; '.' is transparent. */
+/** A small picture of what each joker does; '.' is transparent. */
 /** Hand-drawn icons (3b draws the rest; placeholders below). */
 const DRAWN = {
   serial: {
@@ -221,7 +221,7 @@ export const JOKER_ICONS: Readonly<Record<JokerId, JokerIcon>> = {
   collector: PLACEHOLDER,
 };
 
-/** Tile colours per perk (top → bottom gradient). */
+/** Tile colours per joker (top → bottom gradient). */
 const TILES: Readonly<Record<JokerId, readonly [string, string]>> = {
   serial: ['#ff7a59', '#b4282d'],
   thickSkin: ['#c9d6e3', '#6f86a1'],

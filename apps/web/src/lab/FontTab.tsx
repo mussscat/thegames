@@ -4,7 +4,7 @@ import { FONT_OPTIONS, fontFamily, type FontId } from './labFonts';
 import { LabSelect } from './LabSelect';
 
 const RULES =
-  'Заставь соперника взять — он теряет HP за каждую карту. Победа приносит монеты; в магазине — перки (до 3) и усиления карт.';
+  'Заставь соперника взять — он теряет HP за каждую карту. Победа приносит монеты; в магазине — джокеры (до 5) и усиления карт.';
 
 /** Real game copy in candidate fonts: title, rules, a joker card, buttons, status and HP. */
 export function FontTab() {
