@@ -1,23 +1,15 @@
 import type { RunState } from '@game/durak';
+import type { KeyValueStore } from '../../storage';
 import { parseSave, SAVE_VERSION } from './runSchema';
 
-export const RUN_STORAGE_KEY = 'thegame.durak.run';
+export { browserStore, type KeyValueStore } from '../../storage';
 
-export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+export const RUN_STORAGE_KEY = 'thegame.durak.run';
 
 export type LoadResult =
   | { readonly status: 'none' }
   | { readonly status: 'ok'; readonly run: RunState }
   | { readonly status: 'invalid' };
-
-export function browserStore(): KeyValueStore | null {
-  try {
-    return window.localStorage;
-  } catch (error) {
-    console.warn('localStorage is unavailable; the run will not be saved', error);
-    return null;
-  }
-}
 
 export function saveRun(store: KeyValueStore, run: RunState): boolean {
   try {

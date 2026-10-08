@@ -90,6 +90,17 @@ export const SOUNDS = {
     tone(659, 0.14, 'sine', 0.04);
     tone(988, 0.24, 'sine', 0.035, undefined, 0.07);
   },
+  /** Taking the table: a low, muffled thud. */
+  hit: () => {
+    whoosh(0.18, 0.12, 300);
+    tone(110, 0.32, 'sine', 0.09, 70);
+  },
+  /** Winning a fight: a short rising arpeggio. */
+  win: () => {
+    tone(392, 0.2, 'sine', 0.045);
+    tone(523, 0.2, 'sine', 0.045, undefined, 0.1);
+    tone(659, 0.32, 'sine', 0.045, undefined, 0.2);
+  },
 } as const;
 
 export type SoundName = keyof typeof SOUNDS;

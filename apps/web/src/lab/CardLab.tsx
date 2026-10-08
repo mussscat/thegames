@@ -7,7 +7,7 @@ import '@fontsource/pixelify-sans/700.css';
 import '@fontsource/rubik/700.css';
 import './lab.css';
 import { PixelCard, type CardFeel, type RankFont } from './PixelCard';
-import { playSound, setVolume } from './sound';
+import { playSound, setVolume } from '../ui/sound';
 import { PALETTES, SwirlBackground } from './SwirlBackground';
 
 const HERO: Card = makeCard('hearts', 12);
