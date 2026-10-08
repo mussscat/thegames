@@ -7,12 +7,23 @@ type DeckViewProps = { readonly round: RoundState; readonly revealTop: boolean }
 export function DeckView({ round, revealTop }: DeckViewProps) {
   const top = round.deck[0];
   const showTopFaceUp = revealTop && round.deck.length > 1 && top !== undefined;
+  const stack = Math.min(3, Math.max(0, round.deck.length - 1));
   return (
     <div className="deck" data-testid="deck">
-      {round.deck.length > 1 && (showTopFaceUp ? <CardView card={top} /> : <CardBack />)}
-      {round.deck.length > 0 && <CardView card={round.trumpCard} trump={isTrumpCard(round.trumpCard, round.trumpSuit, round.boss)} />}
-      <span className="deck__count">{round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
-      <span className="deck__trump">
+      <div className="deck__pile">
+        {round.deck.length > 0 && (
+          <div className="deck__trump-card">
+            <CardView card={round.trumpCard} trump={isTrumpCard(round.trumpCard, round.trumpSuit, round.boss)} />
+          </div>
+        )}
+        {Array.from({ length: stack }, (_, i) => (
+          <div key={i} className="deck__layer" style={{ transform: `translate(${-i * 2}px, ${-i * 2}px)` }}>
+            {i === stack - 1 && showTopFaceUp ? <CardView card={top} /> : <CardBack />}
+          </div>
+        ))}
+      </div>
+      <span className="chip deck__count">{round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
+      <span className="chip deck__trump">
         Козырь {SUIT_SYMBOLS[round.trumpSuit]}
         {round.boss === 'witch' && ' + дамы'}
         {round.boss === 'shuffler' && ' (меняется)'}

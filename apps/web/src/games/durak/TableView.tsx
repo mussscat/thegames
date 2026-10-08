@@ -12,7 +12,7 @@ function badge(enhancement: TablePair['attackEnh'], playedByPlayer: boolean) {
 export function TableView({ table, attacker }: TableViewProps) {
   const playerAttacks = attacker === 'player';
   return (
-    <div className="table" data-testid="table">
+    <div className="table panel" data-testid="table">
       {table.map((pair) => (
         <div key={pair.attack.id} className="table__pair">
           <CardView card={pair.attack} enhancements={badge(pair.attackEnh, playerAttacks)} />

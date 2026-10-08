@@ -1,0 +1,72 @@
+/* ---------- cards ---------- */
+.card {
+  position: relative;
+  display: block;
+  width: var(--card-w);
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: calc(var(--card-w) * 0.2);
+  color: inherit;
+  cursor: pointer;
+  transition: translate 0.15s ease-out, filter 0.15s;
+}
+.card:disabled { cursor: default; }
+.card--playable { translate: 0 -10%; }
+.card--playable .face { outline: 3px solid #ffffff; outline-offset: 1px; box-shadow: 0 0 0 6px rgb(0 0 0 / 55%); }
+.card--trump .face::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px dashed var(--gold);
+  pointer-events: none;
+}
+.card--back { cursor: default; }
+.card__tag {
+  position: absolute;
+  left: 4%;
+  bottom: 4%;
+  padding: 0 0.25em;
+  font-size: 0.75em;
+  line-height: 1.3;
+  color: #ffffff;
+  box-shadow: 1px 1px 0 #000000;
+}
+.card__tag--own { background: #2563eb; }
+.card__tag--foreign { background: #dc2626; }
+.card--split { cursor: default; }
+.card__half { position: absolute; inset: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.card__half:disabled { cursor: default; }
+.card__half--own { clip-path: polygon(0 0, 100% 0, 0 100%); }
+.card__half--foreign { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.card__half--own .card__tag { left: 4%; top: 42%; bottom: auto; }
+.card__half--foreign .card__tag { left: auto; right: 4%; }
+.card__half--illegal { background: rgb(15 10 25 / 55%); }
+
+/* ---------- hands ---------- */
+.hand { --slot-w: var(--card-w); display: flex; justify-content: center; align-items: flex-end; min-height: calc(var(--card-w) * 1.5); padding-top: 8px; }
+.hand__slot { transform-origin: 50% 120%; }
+.hand--enemy { --slot-w: calc(var(--card-w) * 0.6); min-height: calc(var(--card-w) * 0.9); }
+.hand--enemy .card { width: calc(var(--card-w) * 0.6); }
+.hand--waiting .card { filter: brightness(0.7); }
+
+/* ---------- table & deck ---------- */
+.fight__middle { flex: 1; display: flex; align-items: center; gap: 10px; min-height: calc(var(--card-w) * 1.9); }
+.table {
+  flex: 1;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, var(--card-w));
+  gap: 22px 14px;
+  justify-content: center;
+  align-content: center;
+  background: rgb(0 0 0 / 30%);
+}
+.table__pair { position: relative; width: var(--card-w); }
+.table__defense { position: absolute; top: 34%; left: 30%; }
+.deck { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; text-align: center; }
+.deck__pile { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; margin-bottom: calc(var(--card-w) * 0.3); }
+.deck__layer { position: absolute; inset: 0; }
+.deck__trump-card { position: absolute; left: 30%; top: 22%; transform: rotate(90deg); }

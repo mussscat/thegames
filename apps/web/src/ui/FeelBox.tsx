@@ -1,5 +1,5 @@
-import { motion, useSpring } from 'motion/react';
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { motion, useAnimate, useSpring } from 'motion/react';
+import { useRef, type PointerEvent, type ReactNode } from 'react';
 
 export type Feel = {
   readonly tilt: number;
@@ -29,7 +29,7 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
   const spring = { stiffness: feel.stiffness, damping: feel.damping };
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
-  const [squash, setSquash] = useState(0);
+  const [squashScope, animate] = useAnimate<HTMLDivElement>();
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
     const rect = ref.current?.getBoundingClientRect();
@@ -56,17 +56,12 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
         onPointerMove={onMove}
         onPointerLeave={onLeave}
         onPointerEnter={onHover}
-        onPointerDown={() => setSquash((n) => n + 1)}
+        onPointerDown={() => void animate(squashScope.current, SQUASH, { duration: 0.38, ease: 'easeOut' })}
       >
-        <motion.div
-          key={squash}
-          className="feel__squash"
-          initial={false}
-          animate={squash ? SQUASH : {}}
-          transition={{ duration: 0.38, ease: 'easeOut' }}
-        >
+        {/* Animated in place: re-mounting the node under the finger would swallow the click. */}
+        <div ref={squashScope} className="feel__squash">
           {children}
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   );

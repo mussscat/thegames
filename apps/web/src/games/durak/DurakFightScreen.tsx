@@ -10,15 +10,28 @@ import {
   type FightState,
 } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
 import { HpBar } from '../../components/HpBar';
+import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';
+import { useSettings } from '../../ui/SettingsContext';
 import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { FightOverlay } from './FightOverlay';
 import { hitLabelFor } from './hits';
 import { statusText } from './status';
 import { TableView } from './TableView';
+import './fight.css';
+
+/** Later cards sit on top; a big hand overlaps so it never leaves the screen. */
+function slotStyle(index: number, count: number, fan: boolean): CSSProperties {
+  const overlap = handOverlap(count);
+  return {
+    marginLeft: index === 0 ? 0 : `calc(var(--slot-w) * ${-overlap})`,
+    transform: fan ? `translateY(${fanDrop(index, count)}px) rotate(${fanAngle(index, count)}deg)` : undefined,
+    zIndex: index,
+  };
+}
 
 type DurakFightScreenProps = {
   readonly fight: FightState;
@@ -30,6 +43,7 @@ type DurakFightScreenProps = {
 };
 
 export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+  const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const myTurn = !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
@@ -62,8 +76,10 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
           hitKey={fight.hitSeq}
         />
         <div className="hand hand--enemy" data-testid="enemy-hand">
-          {round.hands.enemy.map((card) => (
-            <CardBack key={card.id} layoutId={card.id} />
+          {round.hands.enemy.map((card, index, all) => (
+            <div key={card.id} className="hand__slot" style={slotStyle(index, all.length, false)}>
+              <CardBack layoutId={card.id} />
+            </div>
           ))}
         </div>
 
@@ -78,22 +94,23 @@ export function DurakFightScreen({ fight, error, header, onFightAction, onLeaveF
         <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
 
         <div className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand">
-          {round.hands.player.map((card) => {
+          {round.hands.player.map((card, index, all) => {
             const enhancements = cardEnhancements(round, 'player', card);
             const split = Boolean(enhancements.own && enhancements.foreign);
             return (
-              <CardView
-                key={card.id}
-                card={card}
-                enhancements={enhancements}
-                playable={myTurn && playableIds.has(card.id)}
-                trump={
-                  isTrumpCard(card, round.trumpSuit, round.boss) || enhancements.own === 'trump' || enhancements.foreign === 'trump'
-                }
-                onTap={myTurn && !split ? () => play(card) : undefined}
-                onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
-                legalUses={myTurn && split ? legalUses(card.id) : undefined}
-              />
+              <div key={card.id} className="hand__slot" style={slotStyle(index, all.length, true)}>
+                <CardView
+                  card={card}
+                  enhancements={enhancements}
+                  playable={myTurn && playableIds.has(card.id)}
+                  trump={isTrumpCard(card, round.trumpSuit, round.boss) || enhancements.own === 'trump' || enhancements.foreign === 'trump'}
+                  onTap={myTurn && !split ? () => play(card) : undefined}
+                  onTapOption={myTurn && split ? (use) => play(card, use) : undefined}
+                  legalUses={myTurn && split ? legalUses(card.id) : undefined}
+                  idle={settings.sway}
+                  swayDelay={index * 0.4}
+                />
+              </div>
             );
           })}
         </div>
