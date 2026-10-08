@@ -8,7 +8,20 @@ import { PALETTE_IDS, PALETTES, type PaletteId } from '../ui/palettes';
 import { PixelCard } from '../ui/PixelCard';
 import { playSound, setVolume } from '../ui/sound';
 import { SwirlBackground } from '../ui/SwirlBackground';
+import { FontTab } from './FontTab';
+import { HighlightTab } from './HighlightTab';
+import './labFonts';
+import '../games/durak/shop.css';
 import './lab.css';
+import { TrumpTab } from './TrumpTab';
+
+const TABS = [
+  { id: 'card', name: 'Карта' },
+  { id: 'font', name: 'Шрифт' },
+  { id: 'highlight', name: 'Подсветка' },
+  { id: 'trump', name: 'Козырь' },
+] as const;
+type Tab = (typeof TABS)[number]['id'];
 
 const HERO: Card = makeCard('hearts', 12);
 const HAND: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('diamonds', 14), makeCard('hearts', 9), makeCard('spades', 13)];
@@ -37,6 +50,7 @@ export function CardLab() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [played, setPlayed] = useState(false);
   const [panel, setPanel] = useState(false);
+  const [tab, setTab] = useState<Tab>('card');
   const palette = PALETTES[paletteId];
   const tune = (patch: Partial<Feel>): void => setFeel((f) => ({ ...f, ...patch }));
 
@@ -62,6 +76,18 @@ export function CardLab() {
       <div className="crt" aria-hidden="true" />
       <main className="lab__stage">
         <h1 className="lab__title">Лаборатория карты</h1>
+        <nav className="lab__tabs">
+          {TABS.map((t) => (
+            <button key={t.id} type="button" className={t.id === tab ? 'pbtn pbtn--small pbtn--orange' : 'pbtn pbtn--small pbtn--blue'} onClick={() => setTab(t.id)}>
+              {t.name}
+            </button>
+          ))}
+        </nav>
+        {tab === 'font' && <FontTab />}
+        {tab === 'highlight' && <HighlightTab />}
+        {tab === 'trump' && <TrumpTab />}
+        {tab === 'card' && (
+          <>
         <div className="lab__hero">
           <AnimatePresence>
             {!played && (
@@ -103,8 +129,11 @@ export function CardLab() {
             <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} swayDelay={i * 0.3} showLabel onTap={() => playSound('select', sound)} />
           ))}
         </div>
+          </>
+        )}
       </main>
 
+      {tab === 'card' && (
       <section className={panel ? 'lab__panel' : 'lab__panel lab__panel--closed'}>
         <button type="button" className="pbtn pbtn--small" onClick={() => setPanel((p) => !p)}>
           {panel ? 'Скрыть настройки' : 'Настройки'}
@@ -160,6 +189,7 @@ export function CardLab() {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }
