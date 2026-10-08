@@ -1,9 +1,13 @@
 import type { Card, Rank, Suit } from '@game/core';
 import type { EnhancementId } from '@game/durak';
+import { createGrid, ditherIndex, getPixel, mix, setPixel, stampOutlinedIcon, stampShaded, toDataUrl, type Grid } from './pixelArt';
 
-/** The whole card is a 35×49 pixel sprite scaled up without smoothing — the Balatro look. */
-export const SPRITE_W = 35;
-export const SPRITE_H = 49;
+/** 50×70 pixel sprite: enough pixels for dithered gradients, bevels and shaded shapes. */
+export const SPRITE_W = 50;
+export const SPRITE_H = 70;
+
+const INK = '#1b1426';
+const RED = '#c2292e';
 
 const GLYPHS: Readonly<Record<string, readonly string[]>> = {
   '0': ['XXX', 'X.X', 'X.X', 'X.X', 'XXX'],
@@ -17,16 +21,14 @@ const GLYPHS: Readonly<Record<string, readonly string[]>> = {
   К: ['X.X', 'X.X', 'XX.', 'X.X', 'X.X'],
   Т: ['XXX', '.X.', '.X.', '.X.', '.X.'],
 };
-
 const RANK_TEXT: Readonly<Record<number, string>> = { 11: 'В', 12: 'Д', 13: 'К', 14: 'Т' };
 
 const MINI_SUITS: Readonly<Record<Suit, readonly string[]>> = {
   hearts: ['XX.XX', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
   diamonds: ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
-  clubs: ['..X..', '.XXX.', 'X.X.X', 'XXXXX', '..X..'],
-  spades: ['..X..', '.XXX.', 'XXXXX', 'XXXXX', '..X..'],
+  clubs: ['.XXX.', '.XXX.', 'XXXXX', 'XXXXX', '..X..'],
+  spades: ['..X..', '.XXX.', 'XXXXX', 'XXXXX', '.X.X.'],
 };
-
 const BIG_SUITS: Readonly<Record<Suit, readonly string[]>> = {
   hearts: ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
   diamonds: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
@@ -34,99 +36,140 @@ const BIG_SUITS: Readonly<Record<Suit, readonly string[]>> = {
   spades: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '..X.X..', '.XXXXX.'],
 };
 
-type Pixel = { readonly x: number; readonly y: number; readonly color: string };
+type Paper = { readonly top: string; readonly bottom: string; readonly edge: string };
 
-const INK = '#1b1426';
-const RED = '#c2292e';
-
-/** Paper colour and a texture accent for each enhancement, like Balatro's card enhancements. */
-const PAPER: Readonly<Record<EnhancementId | 'plain', { readonly base: string; readonly shade: string; readonly accent?: string }>> = {
-  plain: { base: '#f4efe2', shade: '#d9d1bd' },
-  golden: { base: '#f2c94c', shade: '#c99a22', accent: '#fff1a8' },
-  sharp: { base: '#c9d3e0', shade: '#8f9db3', accent: '#eef3fa' },
-  heavy: { base: '#a89c8a', shade: '#7d7262', accent: '#c4b8a4' },
-  trump: { base: '#d8c3f0', shade: '#a487c9', accent: '#f1e6ff' },
-  coin: { base: '#bfe3b0', shade: '#84b874', accent: '#f2c94c' },
+const PAPERS: Readonly<Record<EnhancementId | 'plain', Paper>> = {
+  plain: { top: '#fbf6ea', bottom: '#ddd3bd', edge: '#ffffff' },
+  golden: { top: '#ffe58a', bottom: '#d99a1e', edge: '#fff6c9' },
+  sharp: { top: '#e6f0fb', bottom: '#8ea9c9', edge: '#ffffff' },
+  heavy: { top: '#8c7b68', bottom: '#4f4338', edge: '#a8967f' },
+  trump: { top: '#d9c2ff', bottom: '#7a4fc0', edge: '#efe4ff' },
+  coin: { top: '#d8f5d0', bottom: '#86c777', edge: '#f1fff0' },
 };
 
-function stamp(mask: readonly string[], ox: number, oy: number, color: string, scale = 1, flip = false): Pixel[] {
-  const h = mask.length;
-  const w = mask[0]?.length ?? 0;
-  return mask.flatMap((row, y) =>
-    [...row].flatMap((cell, x) => {
-      if (cell !== 'X') return [];
-      const px = flip ? w - 1 - x : x;
-      const py = flip ? h - 1 - y : y;
-      return Array.from({ length: scale * scale }, (_, i) => ({ x: ox + px * scale + (i % scale), y: oy + py * scale + Math.floor(i / scale), color }));
-    }),
-  );
+const GOLD = { Y: '#ffd84a', O: '#c98a12', W: '#fff7cf', R: '#d83a4a', D: '#7a4c06' } as const;
+
+/** Each enhancement gets a symbol that tells its job at a glance. */
+const ICONS: Readonly<Record<EnhancementId, { readonly rows: readonly string[]; readonly palette: Readonly<Record<string, string>> }>> = {
+  golden: {
+    rows: ['....W....', '....Y....', '...YYY...', 'WYYYOYYYW', '..YYOYY..', '...YOY...', '..YY.YY..', '.Y.....Y.', '.........'],
+    palette: GOLD,
+  },
+  sharp: {
+    rows: ['.......WS', '......WSD', '.....WSD.', '....WSD..', '.B.WSD...', '..BSD....', '..BB.....', '.B..B....', 'B........'],
+    palette: { W: '#ffffff', S: '#9fb6d3', D: '#4a5f7d', B: '#7a4a24' },
+  },
+  heavy: {
+    rows: ['.........', 'LLLLLLL..', 'KLLLLLLLL', '.KKLLLLK.', '...KLLK..', '...KLLK..', '..KLLLLK.', '.KKKKKKKK', '.........'],
+    palette: { L: '#c7c0b6', K: '#3a332c' },
+  },
+  trump: {
+    rows: ['.........', 'Y...Y...Y', 'YY.YYY.YY', 'YYYYRYYYY', 'YRYYYYYRY', 'YYYYYYYYY', 'OOOOOOOOO', 'DDDDDDDDD', '.........'],
+    palette: GOLD,
+  },
+  coin: {
+    rows: ['...OOO...', '..OYYYO..', '.OYWYYYO.', 'OYWYOYYYO', 'OYYOYOYYO', 'OYYYOYYYO', '.OYYYYYO.', '..OYYYO..', '...OOO...'],
+    palette: GOLD,
+  },
+};
+
+function inside(x: number, y: number): boolean {
+  const notch = (x < 2 || x > SPRITE_W - 3) && (y < 2 || y > SPRITE_H - 3);
+  return x >= 0 && y >= 0 && x < SPRITE_W && y < SPRITE_H && !notch;
 }
 
-function rankPixels(rank: Rank, ox: number, oy: number, color: string, flip: boolean): Pixel[] {
-  const text = RANK_TEXT[rank] ?? String(rank);
-  const glyphs = [...text].map((ch) => GLYPHS[ch] ?? GLYPHS['0']!);
-  const widths = glyphs.map((g) => g[0]?.length ?? 3);
-  const total = widths.reduce((a, b) => a + b, 0) + glyphs.length - 1;
-  let cursor = flip ? ox - total + 1 : ox;
-  return glyphs.flatMap((glyph, i) => {
-    const pixels = stamp(glyph, cursor, flip ? oy - 4 : oy, color, 1, flip);
-    cursor += (widths[i] ?? 3) + 1;
-    return pixels;
-  });
-}
-
-function frame(base: string, shade: string, accent: string | undefined, enhancement: EnhancementId | undefined): Pixel[] {
-  const pixels: Pixel[] = [];
+function drawBody(grid: Grid, paper: Paper): void {
+  const shades = [0, 0.33, 0.66, 1].map((t) => mix(paper.top, paper.bottom, t));
   for (let y = 0; y < SPRITE_H; y++) {
     for (let x = 0; x < SPRITE_W; x++) {
-      const corner = (x === 0 || x === SPRITE_W - 1) && (y === 0 || y === SPRITE_H - 1);
-      if (corner) continue;
-      const edge = x === 0 || y === 0 || x === SPRITE_W - 1 || y === SPRITE_H - 1;
-      const innerCorner = (x === 1 || x === SPRITE_W - 2) && (y === 1 || y === SPRITE_H - 2);
-      let color = edge || innerCorner ? INK : base;
-      if (!edge && y >= SPRITE_H - 3) color = shade;
-      if (!edge && accent && enhancement === 'sharp' && (x + y) % 6 === 0) color = accent;
-      if (!edge && accent && enhancement === 'heavy' && (x * 7 + y * 3) % 11 === 0) color = shade;
-      if (!edge && accent && (enhancement === 'golden' || enhancement === 'trump') && (x === 2 || y === 2) && !innerCorner) color = accent;
-      pixels.push({ x, y, color });
+      if (!inside(x, y)) continue;
+      const border = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      if (border) {
+        setPixel(grid, x, y, INK);
+        continue;
+      }
+      const shade = shades[ditherIndex(y / SPRITE_H, shades.length, x, y)] ?? paper.top;
+      const lit = !inside(x - 2, y) || !inside(x, y - 2);
+      const shadow = !inside(x + 2, y) || !inside(x, y + 2) || !inside(x, y + 3);
+      setPixel(grid, x, y, lit ? paper.edge : shadow ? mix(paper.bottom, INK, 0.25) : shade);
     }
   }
-  return pixels;
 }
 
-export function frontPixels(card: Card, enhancement?: EnhancementId): readonly Pixel[] {
-  const paper = PAPER[enhancement ?? 'plain'];
+function drawPattern(grid: Grid, enhancement: EnhancementId | undefined): void {
+  if (!enhancement) return;
+  for (let y = 3; y < SPRITE_H - 4; y++) {
+    for (let x = 3; x < SPRITE_W - 3; x++) {
+      const current = getPixel(grid, x, y);
+      if (!current) continue;
+      if (enhancement === 'sharp' && (x + y) % 9 === 0) setPixel(grid, x, y, mix(current, '#ffffff', 0.7));
+      if (enhancement === 'heavy') {
+        const row = Math.floor(y / 6);
+        const mortar = y % 6 === 0 || (x + (row % 2) * 6) % 12 === 0;
+        if (mortar) setPixel(grid, x, y, mix(current, INK, 0.35));
+      }
+      if (enhancement === 'golden' && (x * 13 + y * 7) % 53 === 0) setPixel(grid, x, y, '#ffffff');
+    }
+  }
+}
+
+function drawRank(grid: Grid, rank: Rank, ox: number, oy: number, ink: string, flip: boolean): void {
+  const text = RANK_TEXT[rank] ?? String(rank);
+  const glyphs = (flip ? [...text].reverse() : [...text]).map((ch) => GLYPHS[ch] ?? GLYPHS['0']!);
+  let cursor = ox;
+  for (const glyph of glyphs) {
+    const width = (glyph[0]?.length ?? 3) * 2;
+    const x = flip ? cursor - width + 1 : cursor;
+    stampShaded(grid, glyph, x, flip ? oy - 9 : oy, 2, ink, mix(ink, '#ffffff', 0.35), mix(ink, '#000000', 0.45), flip);
+    cursor = flip ? cursor - width - 2 : cursor + width + 2;
+  }
+}
+
+function suitShades(ink: string): readonly [string, string, string] {
+  return [ink, mix(ink, '#ffffff', 0.4), mix(ink, '#000000', 0.45)];
+}
+
+export function drawFront(card: Card, enhancement?: EnhancementId): Grid {
+  const grid = createGrid(SPRITE_W, SPRITE_H);
+  drawBody(grid, PAPERS[enhancement ?? 'plain']);
+  drawPattern(grid, enhancement);
   const ink = card.suit === 'hearts' || card.suit === 'diamonds' ? RED : INK;
-  const coin = enhancement === 'coin' ? stamp(['.XX.', 'XXXX', 'XXXX', '.XX.'], SPRITE_W - 7, 3, '#e0a91b') : [];
-  return [
-    ...frame(paper.base, paper.shade, paper.accent, enhancement),
-    ...rankPixels(card.rank, 3, 3, ink, false),
-    ...stamp(MINI_SUITS[card.suit], 3, 9, ink),
-    ...stamp(BIG_SUITS[card.suit], 8, 14, ink, 3),
-    ...rankPixels(card.rank, SPRITE_W - 4, SPRITE_H - 4, ink, true),
-    ...stamp(MINI_SUITS[card.suit], SPRITE_W - 8, SPRITE_H - 14, ink, 1, true),
-    ...coin,
-  ];
+  const [base, light, dark] = suitShades(ink);
+  drawRank(grid, card.rank, 5, 5, ink, false);
+  stampShaded(grid, MINI_SUITS[card.suit], 5, 17, 2, base, light, dark);
+  stampShaded(grid, BIG_SUITS[card.suit], 14, 26, 3, base, light, dark);
+  stampShaded(grid, MINI_SUITS[card.suit], SPRITE_W - 15, SPRITE_H - 27, 2, base, light, dark, true);
+  drawRank(grid, card.rank, SPRITE_W - 6, SPRITE_H - 6, ink, true);
+  if (enhancement) {
+    const icon = ICONS[enhancement];
+    stampOutlinedIcon(grid, icon.rows, icon.palette, SPRITE_W - 22, 4, 2, INK);
+  }
+  return grid;
 }
 
-export function backPixels(): readonly Pixel[] {
-  const pixels = frame('#c2292e', '#9c1f25', undefined, undefined);
-  return pixels.map((p) => {
-    const inner = p.x >= 3 && p.x <= SPRITE_W - 4 && p.y >= 3 && p.y <= SPRITE_H - 4;
-    const border = p.x === 2 || p.y === 2 || p.x === SPRITE_W - 3 || p.y === SPRITE_H - 3;
-    if (p.color === INK) return p;
-    if (border && p.x > 1 && p.y > 1 && p.x < SPRITE_W - 2 && p.y < SPRITE_H - 2) return { ...p, color: '#f4efe2' };
-    if (inner) return { ...p, color: (Math.floor(p.x / 2) + Math.floor(p.y / 2)) % 2 === 0 ? '#c2292e' : '#9c1f25' };
-    return p;
-  });
+export function drawBack(): Grid {
+  const grid = createGrid(SPRITE_W, SPRITE_H);
+  drawBody(grid, { top: '#d8343a', bottom: '#8e1a20', edge: '#f06a6a' });
+  for (let y = 5; y < SPRITE_H - 5; y++) {
+    for (let x = 5; x < SPRITE_W - 5; x++) {
+      const frame = x === 5 || y === 5 || x === SPRITE_W - 6 || y === SPRITE_H - 6;
+      if (frame) setPixel(grid, x, y, '#f4efe2');
+      else if ((Math.floor(x / 3) + Math.floor(y / 3)) % 2 === 0) setPixel(grid, x, y, mix(getPixel(grid, x, y) ?? '#c2292e', '#000000', 0.18));
+    }
+  }
+  return grid;
 }
 
-export function SpriteSvg({ pixels }: { readonly pixels: readonly Pixel[] }) {
-  return (
-    <svg className="sprite" viewBox={`0 0 ${SPRITE_W} ${SPRITE_H}`} shapeRendering="crispEdges" aria-hidden="true">
-      {pixels.map((p, i) => (
-        <rect key={i} x={p.x} y={p.y} width={1} height={1} fill={p.color} />
-      ))}
-    </svg>
-  );
+const cache = new Map<string, string>();
+
+export function spriteUrl(key: string, draw: () => Grid): string {
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const url = toDataUrl(draw());
+  cache.set(key, url);
+  return url;
+}
+
+export function SpriteImage({ url }: { readonly url: string }) {
+  return <img className="sprite" src={url} alt="" draggable={false} />;
 }

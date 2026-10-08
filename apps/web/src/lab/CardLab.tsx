@@ -12,7 +12,7 @@ import { PALETTES, SwirlBackground } from './SwirlBackground';
 const HERO: Card = makeCard('hearts', 12);
 const HAND: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('diamonds', 14), makeCard('hearts', 9), makeCard('spades', 13)];
 /** Tuned by the user in the lab, 2026-10-08. */
-const DEFAULT_FEEL: CardFeel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4, shine: true };
+const DEFAULT_FEEL: CardFeel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4 };
 
 type SliderProps = { readonly label: string; readonly value: number; readonly min: number; readonly max: number; readonly step?: number; readonly onChange: (v: number) => void };
 
@@ -31,7 +31,7 @@ export function CardLab() {
   const [feel, setFeel] = useState<CardFeel>(DEFAULT_FEEL);
   const [paletteIndex, setPaletteIndex] = useState(2);
   const [speed, setSpeed] = useState(0.6);
-  const [volume, setVolumeState] = useState(0.5);
+  const [volume, setVolumeState] = useState(0.35);
   const [sound, setSound] = useState(true);
   const [faceDown, setFaceDown] = useState(false);
   const [enhancement, setEnhancement] = useState<EnhancementId | undefined>('golden');
@@ -98,6 +98,11 @@ export function CardLab() {
             </div>
           ))}
         </div>
+        <div className="lab__gallery">
+          {ENHANCEMENT_IDS.map((id, i) => (
+            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} swayDelay={i * 0.3} onTap={() => playSound('select', sound)} />
+          ))}
+        </div>
       </main>
 
       <section className={panel ? 'lab__panel' : 'lab__panel lab__panel--closed'}>
@@ -144,9 +149,6 @@ export function CardLab() {
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="lab__check">
-              <input type="checkbox" checked={feel.shine} onChange={(e) => tune({ shine: e.target.checked })} /> Блик
             </label>
             <label className="lab__check">
               <input type="checkbox" checked={sound} onChange={(e) => setSound(e.target.checked)} /> Звук

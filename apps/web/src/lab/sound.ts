@@ -1,10 +1,11 @@
 /** Soft WebAudio synth: rounded waves, a low-pass "felt" filter and gentle envelopes — no audio files. */
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
-let volume = 0.5;
+let volume = 0.35;
 
-const ATTACK = 0.008;
-const SOFT_CUTOFF = 1800;
+/** Slow attack and a low cutoff keep every sound round, like a felt mallet. */
+const ATTACK = 0.025;
+const SOFT_CUTOFF = 900;
 
 function audio(): { ctx: AudioContext; out: AudioNode } | null {
   try {
@@ -71,22 +72,23 @@ function whoosh(duration: number, level: number, cutoff: number): void {
   source.start();
 }
 
+/** Soft sine "marimba" notes an octave lower, plus a faint muffled rustle for card movement. */
 export const SOUNDS = {
-  hover: () => tone(880, 0.05, 'sine', 0.03),
+  hover: () => tone(523, 0.08, 'sine', 0.015),
   select: () => {
-    tone(523, 0.09, 'triangle', 0.09);
-    tone(784, 0.12, 'triangle', 0.08, undefined, 0.05);
+    tone(392, 0.16, 'sine', 0.05);
+    tone(523, 0.2, 'sine', 0.04, undefined, 0.06);
   },
-  deselect: () => tone(587, 0.1, 'triangle', 0.07, 440),
-  flip: () => whoosh(0.16, 0.35, 1400),
+  deselect: () => tone(440, 0.18, 'sine', 0.04, 330),
+  flip: () => whoosh(0.2, 0.12, 500),
   play: () => {
-    whoosh(0.22, 0.4, 900);
-    tone(196, 0.2, 'sine', 0.14, 130);
+    whoosh(0.26, 0.14, 420);
+    tone(147, 0.28, 'sine', 0.08, 110);
   },
-  deny: () => tone(220, 0.16, 'triangle', 0.07, 165),
+  deny: () => tone(196, 0.22, 'sine', 0.05, 165),
   coin: () => {
-    tone(1047, 0.08, 'sine', 0.07);
-    tone(1568, 0.16, 'sine', 0.06, undefined, 0.06);
+    tone(659, 0.14, 'sine', 0.04);
+    tone(988, 0.24, 'sine', 0.035, undefined, 0.07);
   },
 } as const;
 

@@ -2,7 +2,7 @@ import type { Card } from '@game/core';
 import { ENHANCEMENTS, type EnhancementId } from '@game/durak';
 import { motion, useSpring } from 'motion/react';
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
-import { backPixels, frontPixels, SpriteSvg } from './CardSprite';
+import { drawBack, drawFront, SpriteImage, spriteUrl } from './CardSprite';
 
 export type CardFeel = {
   /** Max tilt in degrees while the pointer is over the card. */
@@ -13,7 +13,6 @@ export type CardFeel = {
   readonly damping: number;
   /** Size of one "pixel" in CSS px for borders and shadows. */
   readonly pixel: number;
-  readonly shine: boolean;
 };
 
 type PixelCardProps = {
@@ -28,7 +27,6 @@ type PixelCardProps = {
   readonly onHover?: () => void;
 };
 
-const BACK = backPixels();
 
 export function PixelCard({ card, feel, width, enhancement, faceDown = false, selected = false, swayDelay = 0, onTap, onHover }: PixelCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -36,7 +34,8 @@ export function PixelCard({ card, feel, width, enhancement, faceDown = false, se
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squash, setSquash] = useState(0);
-  const front = useMemo(() => frontPixels(card, enhancement), [card, enhancement]);
+  const front = useMemo(() => spriteUrl(`${card.id}:${enhancement ?? '-'}`, () => drawFront(card, enhancement)), [card, enhancement]);
+  const back = useMemo(() => spriteUrl('back', drawBack), []);
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
     const rect = ref.current?.getBoundingClientRect();
@@ -90,11 +89,10 @@ export function PixelCard({ card, feel, width, enhancement, faceDown = false, se
               transition={{ duration: 0.38, ease: 'easeOut' }}
             >
               <div className="pcard__face pcard__front">
-                <SpriteSvg pixels={front} />
-                {enhancement && feel.shine && <span className="pcard__shine" />}
+                <SpriteImage url={front} />
               </div>
               <div className="pcard__face pcard__back">
-                <SpriteSvg pixels={BACK} />
+                <SpriteImage url={back} />
               </div>
             </motion.div>
           </motion.div>
