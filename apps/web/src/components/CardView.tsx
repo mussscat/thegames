@@ -22,11 +22,6 @@ type CardViewProps = {
   readonly swayDelay?: number;
 };
 
-/** Blue tag — the enhancement is yours, red — it came from the opponent. */
-function Tag({ source, short }: { readonly source: EnhancementSource; readonly short: string }) {
-  return <span className={`card__tag card__tag--${source}`}>{short}</span>;
-}
-
 function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''): string {
   return ['card', isRedSuit(card.suit) ? 'card--red' : 'card--black', playable ? 'card--playable' : '', trump ? 'card--trump' : '', extra]
     .filter(Boolean)
@@ -47,9 +42,7 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
         disabled={!halfEnabled(source)}
         onClick={() => onTapOption?.(source)}
         aria-label={`${label}: ${ENHANCEMENTS[id].name} (${source === 'own' ? 'твоё' : 'соперника'})`}
-      >
-        <Tag source={source} short={ENHANCEMENTS[id].short} />
-      </button>
+      />
     );
     return (
       <motion.div layoutId={card.id} transition={CARD_SPRING} className={cardClasses(card, playable, trump, 'card--split')} aria-label={label}>
@@ -75,7 +68,6 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
     >
       <FeelBox idle={idle} swayDelay={swayDelay}>
         <CardFace card={card} enhancement={single} />
-        {single && <Tag source={own ? 'own' : 'foreign'} short={ENHANCEMENTS[single].short} />}
       </FeelBox>
     </motion.button>
   );

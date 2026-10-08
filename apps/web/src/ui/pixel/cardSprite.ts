@@ -103,8 +103,11 @@ function suitShades(ink: string): readonly [string, string, string] {
   return [ink, mix(ink, '#ffffff', 0.4), mix(ink, '#000000', 0.45)];
 }
 
+/** Where the enhancement icon goes: top-right normally; bottom-left for the opponent's half of a split card. */
+export type IconCorner = 'topRight' | 'bottomLeft';
+
 /** The rank is drawn as text by the UI, so the sprite leaves the rank corners empty. */
-export function drawFront(card: Card, enhancement?: EnhancementId): Grid {
+export function drawFront(card: Card, enhancement?: EnhancementId, corner: IconCorner = 'topRight'): Grid {
   const grid = createGrid(SPRITE_W, SPRITE_H);
   drawBody(grid, PAPERS[enhancement ?? 'plain']);
   drawPattern(grid, enhancement);
@@ -115,7 +118,8 @@ export function drawFront(card: Card, enhancement?: EnhancementId): Grid {
   stampShaded(grid, MINI_SUITS[card.suit], SPRITE_W - 15, SPRITE_H - 27, 2, base, light, dark, true);
   if (enhancement) {
     const icon = ICONS[enhancement];
-    stampOutlinedIcon(grid, icon.rows, icon.palette, SPRITE_W - 22, 4, 2, INK);
+    const [ox, oy] = corner === 'topRight' ? [SPRITE_W - 22, 4] : [4, SPRITE_H - 22];
+    stampOutlinedIcon(grid, icon.rows, icon.palette, ox, oy, 2, INK);
   }
   return grid;
 }
@@ -143,8 +147,8 @@ function cached(key: string, draw: () => Grid): string {
   return url;
 }
 
-export function frontUrl(card: Card, enhancement?: EnhancementId): string {
-  return cached(`${card.id}:${enhancement ?? '-'}`, () => drawFront(card, enhancement));
+export function frontUrl(card: Card, enhancement?: EnhancementId, corner: IconCorner = 'topRight'): string {
+  return cached(`${card.id}:${enhancement ?? '-'}:${corner}`, () => drawFront(card, enhancement, corner));
 }
 
 export function backUrl(): string {

@@ -21,25 +21,11 @@
 .card--trump.card--playable .feel { filter: drop-shadow(0 0 8px var(--glow-trump)) drop-shadow(0 0 3px var(--glow-trump)); }
 .hand--player:not(.hand--waiting) .card:not(.card--playable) .face { filter: brightness(0.6) saturate(0.7); }
 .card--back { cursor: default; }
-.card__tag {
-  position: absolute;
-  left: 4%;
-  bottom: 4%;
-  padding: 0 0.25em;
-  font-size: 0.75em;
-  line-height: 1.3;
-  color: #ffffff;
-  box-shadow: 1px 1px 0 #000000;
-}
-.card__tag--own { background: #2563eb; }
-.card__tag--foreign { background: #dc2626; }
 .card--split { cursor: default; }
 .card__half { position: absolute; inset: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .card__half:disabled { cursor: default; }
-.card__half--own { clip-path: polygon(0 0, 100% 0, 0 100%); }
-.card__half--foreign { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
-.card__half--own .card__tag { left: 4%; top: 42%; bottom: auto; }
-.card__half--foreign .card__tag { left: auto; right: 4%; }
+.card__half--own { clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.card__half--foreign { clip-path: polygon(0 0, 0 100%, 100% 100%); }
 .card__half--illegal { background: rgb(15 10 25 / 55%); }
 
 /* ---------- hands ---------- */

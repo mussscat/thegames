@@ -5,7 +5,7 @@ import { frontUrl } from './pixel/cardSprite';
 type CardFaceProps = {
   readonly card: Card;
   readonly enhancement?: EnhancementId;
-  /** Both enhancements available: own paper top-left, foreign paper bottom-right, split on the diagonal. */
+  /** Both enhancements available: own half top-right (icon top-right), foreign half bottom-left (icon bottom-left). */
   readonly split?: { readonly own: EnhancementId; readonly foreign: EnhancementId };
 };
 
@@ -17,8 +17,7 @@ export function CardFace({ card, enhancement, split }: CardFaceProps) {
       {split ? (
         <>
           <img className="sprite face__sprite face__sprite--own" src={frontUrl(card, split.own)} alt="" draggable={false} />
-          <img className="sprite face__sprite face__sprite--foreign" src={frontUrl(card, split.foreign)} alt="" draggable={false} />
-          <span className="face__diagonal" aria-hidden="true" />
+          <img className="sprite face__sprite face__sprite--foreign" src={frontUrl(card, split.foreign, 'bottomLeft')} alt="" draggable={false} />
         </>
       ) : (
         <img className="sprite face__sprite" src={frontUrl(card, enhancement)} alt="" draggable={false} />

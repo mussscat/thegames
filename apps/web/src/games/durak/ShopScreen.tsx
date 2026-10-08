@@ -124,7 +124,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
                       <PixelCard card={card} width={56} enhancement={offer.enhancementId} idle={false} />
                       <span className="shop__card-caption">
                         {cardLabel(cardId)}
-                        {current ? ` (заменит ${ENHANCEMENTS[current].short})` : ''}
+                        {current ? ` (заменит: ${ENHANCEMENTS[current].name})` : ''}
                       </span>
                     </button>
                   );
@@ -165,7 +165,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         <div className="shop__deck">
           {Object.entries(run.profile).map(([cardId, id]) => {
             const card = CARDS_BY_ID.get(cardId);
-            return card && id ? <PixelCard key={cardId} card={card} width={44} enhancement={id} idle={false} showLabel /> : null;
+            return card && id ? <PixelCard key={cardId} card={card} width={44} enhancement={id} idle={false} /> : null;
           })}
         </div>
       </section>

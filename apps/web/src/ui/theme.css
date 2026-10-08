@@ -111,14 +111,8 @@ body {
   z-index: -1;
 }
 .face__sprite { position: absolute; inset: 0; }
-.face__sprite--own { clip-path: polygon(0 0, 100% 0, 0 100%); }
-.face__sprite--foreign { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
-.face__diagonal {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top right, transparent calc(50% - 1px), var(--ink) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
-  pointer-events: none;
-}
+.face__sprite--own { clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.face__sprite--foreign { clip-path: polygon(0 0, 0 100%, 100% 100%); }
 .face__rank {
   position: absolute;
   top: 3%;

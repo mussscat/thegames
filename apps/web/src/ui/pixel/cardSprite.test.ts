@@ -29,6 +29,12 @@ describe('drawFront', () => {
     expect(getPixel(drawFront(QUEEN), 36, 12)).not.toBe('#ffd84a');
   });
 
+  it('can draw the icon in the bottom-left corner for the foreign half of a split card', () => {
+    const bottomLeft = drawFront(QUEEN, 'coin', 'bottomLeft');
+    expect(getPixel(bottomLeft, 12, SPRITE_H - 14)).toBe('#ffd84a');
+    expect(getPixel(bottomLeft, 36, 12)).not.toBe('#ffd84a');
+  });
+
   it('draws red suits red and black suits dark', () => {
     const centre = (suit: 'hearts' | 'spades') => getPixel(drawFront(makeCard(suit, 9)), 24, 38);
     expect(centre('hearts')).not.toEqual(centre('spades'));
