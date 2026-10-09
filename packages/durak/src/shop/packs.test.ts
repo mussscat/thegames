@@ -27,8 +27,8 @@ describe('rollPack', () => {
   it('follows the kind and size weights roughly', () => {
     const packs = Array.from({ length: 3000 }, (_, seed) => rollPack(createRng(seed))[0]);
     const share = (test: (p: Pack) => boolean) => packs.filter(test).length / packs.length;
-    expect(share((p) => p.kind === 'deck')).toBeGreaterThan(0.2);
-    expect(share((p) => p.kind === 'deck')).toBeLessThan(0.3);
+    expect(share((p) => p.kind === 'deck')).toBeGreaterThan(0.1);
+    expect(share((p) => p.kind === 'deck')).toBeLessThan(0.2);
     expect(share((p) => p.size === 'normal')).toBeGreaterThan(0.65);
     expect(share((p) => p.size === 'mega')).toBeLessThan(0.12);
   });
@@ -50,6 +50,12 @@ describe('rollPackCards', () => {
       expect(ids).not.toContain('clubs');
       expect(ids).not.toContain('not a joker');
     }
+  });
+
+  it('a focus pack holds different focuses', () => {
+    const [cards] = rollPackCards(createRng(4), pack({ kind: 'focuses', size: 'big' }), [], {});
+    expect(cards.every((card) => card.kind === 'focus')).toBe(true);
+    expect(new Set(cards.map((card) => (card.kind === 'focus' ? card.focusId : ''))).size).toBe(5);
   });
 
   it('an arcana pack holds different tarots', () => {
@@ -105,8 +111,9 @@ describe('packCardRarity', () => {
       { kind: 'tarot', tarotId: 'wheel' },
       { kind: 'card', cardId: 'clubs-6', enhancement: 'golden' },
       { kind: 'card', cardId: 'clubs-6', enhancement: 'trump' },
+      { kind: 'focus', focusId: 'suitShift' },
     ];
-    expect(cards.map(packCardRarity)).toEqual(['legendary', 'legendary', 'common', 'rare']);
+    expect(cards.map(packCardRarity)).toEqual(['legendary', 'legendary', 'common', 'rare', 'legendary']);
   });
 });
 

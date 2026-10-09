@@ -6,11 +6,13 @@ import {
   buyPack,
   castShopTarot,
   createShop,
+  focusSellPrice,
   moveJoker,
   pickFromPack,
   priceOf,
   rerollShop,
   sellJoker,
+  sellFocus,
   sellPrice,
   skipPack,
   skipTarot,
@@ -19,7 +21,7 @@ import {
   type ShopState,
 } from './shop';
 
-const purse = (patch: Partial<Purse> = {}): Purse => ({ coins: 20, jokers: [], profile: {}, rng: createRng(7), ...patch });
+const purse = (patch: Partial<Purse> = {}): Purse => ({ coins: 20, jokers: [], focuses: [], profile: {}, rng: createRng(7), ...patch });
 const FULL = ['clubs', 'hearts', 'spades', 'diamonds', 'small'] as const;
 const HAND = ['clubs-6', 'clubs-7', 'clubs-8', 'clubs-9', 'clubs-10'];
 
@@ -215,7 +217,7 @@ describe('pickFromPack', () => {
 
   it('a tarot result keeps the purse shape (no extra fields)', () => {
     const arcana = opened({ kind: 'arcana', cards: [{ kind: 'tarot', tarotId: 'hermit' }], hand: HAND });
-    expect(Object.keys(expectOk(pickFromPack(arcana, purse(), 0, [])).purse).sort()).toEqual(['coins', 'jokers', 'profile', 'rng']);
+    expect(Object.keys(expectOk(pickFromPack(arcana, purse(), 0, [])).purse).sort()).toEqual(['coins', 'focuses', 'jokers', 'profile', 'rng']);
   });
 
   it('refuses when no pack is open', () => {
@@ -282,5 +284,32 @@ describe('Смерть needs an enhanced source', () => {
       const { shop: after } = expectOk(buyPack({ ...shop, packs: [{ kind: 'arcana', size: 'big', price: 6 }, null] }, purse({ rng: createRng(seed) }), 0));
       expect(after.opened?.cards.some((card) => card?.kind === 'tarot' && card.tarotId === 'death')).toBe(false);
     }
+  });
+});
+
+describe('focuses in the shop', () => {
+  it('a shelf focus goes into a free slot, at its catalogue price', () => {
+    const focusShop: ShopState = { ...shop, items: [{ card: { kind: 'focus', focusId: 'boost' }, price: 3 }, null] };
+    expect(priceOf({ kind: 'focus', focusId: 'boost' })).toBe(3);
+    const { purse: paid } = expectOk(buyItem(focusShop, purse(), 0));
+    expect(paid.focuses).toEqual(['boost']);
+    expect(paid.coins).toBe(17);
+    expect(buyItem(focusShop, purse({ focuses: ['peek', 'pad'] }), 0)).toEqual({ ok: false, error: 'focusSlotsFull' });
+  });
+
+  it('a focus pack pick needs a free slot; selling one frees it', () => {
+    const focusPack = opened({ kind: 'focuses', cards: [{ kind: 'focus', focusId: 'shield' }] });
+    const full = purse({ focuses: ['peek', 'pad'] });
+    expect(pickFromPack(focusPack, full, 0, [])).toEqual({ ok: false, error: 'focusSlotsFull' });
+    const sold = expectOk(sellFocus(full, 0));
+    expect(sold.focuses).toEqual(['pad']);
+    expect(sold.coins).toBe(20 + focusSellPrice('peek'));
+    expect(expectOk(pickFromPack(focusPack, sold, 0, [])).purse.focuses).toEqual(['pad', 'shield']);
+    expect(sellFocus(purse(), 0)).toEqual({ ok: false, error: 'focusNotOwned' });
+  });
+
+  it('a tarot cast keeps the focuses', () => {
+    const arcana = opened({ kind: 'arcana', cards: [{ kind: 'tarot', tarotId: 'hermit' }], hand: HAND });
+    expect(expectOk(pickFromPack(arcana, purse({ focuses: ['peek'] }), 0, [])).purse.focuses).toEqual(['peek']);
   });
 });

@@ -3,6 +3,8 @@ import { BOSSES } from '../content/bosses';
 import { RUN_SCHEDULE, TIER_MULT, type EnemySpec } from '../content/enemies';
 import { applyFightAction, createFight, type FightAction, type FightError, type FightState } from '../fight';
 import type { DeckProfile } from '../enhancements';
+import { applyFocus, type FocusError } from '../focus/apply';
+import type { FocusId } from '../focus/catalog';
 import type { JokerId } from '../jokers/catalog';
 import { BOSS_RULES, type BossRule, type PlayerId } from '../types';
 import { fightReward, type FightReward } from './economy';
@@ -14,6 +16,7 @@ import {
   moveJoker,
   pickFromPack,
   rerollShop,
+  sellFocus,
   sellJoker,
   skipPack,
   skipTarot,
@@ -45,6 +48,8 @@ export type RunState = {
   readonly collected: number;
   /** The player's version of the shared deck. */
   readonly profile: DeckProfile;
+  /** The player's focuses, ≤ MAX_FOCUSES, carried between fights. */
+  readonly focuses: readonly FocusId[];
   /** One boss rule per circle, all different. */
   readonly bosses: readonly BossRule[];
   readonly phase: RunPhase;
@@ -61,10 +66,12 @@ export type RunAction =
   | { readonly type: 'skipTarot' }
   | { readonly type: 'sellJoker'; readonly jokerId: JokerId }
   | { readonly type: 'moveJoker'; readonly from: number; readonly to: number }
+  | { readonly type: 'useFocus'; readonly slot: number; readonly targets: readonly string[] }
+  | { readonly type: 'sellFocus'; readonly slot: number }
   | { readonly type: 'reroll' }
   | { readonly type: 'leaveShop' };
 
-export type RunError = FightError | ShopError | 'wrongPhase' | 'fightNotOver';
+export type RunError = FightError | ShopError | FocusError | 'wrongPhase' | 'fightNotOver';
 
 type RunResult = Result<RunState, RunError>;
 type ShopPhase = Extract<RunPhase, { kind: 'shop' }>;
@@ -83,7 +90,7 @@ export function createRun(seed: number): RunState {
   const start = createRng(seed);
   const [order, rng] = shuffle(BOSS_RULES, start);
   const bosses = order.slice(0, CIRCLES);
-  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, jokers: [], collected: 0, profile: {}, bosses, phase: { kind: 'over', won: false } });
+  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, jokers: [], collected: 0, profile: {}, focuses: [], bosses, phase: { kind: 'over', won: false } });
 }
 
 export type StageEnemy = EnemySpec & { readonly boss: BossRule | null };
@@ -119,6 +126,13 @@ export function applyRunAction(state: RunState, action: RunAction): RunResult {
         const result = skipTarot(phase.shop);
         return result.ok ? ok({ ...state, phase: { ...phase, shop: result.value } }) : result;
       });
+    case 'useFocus':
+      return playFocus(state, action.slot, action.targets);
+    case 'sellFocus':
+      return inShop(state, () => {
+        const result = sellFocus(purse(state), action.slot);
+        return result.ok ? ok({ ...state, ...result.value }) : result;
+      });
     case 'reroll':
       return inShop(state, (phase) => withStep(state, phase, rerollShop(phase.shop, purse(state))));
     case 'leaveShop':
@@ -138,7 +152,7 @@ export function applyRunAction(state: RunState, action: RunAction): RunResult {
 }
 
 function purse(state: RunState): Purse {
-  return { coins: state.coins, jokers: state.jokers, profile: state.profile, rng: state.rng };
+  return { coins: state.coins, jokers: state.jokers, focuses: state.focuses, profile: state.profile, rng: state.rng };
 }
 
 function withStep(state: RunState, phase: ShopPhase, result: Result<ShopStep, ShopError>): RunResult {
@@ -206,4 +220,14 @@ function reorderJokers(state: RunState, from: number, to: number): RunResult {
   if (state.phase.kind !== 'fight') return ok({ ...state, jokers });
   const fight = { ...state.phase.fight, jokers: { ...state.phase.fight.jokers, player: jokers } };
   return ok({ ...state, jokers, phase: { kind: 'fight', fight } });
+}
+
+function playFocus(state: RunState, slot: number, targets: readonly string[]): RunResult {
+  if (state.phase.kind !== 'fight') return err('wrongPhase');
+  const id = state.focuses[slot];
+  if (id === undefined) return err('focusNotOwned');
+  const result = applyFocus(state.phase.fight, id, targets);
+  if (!result.ok) return result;
+  const { fight, coins } = result.value;
+  return ok({ ...state, coins: state.coins + coins, focuses: state.focuses.filter((_, i) => i !== slot), phase: { kind: 'fight', fight } });
 }

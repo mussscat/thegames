@@ -215,3 +215,36 @@ describe('jokers in the run', () => {
     expect(left.collected).toBe(4);
   });
 });
+
+describe('focuses in the run', () => {
+  const inFight = (focuses: RunState['focuses'], attacker: 'player' | 'enemy'): RunState => {
+    const run = createRun(1);
+    if (run.phase.kind !== 'fight') throw new Error('not in a fight');
+    return { ...run, focuses, phase: { kind: 'fight', fight: { ...run.phase.fight, round: { ...run.phase.fight.round, attacker, table: [] } } } };
+  };
+
+  it('a new run has no focuses', () => {
+    expect(createRun(1).focuses).toEqual([]);
+  });
+
+  it('a focus is played in the fight, leaves its slot, and Копилочка pays the run', () => {
+    const myTurn = inFight(['piggy', 'boost'], 'player');
+    const used = expectOk(applyRunAction(myTurn, { type: 'useFocus', slot: 0, targets: [] }));
+    expect(used.focuses).toEqual(['boost']);
+    expect(used.coins).toBe(myTurn.coins + 4);
+    const boosted = expectOk(applyRunAction(used, { type: 'useFocus', slot: 0, targets: [] }));
+    expect(boosted.focuses).toEqual([]);
+    expect(boosted.phase.kind === 'fight' && boosted.phase.fight.focusCharges.mult).toBe(3);
+    expect(applyRunAction(boosted, { type: 'useFocus', slot: 0, targets: [] })).toEqual({ ok: false, error: 'focusNotOwned' });
+  });
+
+  it('refuses to play a focus on the enemy turn and keeps it', () => {
+    expect(applyRunAction(inFight(['peek'], 'enemy'), { type: 'useFocus', slot: 0, targets: [] })).toEqual({ ok: false, error: 'notYourTurn' });
+  });
+
+  it('a focus can be sold in the shop, and focuses carry into the next fight', () => {
+    const shop = { ...inShop(createRun(1)), focuses: ['shield' as const] };
+    expect(expectOk(applyRunAction(shop, { type: 'sellFocus', slot: 0 })).focuses).toEqual([]);
+    expect(expectOk(applyRunAction(shop, { type: 'leaveShop' })).focuses).toEqual(['shield']);
+  });
+});
