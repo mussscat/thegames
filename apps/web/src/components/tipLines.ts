@@ -1,6 +1,7 @@
 import { ENHANCEMENTS, type CardEnhancements, type EnhancementId } from '@game/durak';
 
-export type TipLine = { readonly name: string; readonly description: string; readonly owner: 'твоё' | 'соперника' | null };
+/** `owner` — a short note after the name (whose half of a split card, a rarity, a pack size). */
+export type TipLine = { readonly name: string; readonly description: string; readonly owner: string | null };
 
 function line(id: EnhancementId, owner: TipLine['owner']): TipLine {
   return { name: ENHANCEMENTS[id].name, description: ENHANCEMENTS[id].description, owner };

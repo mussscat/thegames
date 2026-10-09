@@ -62,6 +62,5 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
   await expect(owned.nth(1)).toHaveAccessibleName('Трефовик');
   await owned.nth(1).click();
   await page.getByRole('button', { name: 'Трефовик левее' }).click();
-  await page.getByRole('button', { name: 'Закрыть' }).click();
   await expect(owned.nth(0)).toHaveAccessibleName('Трефовик');
 });

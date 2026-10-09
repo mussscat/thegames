@@ -20,7 +20,7 @@ export type EnhancementDef = {
 };
 
 export const ENHANCEMENTS: Readonly<Record<EnhancementId, EnhancementDef>> = {
-  golden: { id: 'golden', name: 'Золотая', short: 'Зол', description: 'Соперник забрал её («Беру») — +1 урон', price: 4 },
+  golden: { id: 'golden', name: 'Золотая', short: 'Зол', description: 'Её забрали («Беру») — +3 фишки к удару', price: 4 },
   sharp: { id: 'sharp', name: 'Острая', short: 'Остр', description: 'Бьёт карту любой масти, если старше по рангу', price: 5 },
   heavy: { id: 'heavy', name: 'Тяжёлая', short: 'Тяж', description: 'Отбился ею — к её рангу нельзя подкинуть', price: 3 },
   trump: { id: 'trump', name: 'Козырная', short: 'Коз', description: 'Всегда считается козырем', price: 6 },

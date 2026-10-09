@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const GOLDEN = 'Соперник забрал её («Беру») — +1 урон';
+const GOLDEN = 'Её забрали («Беру») — +3 фишки к удару';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/?lab');

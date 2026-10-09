@@ -1,4 +1,17 @@
-import { JOKERS, stageEnemy, stageLabel, type FightReward, type PackCard, type RunAction, type RunState, type ShopState } from '@game/durak';
+import {
+  conflictFor,
+  ENHANCEMENTS,
+  JOKERS,
+  stageEnemy,
+  stageLabel,
+  type FightReward,
+  type JokerId,
+  type PackCard,
+  type RunAction,
+  type RunState,
+  type ShopItem,
+  type ShopState,
+} from '@game/durak';
 import { useEffect, useRef, useState } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
@@ -7,14 +20,22 @@ import { OwnedJokers } from './shop/OwnedJokers';
 import { PackArt } from './shop/PackArt';
 import { PackCardFace } from './shop/PackCardFace';
 import { PackOpening } from './shop/PackOpening';
-import { ShopDetail, type ShopFocus } from './shop/ShopDetail';
 import { ShopSlot } from './shop/ShopSlot';
-import { PACK_NAMES, PACK_SIZE_NAMES, packCardTitle } from './shop/shopCopy';
+import { cardTipLines, PACK_NAMES, packCardTitle, packTipLines } from './shop/shopCopy';
 import { TarotCastSheet } from './shop/TarotCastSheet';
 import { castsWheelNow } from './shop/opening';
 import { coinSound, isNewError } from './sounds';
 import './fight.css';
 import './shop.css';
+
+type Selection = { readonly kind: 'item' | 'pack'; readonly index: number };
+
+/** «В колоде: Острая → станет Золотая» for a shelf card that would replace another enhancement. */
+function replacementWarning(item: ShopItem | null, profile: RunState['profile']): string | null {
+  if (item?.card.kind !== 'card') return null;
+  const replaced = conflictFor(profile, item.card.cardId, item.card.enhancement);
+  return replaced ? `В колоде: ${ENHANCEMENTS[replaced].name} → станет ${ENHANCEMENTS[item.card.enhancement].name}` : null;
+}
 
 type ShopScreenProps = {
   readonly run: RunState;
@@ -29,7 +50,8 @@ type ShopScreenProps = {
 /** Balatro's shop: owned jokers on top, a «МАГАЗИН» panel with 2 items and 2 packs, reroll and next fight. */
 export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }: ShopScreenProps) {
   const { settings, play } = useSettings();
-  const [focus, setFocus] = useState<ShopFocus | null>(null);
+  const [selected, setSelected] = useState<Selection | null>(null);
+  const [selectedJoker, setSelectedJoker] = useState<JokerId | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   /**
    * Set when Колесо Фортуны is used — from a pack or straight off the shelf: the jokers count and the shop state it changes
@@ -55,12 +77,21 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
     setNotice(null);
     onAct({ type: 'pickFromPack', index, targets });
   };
-  /** The detail sheet's actions; a shelf Колесо Фортуны is cast on purchase, so its result is told here too. */
-  const actFromSheet = (action: RunAction): void => {
+  /** Buys the selected slot; a shelf Колесо Фортуны is cast on purchase, so its result is told here too. */
+  const buy = (action: RunAction): void => {
     const busy = shop.opened !== null || shop.casting !== null;
     if (action.type === 'buyItem' && castsWheelNow(shop.items[action.index], run.coins, busy)) wheel.current = { jokers: run.jokers.length, marker: shop.items };
     setNotice(null);
+    setSelected(null);
     onAct(action);
+  };
+  const select = (next: Selection): void => {
+    setSelectedJoker(null);
+    setSelected(selected?.kind === next.kind && selected.index === next.index ? null : next);
+  };
+  const clearSelection = (): void => {
+    setSelected(null);
+    setSelectedJoker(null);
   };
   const previousCoins = usePrevious(run.coins);
   useEffect(() => {
@@ -76,7 +107,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
   const { circle, fight } = stageLabel(run.stage + 1);
 
   return (
-    <main className="screen shop" data-testid="shop">
+    <main className="screen shop" data-testid="shop" onClick={clearSelection}>
       <header className="shop__side panel">
         <PixelButton tone="blue" small onClick={onExit}>
           Меню
@@ -92,7 +123,15 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         </span>
       </header>
 
-      <OwnedJokers jokers={run.jokers} onAct={onAct} />
+      <OwnedJokers
+        jokers={run.jokers}
+        selected={selectedJoker}
+        onSelect={(id) => {
+          setSelected(null);
+          setSelectedJoker(id);
+        }}
+        onAct={onAct}
+      />
 
       <section className="shop__panel panel" aria-label="Магазин">
         <h2 className="shop__head">Магазин</h2>
@@ -110,8 +149,14 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               key={`item-${index}`}
               testId={`shop-item-${index}`}
               price={item?.price ?? null}
-              label={item ? `${packCardTitle(item.card)}, ${item.price} монет` : 'Продано'}
-              onOpen={() => setFocus({ kind: 'item', index })}
+              coins={run.coins}
+              title={item ? packCardTitle(item.card) : ''}
+              tip={item ? cardTipLines(item.card, run.profile) : []}
+              selected={selected?.kind === 'item' && selected.index === index}
+              verb="Купить"
+              warning={replacementWarning(item, run.profile)}
+              onSelect={() => select({ kind: 'item', index })}
+              onBuy={() => buy({ type: 'buyItem', index })}
             >
               {item && <PackCardFace card={item.card} />}
             </ShopSlot>
@@ -123,8 +168,13 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               key={`pack-${index}`}
               testId={`shop-pack-${index}`}
               price={pack?.price ?? null}
-              label={pack ? `${PACK_NAMES[pack.kind]}, ${PACK_SIZE_NAMES[pack.size]}, ${pack.price} монет` : 'Продано'}
-              onOpen={() => setFocus({ kind: 'pack', index })}
+              coins={run.coins}
+              title={pack ? PACK_NAMES[pack.kind] : ''}
+              tip={pack ? packTipLines(pack) : []}
+              selected={selected?.kind === 'pack' && selected.index === index}
+              verb="Купить"
+              onSelect={() => select({ kind: 'pack', index })}
+              onBuy={() => buy({ type: 'buyPack', index })}
             >
               {pack && <PackArt kind={pack.kind} size={pack.size} />}
             </ShopSlot>
@@ -136,7 +186,6 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         {error ?? notice ?? ''}
       </p>
 
-      {focus && <ShopDetail focus={focus} shop={shop} run={run} onAct={actFromSheet} onClose={() => setFocus(null)} />}
       {shop.casting && (
         <TarotCastSheet
           key={`${shop.casting.tarotId}-${shop.casting.hand.join()}`}

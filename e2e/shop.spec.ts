@@ -166,3 +166,12 @@ test('the lab opens any pack', async ({ page }) => {
   await page.getByRole('button', { name: 'Вскрыть' }).click();
   await expect(page.getByTestId('pack-opening')).toBeVisible();
 });
+
+test('an unaffordable item can be looked at, but its buy button stays disabled', async ({ page }) => {
+  await openShop(page, shopRun(BASE_SHOP, { coins: 2 }));
+  await page.getByTestId('shop-item-0').getByRole('button').click();
+  const buy = page.getByRole('button', { name: 'Купить Трефовик за 4' });
+  await expect(buy).toBeDisabled();
+  await expect(buy).toHaveText('Мало монет');
+  await expect(page.getByTestId('shop-item-0')).toContainText('4');
+});
