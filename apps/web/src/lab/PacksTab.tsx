@@ -35,7 +35,7 @@ function PacksBench() {
 
   const open = (): void => {
     const [cards, afterCards] = rollPackCards(createRng(seed), { kind, size, price: 0 }, bench.purse.jokers, bench.purse.profile);
-    const [hand, rng] = rollTarotHand(afterCards);
+    const [hand, rng] = rollTarotHand(afterCards, bench.purse.profile);
     const opened = { kind, cards, picksLeft: PACK_SIZE_DEFS[size].picks, hand: kind === 'arcana' ? hand : [] };
     setBench({ shop: { ...EMPTY_SHOP, opened }, purse: { ...bench.purse, rng } });
     setSeed((value) => value + 1);

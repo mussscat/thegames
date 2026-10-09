@@ -11,6 +11,7 @@ import { ShopDetail, type ShopFocus } from './shop/ShopDetail';
 import { ShopSlot } from './shop/ShopSlot';
 import { PACK_NAMES, PACK_SIZE_NAMES, packCardTitle } from './shop/shopCopy';
 import { TarotCastSheet } from './shop/TarotCastSheet';
+import { castsWheelNow } from './shop/opening';
 import { coinSound, isNewError } from './sounds';
 import './fight.css';
 import './shop.css';
@@ -56,7 +57,8 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
   };
   /** The detail sheet's actions; a shelf Колесо Фортуны is cast on purchase, so its result is told here too. */
   const actFromSheet = (action: RunAction): void => {
-    if (action.type === 'buyItem' && isWheel(shop.items[action.index]?.card)) wheel.current = { jokers: run.jokers.length, marker: shop.items };
+    const busy = shop.opened !== null || shop.casting !== null;
+    if (action.type === 'buyItem' && castsWheelNow(shop.items[action.index], run.coins, busy)) wheel.current = { jokers: run.jokers.length, marker: shop.items };
     setNotice(null);
     onAct(action);
   };

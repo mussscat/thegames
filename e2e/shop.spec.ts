@@ -67,6 +67,18 @@ test('a shelf tarot is bought, then applied right in its sheet — no pack scree
   await expect(page.getByTestId('shop-item-1')).toContainText('Продано');
 });
 
+test('a shelf tarot over an enhanced card asks first, and the confirm can be pressed', async ({ page }) => {
+  await openShop(page, shopRun({ ...BASE_SHOP, casting: { tarotId: 'sun', hand: HAND } }, { profile: { 'clubs-6': 'sharp' } }));
+  const targets = page.getByTestId('tarot-targets');
+  await targets.getByRole('button').nth(0).click();
+  await page.getByRole('button', { name: 'Применить' }).click();
+  const dialog = page.getByRole('alertdialog', { name: 'Замена усиления' });
+  await expect(dialog).toContainText('Острая → Золотая');
+  await dialog.getByRole('button', { name: 'Заменить' }).click({ timeout: 3_000 });
+  await expect(targets).toHaveCount(0);
+  expect(await savedProfile(page)).toEqual({ 'clubs-6': 'golden' });
+});
+
 test('a bought shelf tarot survives a reload and can be skipped with the money spent', async ({ page }) => {
   await openShop(page, shopRun(BASE_SHOP));
   await page.getByTestId('shop-item-1').getByRole('button').click();

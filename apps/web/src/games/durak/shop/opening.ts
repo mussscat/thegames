@@ -1,4 +1,4 @@
-import { conflictFor, MAX_JOKERS, TAROTS, targetsOk, type DeckProfile, type EnhancementId, type JokerId, type PackCard } from '@game/durak';
+import { conflictFor, MAX_JOKERS, TAROTS, targetsOk, type DeckProfile, type EnhancementId, type JokerId, type PackCard, type ShopItem } from '@game/durak';
 
 /** Durations at x1; the animation speed setting divides them. */
 export const TEAR_MS = 600;
@@ -38,4 +38,9 @@ export function canTake(card: PackCard, targets: readonly string[], profile: Dec
   if (card.kind === 'joker') return jokers.length < MAX_JOKERS;
   if (card.kind === 'tarot') return targetsOk(card.tarotId, targets, profile);
   return true;
+}
+
+/** A shelf Колесо Фортуны that this tap will really buy (and so cast at once): affordable, with no pack or tarot pending. */
+export function castsWheelNow(item: ShopItem | null | undefined, coins: number, busy: boolean): boolean {
+  return !busy && item?.card.kind === 'tarot' && item.card.tarotId === 'wheel' && coins >= item.price;
 }

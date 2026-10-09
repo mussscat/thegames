@@ -8,12 +8,13 @@ import {
   rollPack,
   rollPackCards,
   rollTarotHand,
+  tarotPool,
   tarotWeight,
   type Pack,
   type PackCard,
   type PackKind,
 } from '../shop/packs';
-import { applyTarot, TAROT_IDS, TAROT_PRICE, TAROTS, type TarotId, type TarotSubject } from '../shop/tarot';
+import { applyTarot, TAROT_PRICE, TAROTS, type TarotId, type TarotSubject } from '../shop/tarot';
 import { pickWeighted } from '../shop/weighted';
 
 export const SHOP_ITEM_COUNT = 2;
@@ -54,6 +55,7 @@ export type ShopError =
   | 'noOffer'
   | 'notEnoughCoins'
   | 'jokerSlotsFull'
+  | 'jokerOwned'
   | 'jokerNotOwned'
   | 'cardNotOffered'
   | 'packOpen'
@@ -82,8 +84,8 @@ export function priceOf(card: PackCard): number {
 
 type Taken = { readonly jokers: readonly JokerId[]; readonly cardIds: readonly string[] };
 
-function rollTarot(rng: RngState): readonly [PackCard | null, RngState] {
-  const [tarotId, next] = pickWeighted<TarotId>(TAROT_IDS, tarotWeight, rng);
+function rollTarot(rng: RngState, profile: DeckProfile): readonly [PackCard | null, RngState] {
+  const [tarotId, next] = pickWeighted<TarotId>(tarotPool(profile), tarotWeight, rng);
   return [tarotId ? { kind: 'tarot', tarotId } : null, next];
 }
 
@@ -92,9 +94,9 @@ function rollItemCard(rng: RngState, taken: Taken, profile: DeckProfile): readon
   if (kind === 'card') return rollDeckCard(afterKind, profile, taken.cardIds);
   if (kind === 'joker') {
     const [jokerId, next] = pickWeighted(JOKER_IDS.filter((id) => !taken.jokers.includes(id)), jokerWeight, afterKind);
-    return jokerId ? [{ kind: 'joker', jokerId }, next] : rollTarot(next);
+    return jokerId ? [{ kind: 'joker', jokerId }, next] : rollTarot(next, profile);
   }
-  return rollTarot(afterKind);
+  return rollTarot(afterKind, profile);
 }
 
 function takenAfter(taken: Taken, card: PackCard | null): Taken {
@@ -139,6 +141,7 @@ function emptied<T>(list: readonly (T | null)[], index: number): readonly (T | n
 /** A joker or an enhanced card goes straight into the purse; tarots are cast, never taken. */
 function take(purse: Purse, card: PackCard): Result<Purse, ShopError> {
   if (card.kind === 'joker') {
+    if (purse.jokers.includes(card.jokerId)) return err('jokerOwned');
     if (purse.jokers.length >= MAX_JOKERS) return err('jokerSlotsFull');
     return ok({ ...purse, jokers: [...purse.jokers, card.jokerId] });
   }
@@ -146,8 +149,8 @@ function take(purse: Purse, card: PackCard): Result<Purse, ShopError> {
   return err('badTargets');
 }
 
-function openArcana(cards: readonly PackCard[], picksLeft: number, rng: RngState): readonly [OpenedPack, RngState] {
-  const [hand, next] = rollTarotHand(rng);
+function openArcana(cards: readonly PackCard[], picksLeft: number, rng: RngState, profile: DeckProfile): readonly [OpenedPack, RngState] {
+  const [hand, next] = rollTarotHand(rng, profile);
   return [{ kind: 'arcana', cards, picksLeft, hand }, next];
 }
 
@@ -157,7 +160,7 @@ function buyTarot(shop: ShopState, paid: Purse, items: ShopState['items'], tarot
     const cast = castTarot(paid, tarotId, [], []);
     return cast.ok ? ok({ shop: { ...shop, items }, purse: cast.value }) : cast;
   }
-  const [hand, rng] = rollTarotHand(paid.rng);
+  const [hand, rng] = rollTarotHand(paid.rng, paid.profile);
   return ok({ shop: { ...shop, items, casting: { tarotId, hand } }, purse: { ...paid, rng } });
 }
 
@@ -180,12 +183,14 @@ export function buyPack(shop: ShopState, purse: Purse, index: number): Result<Sh
   const pack = shop.packs[index];
   if (!pack) return err('noOffer');
   if (purse.coins < pack.price) return err('notEnoughCoins');
-  const [cards, afterCards] = rollPackCards(purse.rng, pack, purse.jokers, purse.profile);
+  // Jokers already on the shelf stay out of the pack, so one joker can never be owned twice.
+  const shelfJokers = shop.items.flatMap((item) => (item?.card.kind === 'joker' ? [item.card.jokerId] : []));
+  const [cards, afterCards] = rollPackCards(purse.rng, pack, [...purse.jokers, ...shelfJokers], purse.profile);
   const picksLeft = PACK_SIZE_DEFS[pack.size].picks;
   const packs = emptied(shop.packs, index);
   const coins = purse.coins - pack.price;
   if (pack.kind === 'arcana') {
-    const [opened, rng] = openArcana(cards, picksLeft, afterCards);
+    const [opened, rng] = openArcana(cards, picksLeft, afterCards, purse.profile);
     return ok({ shop: { ...shop, packs, opened }, purse: { ...purse, coins, rng } });
   }
   const opened: OpenedPack = { kind: pack.kind, cards, picksLeft, hand: [] };

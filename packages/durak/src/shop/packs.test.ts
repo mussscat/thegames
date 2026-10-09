@@ -83,7 +83,7 @@ describe('rollDeckCard', () => {
 
 describe('rollTarotHand', () => {
   it('deals 5 different cards of the deck', () => {
-    const [hand] = rollTarotHand(createRng(2));
+    const [hand] = rollTarotHand(createRng(2), {});
     expect(hand).toHaveLength(TAROT_HAND_SIZE);
     expect(new Set(hand).size).toBe(TAROT_HAND_SIZE);
     expect(hand.every((id) => DECK_IDS.includes(id))).toBe(true);
@@ -107,5 +107,15 @@ describe('packCardRarity', () => {
       { kind: 'card', cardId: 'clubs-6', enhancement: 'trump' },
     ];
     expect(cards.map(packCardRarity)).toEqual(['legendary', 'legendary', 'common', 'rare']);
+  });
+});
+
+describe('rollTarotHand with enhanced cards', () => {
+  it('always deals at least one enhanced card when the deck has any', () => {
+    for (let seed = 0; seed < 100; seed++) {
+      const [hand] = rollTarotHand(createRng(seed), { 'spades-13': 'trump' });
+      expect(hand).toContain('spades-13');
+      expect(new Set(hand).size).toBe(TAROT_HAND_SIZE);
+    }
   });
 });

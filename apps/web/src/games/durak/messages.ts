@@ -13,6 +13,7 @@ const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   noOffer: 'Этот товар уже куплен',
   notEnoughCoins: 'Не хватает монет',
   jokerSlotsFull: 'Все 5 мест заняты — сначала продай джокера',
+  jokerOwned: 'Этот джокер уже есть',
   jokerNotOwned: 'Такого джокера нет',
   cardNotOffered: 'Эту карту нельзя выбрать',
   packOpen: 'Сначала возьми карту из пака или пропусти его',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canTake, replacementsFor, revealSchedule } from './opening';
+import { canTake, castsWheelNow, replacementsFor, revealSchedule } from './opening';
 
 const FULL = ['clubs', 'hearts', 'spades', 'diamonds', 'small'] as const;
 
@@ -50,5 +50,16 @@ describe('canTake', () => {
   });
   it('always takes a deck card', () => {
     expect(canTake({ kind: 'card', cardId: 'a', enhancement: 'golden' }, [], {}, FULL)).toBe(true);
+  });
+});
+
+describe('castsWheelNow', () => {
+  const wheel = { card: { kind: 'tarot', tarotId: 'wheel' }, price: 3 } as const;
+  it('is true only for an affordable shelf Колесо Фортуны in a free shop', () => {
+    expect(castsWheelNow(wheel, 3, false)).toBe(true);
+    expect(castsWheelNow(wheel, 2, false)).toBe(false);
+    expect(castsWheelNow(wheel, 9, true)).toBe(false);
+    expect(castsWheelNow({ card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }, 9, false)).toBe(false);
+    expect(castsWheelNow(null, 9, false)).toBe(false);
   });
 });

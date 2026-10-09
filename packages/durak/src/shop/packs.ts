@@ -91,7 +91,7 @@ export function rollPackCards(rng: RngState, pack: Pack, owned: readonly JokerId
       return [ids.map((jokerId) => ({ kind: 'joker' as const, jokerId })), next];
     }
     case 'arcana': {
-      const [ids, next] = drawUnique(TAROT_IDS, count, tarotWeight, rng);
+      const [ids, next] = drawUnique(tarotPool(profile), count, tarotWeight, rng);
       return [ids.map((tarotId) => ({ kind: 'tarot' as const, tarotId })), next];
     }
     case 'deck':
@@ -99,8 +99,19 @@ export function rollPackCards(rng: RngState, pack: Pack, owned: readonly JokerId
   }
 }
 
-/** The cards a tarot can target: TAROT_HAND_SIZE different cards of the shared deck. */
-export function rollTarotHand(rng: RngState): readonly [readonly string[], RngState] {
+/**
+ * The cards a tarot can target: TAROT_HAND_SIZE different cards of the shared deck.
+ * When the deck has enhanced cards, one is always dealt — Смерть needs a source to copy.
+ */
+export function rollTarotHand(rng: RngState, profile: DeckProfile): readonly [readonly string[], RngState] {
   const [ids, next] = shuffle(DECK_IDS, rng);
-  return [ids.slice(0, TAROT_HAND_SIZE), next];
+  const hand = ids.slice(0, TAROT_HAND_SIZE);
+  const enhanced = (cardId: string): boolean => profile[cardId] !== undefined;
+  const source = ids.find(enhanced);
+  return [source && !hand.some(enhanced) ? [...hand.slice(0, -1), source] : hand, next];
+}
+
+/** Tarots that can act on this deck: Смерть is left out until some card is enhanced. */
+export function tarotPool(profile: DeckProfile): readonly TarotId[] {
+  return Object.values(profile).some((id) => id !== undefined) ? TAROT_IDS : TAROT_IDS.filter((id) => id !== 'death');
 }

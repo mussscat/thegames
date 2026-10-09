@@ -258,3 +258,29 @@ describe('selling and moving jokers', () => {
     expect(moveJoker(['clubs'], 0, 3)).toEqual({ ok: false, error: 'jokerNotOwned' });
   });
 });
+
+describe('no duplicate jokers', () => {
+  it('refuses a joker the player already owns, from the shelf or a pack', () => {
+    expect(buyItem(shop, purse({ jokers: ['looter'] }), 0)).toEqual({ ok: false, error: 'jokerOwned' });
+    const jokerPack = opened({ cards: [{ kind: 'joker', jokerId: 'gloat' }] });
+    expect(pickFromPack(jokerPack, purse({ jokers: ['gloat'] }), 0, [])).toEqual({ ok: false, error: 'jokerOwned' });
+  });
+
+  it('a joker pack never holds a joker that is on the shelf', () => {
+    for (let seed = 0; seed < 80; seed++) {
+      const { shop: after } = expectOk(buyPack({ ...shop, packs: [{ kind: 'jokers', size: 'big', price: 6 }, null] }, purse({ rng: createRng(seed) }), 0));
+      expect(after.opened?.cards.some((card) => card?.kind === 'joker' && card.jokerId === 'looter')).toBe(false);
+    }
+  });
+});
+
+describe('Смерть needs an enhanced source', () => {
+  it('is never offered while the deck has no enhancements', () => {
+    for (let seed = 0; seed < 200; seed++) {
+      const [created] = createShop(createRng(seed), [], {});
+      expect(created.items.some((item) => item?.card.kind === 'tarot' && item.card.tarotId === 'death')).toBe(false);
+      const { shop: after } = expectOk(buyPack({ ...shop, packs: [{ kind: 'arcana', size: 'big', price: 6 }, null] }, purse({ rng: createRng(seed) }), 0));
+      expect(after.opened?.cards.some((card) => card?.kind === 'tarot' && card.tarotId === 'death')).toBe(false);
+    }
+  });
+});
