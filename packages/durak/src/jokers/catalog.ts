@@ -35,6 +35,9 @@ export type JokerDef = {
   readonly price: number;
 };
 
+/** Jokers that act once per taken card (their pop shows over that card). Keep in sync with `cardEffect` in score.ts. */
+export const CARD_JOKERS: readonly JokerId[] = ['hearts', 'diamonds', 'clubs', 'spades', 'small'];
+
 export type SideJokers = Readonly<Record<PlayerId, readonly JokerId[]>>;
 
 export const MAX_JOKERS = 5;
