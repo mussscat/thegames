@@ -12,3 +12,4 @@ export * from './content/bosses';
 export * from './enhancements';
 export * from './origin';
 export * from './jokers';
+export * from './shop/tarot';
