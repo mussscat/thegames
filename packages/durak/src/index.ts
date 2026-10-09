@@ -13,3 +13,4 @@ export * from './enhancements';
 export * from './origin';
 export * from './jokers';
 export * from './shop/tarot';
+export * from './shop/packs';
