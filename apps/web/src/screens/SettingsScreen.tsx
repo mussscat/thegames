@@ -3,6 +3,7 @@ import { RANK_ORDERS, TRUMP_PLACES, type HandSort } from '../ui/handSort';
 import { PALETTE_IDS, PALETTES } from '../ui/palettes';
 import { PixelButton } from '../ui/PixelButton';
 import { useSettings } from '../ui/SettingsContext';
+import { ANIM_SPEEDS } from '../ui/settings';
 import { SortPreview } from './SortPreview';
 import './menu.css';
 
@@ -64,6 +65,22 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
           <input type="checkbox" checked={settings.sway} onChange={(event) => update({ sway: event.target.checked })} />
           Покачивание карт
         </label>
+        <fieldset className="settings__group">
+          <legend className="settings__label">Скорость анимации</legend>
+          <div className="settings__speeds">
+            {ANIM_SPEEDS.map((speed) => (
+              <label key={speed} className="settings__speed">
+                <input
+                  type="radio"
+                  name="anim-speed"
+                  checked={settings.animSpeed === speed}
+                  onChange={() => update({ animSpeed: speed })}
+                />
+                x{speed}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <fieldset className="settings__group">
           <legend className="settings__label">Сортировка руки</legend>
           <label className="settings__row">

@@ -46,3 +46,6 @@
 .sort-preview__card--trump { filter: drop-shadow(0 0 4px var(--glow-trump)) drop-shadow(0 0 2px var(--glow-trump)); }
 .sort-preview .deck__suit { font: 800 1.1rem 'Rubik', sans-serif; }
 .sort-preview .deck__suit--red { color: #ff5a4a; }
+.settings__speeds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.settings__speed { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border: 2px solid rgb(255 255 255 / 20%); border-radius: 6px; }
+.settings__speed:has(input:checked) { border-color: var(--gold); }

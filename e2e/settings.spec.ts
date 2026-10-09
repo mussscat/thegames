@@ -59,3 +59,13 @@ test('the sort preview reorders as the sort settings change', async ({ page }) =
   await page.getByLabel('По рангу').selectOption('desc');
   await expect(preview.first()).toHaveAccessibleName('К червы, козырь');
 });
+
+test('the animation speed is x1 by default and x3 survives a reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByRole('radio', { name: 'x1', exact: true })).toBeChecked();
+  await page.getByRole('radio', { name: 'x3' }).check();
+  await page.reload();
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByRole('radio', { name: 'x3' })).toBeChecked();
+});

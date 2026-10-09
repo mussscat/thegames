@@ -3,6 +3,14 @@ import type { KeyValueStore } from '../storage';
 import { DEFAULT_HAND_SORT, RANK_ORDERS, TRUMP_PLACES, type HandSort } from './handSort';
 import { PALETTE_IDS, type PaletteId } from './palettes';
 
+/** Scoring animation speed: every duration is divided by it. */
+export const ANIM_SPEEDS = [1, 1.5, 2, 3] as const;
+export type AnimSpeed = (typeof ANIM_SPEEDS)[number];
+
+function isAnimSpeed(value: unknown): value is AnimSpeed {
+  return ANIM_SPEEDS.some((speed) => speed === value);
+}
+
 export type Settings = {
   readonly palette: PaletteId;
   readonly sound: boolean;
@@ -11,9 +19,11 @@ export type Settings = {
   readonly sway: boolean;
   /** How the player's hand is ordered. */
   readonly sort: HandSort;
+  /** Scoring animation speed (x1…x3). */
+  readonly animSpeed: AnimSpeed;
 };
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT, animSpeed: 1 };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -30,6 +40,7 @@ const schema = z.object({
       trumps: z.enum(TRUMP_PLACES).catch(DEFAULT_HAND_SORT.trumps),
     })
     .catch(DEFAULT_HAND_SORT),
+  animSpeed: z.custom<AnimSpeed>(isAnimSpeed).catch(DEFAULT_SETTINGS.animSpeed),
 });
 
 export function parseSettings(raw: unknown): Settings {
