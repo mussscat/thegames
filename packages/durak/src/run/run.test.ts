@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RUN_SCHEDULE } from '../content/enemies';
 import { BOSSES } from '../content/bosses';
 import { applyRunAction, createRun, enemyAt, PLAYER_HP, stageEnemy, stageLabel, type RunState } from './run';
+import type { ShopState } from './shop';
 
 function expectOk(result: ReturnType<typeof applyRunAction>): RunState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -70,7 +71,7 @@ describe('fight phase', () => {
     expect(shop.phase.kind).toBe('shop');
     if (shop.phase.kind !== 'shop') return;
     expect(shop.phase.reward.total).toBe(8);
-    expect(shop.phase.shop.offers).toHaveLength(2);
+    expect(shop.phase.shop.items).toHaveLength(2);
   });
 
   it('a lost fight ends the run', () => {
@@ -85,18 +86,20 @@ describe('fight phase', () => {
   });
 });
 
+function withShop(run: RunState, patch: Partial<ShopState>): RunState {
+  if (run.phase.kind !== 'shop') throw new Error('not in shop');
+  return { ...run, phase: { ...run.phase, shop: { ...run.phase.shop, ...patch } } };
+}
+
 describe('shop phase', () => {
-  it('buying a joker spends coins and carries the joker into the next fight', () => {
-    /** Rich enough for any offer, legendary ones included. */
-    const shop = { ...inShop(createRun(1)), coins: 50 };
-    if (shop.phase.kind !== 'shop') throw new Error('not in shop');
-    const offer = shop.phase.shop.offers[0]!;
-    const bought = expectOk(applyRunAction(shop, { type: 'buyJoker', index: 0 }));
-    expect(bought.jokers).toEqual([offer.jokerId]);
-    expect(bought.coins).toBe(shop.coins - offer.price);
+  it('buying a joker item spends coins and carries the joker into the next fight', () => {
+    const shop = withShop({ ...inShop(createRun(1)), coins: 50 }, { items: [{ card: { kind: 'joker', jokerId: 'clubs' }, price: 4 }, null] });
+    const bought = expectOk(applyRunAction(shop, { type: 'buyItem', index: 0 }));
+    expect(bought.jokers).toEqual(['clubs']);
+    expect(bought.coins).toBe(46);
     const next = expectOk(applyRunAction(bought, { type: 'leaveShop' }));
     expect(next.stage).toBe(1);
-    expect(next.phase.kind === 'fight' && next.phase.fight.jokers.player).toEqual([offer.jokerId]);
+    expect(next.phase.kind === 'fight' && next.phase.fight.jokers.player).toEqual(['clubs']);
     expect(next.phase.kind === 'fight' && next.phase.fight.hp).toEqual({ player: PLAYER_HP, enemy: enemyAt(1).hp });
   });
 
@@ -111,16 +114,41 @@ describe('shop phase', () => {
 
   it('passes shop errors through', () => {
     const broke = { ...inShop(createRun(1)), coins: 0 };
-    expect(applyRunAction(broke, { type: 'buyJoker', index: 0 })).toEqual({ ok: false, error: 'notEnoughCoins' });
+    expect(applyRunAction(broke, { type: 'buyItem', index: 0 })).toEqual({ ok: false, error: 'notEnoughCoins' });
+    expect(applyRunAction(broke, { type: 'buyPack', index: 0 })).toEqual({ ok: false, error: 'notEnoughCoins' });
   });
 
-  it('rejects fight actions in the shop', () => {
+  it('an open pack blocks leaving and rerolling until it is picked from or skipped', () => {
+    const shop = withShop({ ...inShop(createRun(1)), coins: 50 }, { packs: [{ kind: 'jokers', size: 'normal', price: 4 }, null] });
+    const opened = expectOk(applyRunAction(shop, { type: 'buyPack', index: 0 }));
+    expect(applyRunAction(opened, { type: 'leaveShop' })).toEqual({ ok: false, error: 'packOpen' });
+    expect(applyRunAction(opened, { type: 'reroll' })).toEqual({ ok: false, error: 'packOpen' });
+    const skipped = expectOk(applyRunAction(opened, { type: 'skipPack' }));
+    expect(skipped.coins).toBe(46);
+    expect(expectOk(applyRunAction(skipped, { type: 'leaveShop' })).stage).toBe(1);
+  });
+
+  it('a shelf tarot waits for targets, blocks leaving, and is cast or skipped', () => {
+    const shop = withShop({ ...inShop(createRun(1)), coins: 50 }, { items: [{ card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }, null] });
+    const bought = expectOk(applyRunAction(shop, { type: 'buyItem', index: 0 }));
+    if (bought.phase.kind !== 'shop' || !bought.phase.shop.casting) throw new Error('no tarot waiting');
+    expect(bought.coins).toBe(47);
+    expect(applyRunAction(bought, { type: 'leaveShop' })).toEqual({ ok: false, error: 'tarotPending' });
+    const [first] = bought.phase.shop.casting.hand;
+    const cast = expectOk(applyRunAction(bought, { type: 'castTarot', targets: [first!] }));
+    expect(cast.profile).toEqual({ [first!]: 'golden' });
+    const skipped = expectOk(applyRunAction(bought, { type: 'skipTarot' }));
+    expect(skipped.coins).toBe(47);
+    expect(skipped.profile).toEqual({});
+    expect(expectOk(applyRunAction(skipped, { type: 'leaveShop' })).stage).toBe(1);
+  });
+
+  it('rejects fight actions in the shop and shop actions in a fight', () => {
     const shop = inShop(createRun(1));
-    expect(applyRunAction(shop, { type: 'fight', actor: 'enemy', action: { type: 'take' } })).toEqual({
-      ok: false,
-      error: 'wrongPhase',
-    });
+    expect(applyRunAction(shop, { type: 'fight', actor: 'enemy', action: { type: 'take' } })).toEqual({ ok: false, error: 'wrongPhase' });
     expect(applyRunAction(shop, { type: 'leaveFight' })).toEqual({ ok: false, error: 'wrongPhase' });
+    expect(applyRunAction(createRun(1), { type: 'buyItem', index: 0 })).toEqual({ ok: false, error: 'wrongPhase' });
+    expect(applyRunAction(createRun(1), { type: 'skipPack' })).toEqual({ ok: false, error: 'wrongPhase' });
   });
 });
 
@@ -154,23 +182,17 @@ describe('deck profiles in a run', () => {
     expect(Object.keys(enemyAt(5).profile).length).toBeGreaterThan(Object.keys(enemyAt(0).profile).length);
   });
 
-  it('a bought enhancement lands in the profile and in the next fight', () => {
-    const shop = { ...inShop(createRun(1)), coins: 20 };
-    if (shop.phase.kind !== 'shop') throw new Error('not in shop');
-    const offer = shop.phase.shop.enhancementOffers[0]!;
-    const cardId = offer.cardIds[1]!;
-    const bought = expectOk(applyRunAction(shop, { type: 'buyEnhancement', index: 0, cardId }));
-    expect(bought.profile).toEqual({ [cardId]: offer.enhancementId });
-    expect(bought.coins).toBe(20 - offer.price);
-    const next = expectOk(applyRunAction(bought, { type: 'leaveShop' }));
-    expect(next.phase.kind === 'fight' && next.phase.fight.round.profiles.player).toEqual({ [cardId]: offer.enhancementId });
-  });
-
-  it('cannot buy enhancements during a fight', () => {
-    expect(applyRunAction(createRun(1), { type: 'buyEnhancement', index: 0, cardId: 'clubs-7' })).toEqual({
-      ok: false,
-      error: 'wrongPhase',
-    });
+  it('a card picked from a deck pack lands in the profile and in the next fight', () => {
+    const shop = withShop({ ...inShop(createRun(1)), coins: 20 }, { packs: [{ kind: 'deck', size: 'normal', price: 4 }, null] });
+    const opened = expectOk(applyRunAction(shop, { type: 'buyPack', index: 0 }));
+    if (opened.phase.kind !== 'shop' || !opened.phase.shop.opened) throw new Error('no pack open');
+    const card = opened.phase.shop.opened.cards[0];
+    if (card?.kind !== 'card') throw new Error('not a deck card');
+    const picked = expectOk(applyRunAction(opened, { type: 'pickFromPack', index: 0, targets: [] }));
+    expect(picked.profile).toEqual({ [card.cardId]: card.enhancement });
+    expect(picked.phase.kind === 'shop' && picked.phase.shop.opened).toBeNull();
+    const next = expectOk(applyRunAction(picked, { type: 'leaveShop' }));
+    expect(next.phase.kind === 'fight' && next.phase.fight.round.profiles.player).toEqual({ [card.cardId]: card.enhancement });
   });
 });
 

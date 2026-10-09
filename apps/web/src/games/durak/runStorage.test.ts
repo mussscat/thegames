@@ -40,6 +40,41 @@ describe('run storage', () => {
     expect(loadRun(memoryStore())).toEqual({ status: 'none' });
   });
 
+  it('round-trips a shop with an open pack', () => {
+    const run = shopRun();
+    if (run.phase.kind !== 'shop') throw new Error('not in shop');
+    const opened: RunState = {
+      ...run,
+      phase: {
+        ...run.phase,
+        shop: {
+          ...run.phase.shop,
+          opened: { kind: 'arcana', cards: [{ kind: 'tarot', tarotId: 'sun' }, null], picksLeft: 1, hand: ['clubs-6', 'clubs-7', 'clubs-8', 'clubs-9', 'clubs-10'] },
+        },
+      },
+    };
+    const store = memoryStore();
+    saveRun(store, opened);
+    expect(loadRun(store)).toEqual({ status: 'ok', run: opened });
+  });
+
+  it('round-trips a shop with a shelf tarot waiting for targets', () => {
+    const run = shopRun();
+    if (run.phase.kind !== 'shop') throw new Error('not in shop');
+    const waiting: RunState = {
+      ...run,
+      phase: { ...run.phase, shop: { ...run.phase.shop, casting: { tarotId: 'death', hand: ['clubs-6', 'clubs-7', 'clubs-8', 'clubs-9', 'clubs-10'] } } },
+    };
+    const store = memoryStore();
+    saveRun(store, waiting);
+    expect(loadRun(store)).toEqual({ status: 'ok', run: waiting });
+  });
+
+  it('rejects saves from version 7', () => {
+    const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: 7, run: shopRun() }) });
+    expect(loadRun(store)).toEqual({ status: 'invalid' });
+  });
+
   it('round-trips a fight run and a shop run', () => {
     for (const run of [createRun(42), shopRun()]) {
       const store = memoryStore();

@@ -1,8 +1,8 @@
 import { RANKS, SUITS, type Rank } from '@game/core';
-import { BOSS_RULES, ENHANCEMENT_IDS, JOKER_IDS, MAX_JOKERS, RUN_SCHEDULE, type RunState } from '@game/durak';
+import { BOSS_RULES, ENHANCEMENT_IDS, JOKER_IDS, MAX_JOKERS, PACK_KINDS, PACK_SIZES, RUN_SCHEDULE, TAROT_IDS, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
@@ -71,10 +71,19 @@ const fight = z.object({
 });
 
 const reward = z.object({ base: count, hpBonus: count, interest: count, jokerBonus: count, cardBonus: count, total: count });
+const packCard = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('joker'), jokerId: joker }),
+  z.object({ kind: z.literal('tarot'), tarotId: z.enum(TAROT_IDS) }),
+  z.object({ kind: z.literal('card'), cardId: z.string(), enhancement }),
+]);
 const shop = z.object({
-  offers: z.array(z.object({ jokerId: joker, price: count }).nullable()),
-  enhancementOffers: z.array(z.object({ enhancementId: enhancement, price: count, cardIds: z.array(z.string()) }).nullable()),
+  items: z.array(z.object({ card: packCard, price: count }).nullable()),
+  packs: z.array(z.object({ kind: z.enum(PACK_KINDS), size: z.enum(PACK_SIZES), price: count }).nullable()),
   rerollCost: count,
+  opened: z
+    .object({ kind: z.enum(PACK_KINDS), cards: z.array(packCard.nullable()), picksLeft: count, hand: z.array(z.string()) })
+    .nullable(),
+  casting: z.object({ tarotId: z.enum(TAROT_IDS), hand: z.array(z.string()) }).nullable(),
 });
 
 const phase = z.discriminatedUnion('kind', [

@@ -15,6 +15,11 @@ const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   jokerSlotsFull: 'Все 5 мест заняты — сначала продай джокера',
   jokerNotOwned: 'Такого джокера нет',
   cardNotOffered: 'Эту карту нельзя выбрать',
+  packOpen: 'Сначала возьми карту из пака или пропусти его',
+  noPackOpen: 'Пак не открыт',
+  tarotPending: 'Сначала примени таро или пропусти его',
+  noTarotPending: 'Таро не ждёт применения',
+  badTargets: 'Выбери подходящие карты',
   wrongPhase: 'Сейчас это недоступно',
   fightNotOver: 'Бой ещё идёт',
 };

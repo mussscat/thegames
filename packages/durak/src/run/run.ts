@@ -6,7 +6,23 @@ import type { DeckProfile } from '../enhancements';
 import type { JokerId } from '../jokers/catalog';
 import { BOSS_RULES, type BossRule, type PlayerId } from '../types';
 import { fightReward, type FightReward } from './economy';
-import { buyEnhancement, buyJoker, createShop, moveJoker, rerollShop, sellJoker, type ShopError, type ShopState, type Wallet } from './shop';
+import {
+  buyItem,
+  buyPack,
+  castShopTarot,
+  createShop,
+  moveJoker,
+  pickFromPack,
+  rerollShop,
+  sellJoker,
+  skipPack,
+  skipTarot,
+  type Purse,
+  type ShopError,
+  type ShopState,
+  type ShopStep,
+  type Wallet,
+} from './shop';
 
 export const PLAYER_HP = 40;
 export const FIGHTS_PER_CIRCLE = 3;
@@ -37,10 +53,14 @@ export type RunState = {
 export type RunAction =
   | { readonly type: 'fight'; readonly actor: PlayerId; readonly action: FightAction }
   | { readonly type: 'leaveFight' }
-  | { readonly type: 'buyJoker'; readonly index: number }
+  | { readonly type: 'buyItem'; readonly index: number }
+  | { readonly type: 'buyPack'; readonly index: number }
+  | { readonly type: 'pickFromPack'; readonly index: number; readonly targets: readonly string[] }
+  | { readonly type: 'skipPack' }
+  | { readonly type: 'castTarot'; readonly targets: readonly string[] }
+  | { readonly type: 'skipTarot' }
   | { readonly type: 'sellJoker'; readonly jokerId: JokerId }
   | { readonly type: 'moveJoker'; readonly from: number; readonly to: number }
-  | { readonly type: 'buyEnhancement'; readonly index: number; readonly cardId: string }
   | { readonly type: 'reroll' }
   | { readonly type: 'leaveShop' };
 
@@ -81,36 +101,50 @@ export function applyRunAction(state: RunState, action: RunAction): RunResult {
       return fightAction(state, action.actor, action.action);
     case 'leaveFight':
       return leaveFight(state);
-    case 'buyJoker':
+    case 'buyItem':
+      return inShop(state, (phase) => withStep(state, phase, buyItem(phase.shop, purse(state), action.index)));
+    case 'buyPack':
+      return inShop(state, (phase) => withStep(state, phase, buyPack(phase.shop, purse(state), action.index)));
+    case 'pickFromPack':
+      return inShop(state, (phase) => withStep(state, phase, pickFromPack(phase.shop, purse(state), action.index, action.targets)));
+    case 'skipPack':
       return inShop(state, (phase) => {
-        const result = buyJoker(phase.shop, wallet(state), action.index);
-        if (!result.ok) return result;
-        return ok({ ...state, ...result.value.wallet, phase: { ...phase, shop: result.value.shop } });
+        const result = skipPack(phase.shop);
+        return result.ok ? ok({ ...state, phase: { ...phase, shop: result.value } }) : result;
+      });
+    case 'castTarot':
+      return inShop(state, (phase) => withStep(state, phase, castShopTarot(phase.shop, purse(state), action.targets)));
+    case 'skipTarot':
+      return inShop(state, (phase) => {
+        const result = skipTarot(phase.shop);
+        return result.ok ? ok({ ...state, phase: { ...phase, shop: result.value } }) : result;
+      });
+    case 'reroll':
+      return inShop(state, (phase) => withStep(state, phase, rerollShop(phase.shop, purse(state))));
+    case 'leaveShop':
+      return inShop(state, (phase) => {
+        if (phase.shop.opened) return err('packOpen');
+        if (phase.shop.casting) return err('tarotPending');
+        return ok(startFight({ ...state, stage: state.stage + 1 }));
       });
     case 'sellJoker':
       return inShop(state, () => {
         const result = sellJoker(wallet(state), action.jokerId);
         return result.ok ? ok({ ...state, ...result.value }) : result;
       });
-    case 'buyEnhancement':
-      return inShop(state, (phase) => {
-        const result = buyEnhancement(phase.shop, state.coins, state.profile, action.index, action.cardId);
-        if (!result.ok) return result;
-        const { shop, coins, profile } = result.value;
-        return ok({ ...state, coins, profile, phase: { ...phase, shop } });
-      });
-    case 'reroll':
-      return inShop(state, (phase) => {
-        const result = rerollShop(phase.shop, wallet(state), state.rng);
-        if (!result.ok) return result;
-        const { shop, wallet: paid, rng } = result.value;
-        return ok({ ...state, ...paid, rng, phase: { ...phase, shop } });
-      });
     case 'moveJoker':
       return reorderJokers(state, action.from, action.to);
-    case 'leaveShop':
-      return inShop(state, () => ok(startFight({ ...state, stage: state.stage + 1 })));
   }
+}
+
+function purse(state: RunState): Purse {
+  return { coins: state.coins, jokers: state.jokers, profile: state.profile, rng: state.rng };
+}
+
+function withStep(state: RunState, phase: ShopPhase, result: Result<ShopStep, ShopError>): RunResult {
+  if (!result.ok) return result;
+  const { shop, purse: changed } = result.value;
+  return ok({ ...state, ...changed, phase: { ...phase, shop } });
 }
 
 function wallet(state: RunState): Wallet {
@@ -160,7 +194,7 @@ function leaveFight(state: RunState): RunResult {
   });
   const coins = state.coins + reward.total;
   if (state.stage >= RUN_SCHEDULE.length - 1) return ok({ ...state, coins, collected, phase: { kind: 'over', won: true } });
-  const [shop, rng] = createShop(state.rng, state.jokers);
+  const [shop, rng] = createShop(state.rng, state.jokers, state.profile);
   return ok({ ...state, coins, collected, rng, phase: { kind: 'shop', shop, reward } });
 }
 

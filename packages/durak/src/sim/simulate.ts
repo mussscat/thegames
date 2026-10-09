@@ -2,6 +2,9 @@ import { chooseAction } from '../ai';
 import { MAX_JOKERS } from '../jokers/catalog';
 import { currentActor } from '../rules';
 import { applyRunAction, createRun, enemyAt, type RunAction, type RunState } from '../run/run';
+import type { DeckProfile } from '../enhancements';
+import type { OpenedPack, ShopState } from '../run/shop';
+import { TAROTS, targetsOk, type TarotId } from '../shop/tarot';
 
 const MAX_STEPS = 300_000;
 const STAGES = 6;
@@ -9,7 +12,7 @@ const STAGES = 6;
 export type FightStats = { readonly stage: number; readonly won: boolean; readonly rounds: number; readonly playerHpLeft: number; readonly maxHit: number };
 export type RunStats = { readonly won: boolean; readonly stagesWon: number; readonly fights: readonly FightStats[] };
 
-/** A plain bot: aggressive AI in fights, buys the first affordable joker while slots are free — no synergy hunting. */
+/** A plain bot: aggressive AI in fights; in the shop buys joker items, then joker and arcana packs — no synergy hunting. */
 export function botAction(run: RunState): RunAction {
   const { phase } = run;
   if (phase.kind === 'fight') {
@@ -22,11 +25,50 @@ export function botAction(run: RunState): RunAction {
     if (!action) throw new Error('AI returned no action');
     return { type: 'fight', actor, action };
   }
-  if (phase.kind === 'shop') {
-    const index = phase.shop.offers.findIndex((offer) => offer !== null && offer.price <= run.coins);
-    return index >= 0 && run.jokers.length < MAX_JOKERS ? { type: 'buyJoker', index } : { type: 'leaveShop' };
-  }
+  if (phase.kind === 'shop') return shopAction(run, phase.shop);
   throw new Error('run is over');
+}
+
+/** Packs the plain bot buys, most wanted first. */
+const BOT_PACKS = ['jokers', 'arcana'] as const;
+
+/** Simple tarot targets: the first hand cards; Смерть copies from the first enhanced one. */
+export function botTargets(id: TarotId, hand: readonly string[], profile: DeckProfile): readonly string[] | null {
+  if (id === 'death') {
+    const source = hand.find((cardId) => profile[cardId] !== undefined);
+    const target = hand.find((cardId) => cardId !== source);
+    return source && target ? [target, source] : null;
+  }
+  const targets = hand.slice(0, TAROTS[id].maxTargets);
+  return targetsOk(id, targets, profile) ? targets : null;
+}
+
+function packAction(run: RunState, opened: OpenedPack): RunAction {
+  const room = run.jokers.length < MAX_JOKERS;
+  const picks = opened.cards.flatMap((card, index): RunAction[] => {
+    if (!card) return [];
+    if (card.kind === 'joker') return room ? [{ type: 'pickFromPack', index, targets: [] }] : [];
+    if (card.kind === 'card') return [{ type: 'pickFromPack', index, targets: [] }];
+    const targets = botTargets(card.tarotId, opened.hand, run.profile);
+    return targets ? [{ type: 'pickFromPack', index, targets }] : [];
+  });
+  return picks[0] ?? { type: 'skipPack' };
+}
+
+/** Buys an affordable joker item, then a joker pack, then an arcana pack; otherwise moves on. */
+function shopAction(run: RunState, shop: ShopState): RunAction {
+  if (shop.opened) return packAction(run, shop.opened);
+  if (shop.casting) {
+    const targets = botTargets(shop.casting.tarotId, shop.casting.hand, run.profile);
+    return targets ? { type: 'castTarot', targets } : { type: 'skipTarot' };
+  }
+  const room = run.jokers.length < MAX_JOKERS;
+  const item = shop.items.findIndex((entry) => entry !== null && entry.card.kind === 'joker' && room && entry.price <= run.coins);
+  if (item >= 0) return { type: 'buyItem', index: item };
+  const pack = BOT_PACKS.flatMap((kind) =>
+    shop.packs.flatMap((entry, index) => (entry && entry.kind === kind && entry.price <= run.coins && (kind !== 'jokers' || room) ? [index] : [])),
+  )[0];
+  return pack === undefined ? { type: 'leaveShop' } : { type: 'buyPack', index: pack };
 }
 
 function finishedFight(before: RunState, after: RunState, maxHit: number): FightStats | null {
