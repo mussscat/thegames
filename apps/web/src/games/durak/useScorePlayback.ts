@@ -1,7 +1,7 @@
 import type { ScoredHit } from '@game/durak';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnimSpeed } from '../../ui/settings';
-import { boardAt, playbackCues, scoreTimeline, type Board, type Timeline, type TimelineEvent } from './scoreTimeline';
+import { boardAt, playbackCues, scoreTimeline, skipTarget, type Board, type Timeline, type TimelineEvent } from './scoreTimeline';
 
 export type Playback = {
   readonly active: boolean;
@@ -41,7 +41,8 @@ export function useScorePlayback(score: ScoredHit | null, speed: AnimSpeed, onDo
     current: timeline.events[index] ?? null,
     board: boardAt(timeline, index),
     skip: () => {
-      if (skipped !== timeline) setSkipped(timeline);
+      if (skipTarget(timeline, index) === 'done') done.current();
+      else if (skipped !== timeline) setSkipped(timeline);
     },
   };
 }

@@ -117,6 +117,12 @@ export function playbackCues(timeline: Timeline, from: number) {
   return { cues, doneAt: timeline.end - offset };
 }
 
+/** Where a tap leads: to the final, or — when the final is already showing — straight to the end. */
+export function skipTarget(timeline: Timeline, index: number): number | 'done' {
+  const finalIndex = timeline.events.length - 1;
+  return index >= finalIndex ? 'done' : finalIndex;
+}
+
 export const BOARD_SELECTOR = '[data-score-board]';
 
 export function targetSelector(target: ScoreTarget): string {

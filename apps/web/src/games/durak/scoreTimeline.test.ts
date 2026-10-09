@@ -1,7 +1,7 @@
 import type { Card } from '@game/core';
 import type { ScoredHit, ScoreStep } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { anchorFor, boardAt, playbackCues, scoreTimeline, targetSelector } from './scoreTimeline';
+import { anchorFor, boardAt, playbackCues, scoreTimeline, skipTarget, targetSelector } from './scoreTimeline';
 
 const ace: Card = { id: 'hearts-14', suit: 'hearts', rank: 14 };
 const six: Card = { id: 'clubs-6', suit: 'clubs', rank: 6 };
@@ -104,6 +104,17 @@ describe('playbackCues', () => {
     const skip = playbackCues(t, 2);
     expect(skip).toEqual({ cues: [{ at: 0, index: 2 }], doneAt: 800 });
     expect(playbackCues(t, 2)).toEqual(skip);
+  });
+});
+
+describe('skipTarget', () => {
+  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1);
+  it('jumps to the final from the board or any step', () => {
+    expect(skipTarget(t, -1)).toBe(2);
+    expect(skipTarget(t, 1)).toBe(2);
+  });
+  it('finishes at once when the final is already showing, so a skip never makes the show longer', () => {
+    expect(skipTarget(t, 2)).toBe('done');
   });
 });
 
