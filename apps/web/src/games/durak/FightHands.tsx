@@ -18,12 +18,13 @@ function slotStyle(index: number, count: number, fan: boolean): CSSProperties {
   };
 }
 
-export function EnemyHand({ cards }: { readonly cards: readonly Card[] }) {
+/** The enemy's hand: card backs, or the faces while Подглядывание is on. */
+export function EnemyHand({ cards, revealed = false }: { readonly cards: readonly Card[]; readonly revealed?: boolean }) {
   return (
-    <div className="hand hand--enemy" data-testid="enemy-hand">
+    <div className="hand hand--enemy" data-testid="enemy-hand" data-revealed={revealed ? 'true' : undefined}>
       {cards.map((card, index, all) => (
         <div key={card.id} className="hand__slot" style={slotStyle(index, all.length, false)}>
-          <CardBack layoutId={card.id} />
+          {revealed ? <CardView card={card} /> : <CardBack layoutId={card.id} />}
         </div>
       ))}
       <span className="hand__count">{cards.length}</span>
@@ -43,9 +44,11 @@ type PlayerHandProps = {
   readonly sway: boolean;
   readonly sort: HandSort;
   readonly onPlay: (card: Card, use?: EnhancementSource) => void;
+  /** A focus choosing its target cards: every card is tappable and a tap picks it instead of playing it. */
+  readonly targeting?: { readonly picked: readonly string[]; readonly onPick: (card: Card) => void } | null;
 };
 
-export function PlayerHand({ round, myTurn, sway, sort, onPlay }: PlayerHandProps) {
+export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null }: PlayerHandProps) {
   const legal = legalActions(round, 'player');
   const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
@@ -57,15 +60,15 @@ export function PlayerHand({ round, myTurn, sway, sort, onPlay }: PlayerHandProp
         const enhancements = cardEnhancements(round, 'player', card);
         const split = Boolean(enhancements.own && enhancements.foreign);
         return (
-          <div key={card.id} className="hand__slot" style={slotStyle(index, all.length, true)}>
+          <div key={card.id} className={targeting?.picked.includes(card.id) ? 'hand__slot hand__slot--picked' : 'hand__slot'} style={slotStyle(index, all.length, true)}>
             <CardView
               card={card}
               enhancements={enhancements}
-              playable={myTurn && playableIds.has(card.id)}
+              playable={targeting ? true : myTurn && playableIds.has(card.id)}
               trump={isRoundTrump(round, card)}
-              onTap={myTurn && !split ? () => onPlay(card) : undefined}
-              onTapOption={myTurn && split ? (use) => onPlay(card, use) : undefined}
-              legalUses={myTurn && split ? legalUses(card.id) : undefined}
+              onTap={targeting ? () => targeting.onPick(card) : myTurn && !split ? () => onPlay(card) : undefined}
+              onTapOption={!targeting && myTurn && split ? (use) => onPlay(card, use) : undefined}
+              legalUses={!targeting && myTurn && split ? legalUses(card.id) : undefined}
               idle={sway}
               swayDelay={index * 0.4}
             />
