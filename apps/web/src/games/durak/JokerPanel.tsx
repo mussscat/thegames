@@ -7,10 +7,10 @@ import { TicketFace } from './JokerTicket';
 /** The sidebar of a wide, tall screen has room for full tickets; elsewhere tickets are compact and open on tap. */
 const WIDE_JOKERS = '(min-aspect-ratio: 5/4) and (min-height: 521px)';
 
-function CompactTicket({ id, badge }: { readonly id: JokerId; readonly badge: string | null }) {
+function CompactTicket({ id, slot, badge }: { readonly id: JokerId; readonly slot: number; readonly badge: string | null }) {
   const [open, setOpen] = useState(false);
   return (
-    <li className={open ? 'ticket-slot ticket-slot--open' : 'ticket-slot'}>
+    <li className={open ? 'ticket-slot ticket-slot--open' : 'ticket-slot'} data-score-joker={`player-${slot}`}>
       <button
         type="button"
         className="ticket-slot__button"
@@ -47,14 +47,14 @@ export function JokerPanel({ jokers, state, enemyTakes }: JokerPanelProps) {
         </span>
       </header>
       <ul className={wide ? 'jokers__list jokers__list--wide' : 'jokers__list'}>
-        {jokers.map((id) => {
+        {jokers.map((id, slot) => {
           const badge = jokerBadge(id, state, enemyTakes);
           return wide ? (
-            <li key={id} className="ticket-slot" aria-label={JOKERS[id].name}>
+            <li key={id} className="ticket-slot" aria-label={JOKERS[id].name} data-score-joker={`player-${slot}`}>
               <TicketFace id={id} wide badge={badge} />
             </li>
           ) : (
-            <CompactTicket key={id} id={id} badge={badge} />
+            <CompactTicket key={id} id={id} slot={slot} badge={badge} />
           );
         })}
         {!wide &&

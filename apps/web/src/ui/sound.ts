@@ -108,3 +108,23 @@ export type SoundName = keyof typeof SOUNDS;
 export function playSound(name: SoundName, enabled: boolean): void {
   if (enabled) SOUNDS[name]();
 }
+
+/** Scoring ticks climb a semitone per step, up to an octave. */
+const TICK_BASE_HZ = 392;
+const TICK_MAX_STEPS = 12;
+
+export function tickFrequency(step: number): number {
+  return TICK_BASE_HZ * 2 ** (Math.min(step, TICK_MAX_STEPS) / 12);
+}
+
+/** One scoring beat; a «×» step rings a brighter two-note chime. */
+export function playScoreTick(step: number, times: boolean, enabled: boolean): void {
+  if (!enabled) return;
+  const freq = tickFrequency(step);
+  if (times) {
+    tone(freq, 0.22, 'triangle', 0.06);
+    tone(freq * 1.5, 0.26, 'triangle', 0.05, undefined, 0.05);
+  } else {
+    tone(freq, 0.1, 'sine', 0.045);
+  }
+}

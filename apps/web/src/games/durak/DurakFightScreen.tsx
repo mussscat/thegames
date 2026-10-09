@@ -20,16 +20,10 @@ import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
 import { JokerPanel } from './JokerPanel';
 import { RunHeader } from './RunHeader';
-import { HitPop } from './HitPop';
-import { hitInfoFor } from './hits';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
 import './fight.css';
-
-function hitPop(info: ReturnType<typeof hitInfoFor>) {
-  return info ? <HitPop hit={info} /> : null;
-}
 
 type DurakFightScreenProps = {
   readonly fight: FightState;
@@ -72,16 +66,16 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
             className="hp--enemy"
             hp={fight.hp.enemy}
             maxHp={fight.maxHp.enemy}
-            hit={hitPop(hitInfoFor(fight.hits, 'enemy', fight.lastScore))}
-            hitKey={fight.hitSeq}
+            shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
+            scoreTarget="enemy"
           />
           <HpBar
             label="Ты"
             className="hp--player"
             hp={fight.hp.player}
             maxHp={fight.maxHp.player}
-            hit={hitPop(hitInfoFor(fight.hits, 'player', fight.lastScore))}
-            hitKey={fight.hitSeq}
+            shakeKey={fight.hits.some((h) => h.target === 'player') ? fight.hitSeq : 0}
+            scoreTarget="player"
           />
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
           <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} />

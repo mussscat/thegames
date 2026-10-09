@@ -15,9 +15,11 @@ export function RunHeader({ run }: { readonly run: RunState }) {
       {enemy.boss && <span className="run-header__boss">{BOSSES[enemy.boss].description}</span>}
       {(enemy.jokers.length > 0 || TIER_MULT[enemy.tier] > 1) && (
         <span className="run-header__jokers">
-          {TIER_MULT[enemy.tier] > 1 && <span className="chip">×{TIER_MULT[enemy.tier]}</span>}
-          {enemy.jokers.map((id) => (
-            <span key={id} className="chip" title={JOKERS[id].description}>
+          {TIER_MULT[enemy.tier] > 1 && <span className="chip" data-score-tier>
+              ×{TIER_MULT[enemy.tier]}
+            </span>}
+          {enemy.jokers.map((id, i) => (
+            <span key={id} className="chip" data-score-joker={`enemy-${i}`} title={JOKERS[id].description}>
               {JOKERS[id].name}
             </span>
           ))}

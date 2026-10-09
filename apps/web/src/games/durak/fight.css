@@ -37,6 +37,7 @@
 
 /* ---------- table & deck ---------- */
 .table {
+  position: relative;
   flex: 1;
   align-self: stretch;
   display: grid;
@@ -70,15 +71,6 @@
 .hp__seg { position: relative; overflow: hidden; }
 .hp__seg-fill { position: absolute; inset: 0 auto 0 0; background: #e24a3b; box-shadow: inset 0 3px 0 #ff8a73, inset 0 -3px 0 #a12a1f; }
 .hp__value { text-align: right; }
-.hp__hit {
-  /* Centred over its own bar on a dark plate, so it never covers other tiles and reads at a glance. */
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 3;
-  translate: -50% -50%;
-  pointer-events: none;
-}
 
 /* ---------- round / fight overlay ---------- */
 .overlay {
@@ -314,10 +306,3 @@
 .run-header__jokers { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 
 /* ---------- hit pop: big damage, small chips × mult board (Balatro-like) ---------- */
-.hit-pop { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.3em 0.6em; border: 3px solid #000000; border-radius: 8px; background: rgb(27 20 38 / 94%); box-shadow: 0 4px 0 rgb(0 0 0 / 55%); white-space: nowrap; }
-.hit-pop__damage { font-family: var(--font-head); font-size: 1.4rem; color: #ff5a4a; text-shadow: 3px 3px 0 #000000; }
-.hit-pop__board { display: inline-flex; align-items: center; gap: 0.25em; font-family: var(--font-text); font-size: 1rem; font-weight: 800; text-shadow: none; }
-.hit-pop__chips, .hit-pop__mult { min-width: 2em; padding: 0.05em 0.45em; border: 2px solid #000000; border-radius: 5px; color: #ffffff; text-align: center; box-shadow: 0 2px 0 rgb(0 0 0 / 55%); }
-.hit-pop__chips { background: #2f7dd1; }
-.hit-pop__mult { background: #e24a3b; }
-.hit-pop__times { color: #ff8a73; text-shadow: 1px 1px 0 #000000; }
