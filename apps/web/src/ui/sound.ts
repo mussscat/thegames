@@ -95,6 +95,23 @@ export const SOUNDS = {
     whoosh(0.18, 0.12, 300);
     tone(110, 0.32, 'sine', 0.09, 70);
   },
+  /** A booster pack tearing open. */
+  tear: () => {
+    whoosh(0.35, 0.16, 900);
+    tone(220, 0.2, 'sine', 0.04, 330);
+  },
+  /** Card flips in a pack, by rarity. */
+  reveal: () => tone(523, 0.12, 'sine', 0.04),
+  revealRare: () => {
+    tone(659, 0.16, 'triangle', 0.05);
+    tone(988, 0.22, 'triangle', 0.04, undefined, 0.06);
+  },
+  revealLegendary: () => {
+    tone(523, 0.18, 'triangle', 0.05);
+    tone(659, 0.18, 'triangle', 0.05, undefined, 0.08);
+    tone(784, 0.2, 'triangle', 0.05, undefined, 0.16);
+    tone(1047, 0.34, 'triangle', 0.05, undefined, 0.24);
+  },
   /** Winning a fight: a short rising arpeggio. */
   win: () => {
     tone(392, 0.2, 'sine', 0.045);
