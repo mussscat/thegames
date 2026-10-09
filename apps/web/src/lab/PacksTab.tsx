@@ -31,7 +31,7 @@ function PacksBench() {
   const [kind, setKind] = useState<PackKind>('jokers');
   const [size, setSize] = useState<PackSize>('normal');
   const [seed, setSeed] = useState(1);
-  const [bench, setBench] = useState<Bench>({ shop: EMPTY_SHOP, purse: { coins: 10, jokers: [], profile: {}, rng: createRng(1) } });
+  const [bench, setBench] = useState<Bench>({ shop: EMPTY_SHOP, purse: { coins: 10, jokers: [], focuses: [], profile: {}, rng: createRng(1) } });
 
   const open = (): void => {
     const [cards, afterCards] = rollPackCards(createRng(seed), { kind, size, price: 0 }, bench.purse.jokers, bench.purse.profile);
@@ -90,10 +90,12 @@ function PacksBench() {
           opened={bench.shop.opened}
           profile={bench.purse.profile}
           jokers={bench.purse.jokers}
+          focuses={bench.purse.focuses}
           speed={settings.animSpeed}
           onPick={pick}
           onSkip={() => setBench({ ...bench, shop: EMPTY_SHOP })}
           onSell={() => undefined}
+          onSellFocus={() => undefined}
         />
       )}
     </div>

@@ -39,17 +39,17 @@ describe('replacementsFor', () => {
 
 describe('canTake', () => {
   it('needs a free slot for a joker', () => {
-    expect(canTake({ kind: 'joker', jokerId: 'looter' }, [], {}, [])).toBe(true);
-    expect(canTake({ kind: 'joker', jokerId: 'looter' }, [], {}, FULL)).toBe(false);
+    expect(canTake({ kind: 'joker', jokerId: 'looter' }, [], {}, [], [])).toBe(true);
+    expect(canTake({ kind: 'joker', jokerId: 'looter' }, [], {}, FULL, [])).toBe(false);
   });
   it('needs valid targets for a tarot', () => {
-    expect(canTake({ kind: 'tarot', tarotId: 'sun' }, [], {}, [])).toBe(false);
-    expect(canTake({ kind: 'tarot', tarotId: 'sun' }, ['a'], {}, [])).toBe(true);
-    expect(canTake({ kind: 'tarot', tarotId: 'death' }, ['a', 'b'], {}, [])).toBe(false);
-    expect(canTake({ kind: 'tarot', tarotId: 'hermit' }, [], {}, [])).toBe(true);
+    expect(canTake({ kind: 'tarot', tarotId: 'sun' }, [], {}, [], [])).toBe(false);
+    expect(canTake({ kind: 'tarot', tarotId: 'sun' }, ['a'], {}, [], [])).toBe(true);
+    expect(canTake({ kind: 'tarot', tarotId: 'death' }, ['a', 'b'], {}, [], [])).toBe(false);
+    expect(canTake({ kind: 'tarot', tarotId: 'hermit' }, [], {}, [], [])).toBe(true);
   });
   it('always takes a deck card', () => {
-    expect(canTake({ kind: 'card', cardId: 'a', enhancement: 'golden' }, [], {}, FULL)).toBe(true);
+    expect(canTake({ kind: 'card', cardId: 'a', enhancement: 'golden' }, [], {}, FULL, [])).toBe(true);
   });
 });
 
@@ -61,5 +61,12 @@ describe('castsWheelNow', () => {
     expect(castsWheelNow(wheel, 9, true)).toBe(false);
     expect(castsWheelNow({ card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }, 9, false)).toBe(false);
     expect(castsWheelNow(null, 9, false)).toBe(false);
+  });
+});
+
+describe('canTake with focuses', () => {
+  it('needs a free focus slot for a focus', () => {
+    expect(canTake({ kind: 'focus', focusId: 'peek' }, [], {}, [], [])).toBe(true);
+    expect(canTake({ kind: 'focus', focusId: 'peek' }, [], {}, [], ['pad', 'shield'])).toBe(false);
   });
 });

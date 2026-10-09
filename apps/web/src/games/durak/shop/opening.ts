@@ -1,4 +1,4 @@
-import { conflictFor, MAX_JOKERS, TAROTS, targetsOk, type DeckProfile, type EnhancementId, type JokerId, type PackCard, type ShopItem } from '@game/durak';
+import { conflictFor, MAX_FOCUSES, MAX_JOKERS, TAROTS, targetsOk, type DeckProfile, type EnhancementId, type FocusId, type JokerId, type PackCard, type ShopItem } from '@game/durak';
 
 /** Durations at x1; the animation speed setting divides them. */
 export const TEAR_MS = 600;
@@ -34,8 +34,9 @@ export function replacementsFor(card: PackCard, targets: readonly string[], prof
   return to !== undefined && source ? replacement(profile, to, source) : [];
 }
 
-export function canTake(card: PackCard, targets: readonly string[], profile: DeckProfile, jokers: readonly JokerId[]): boolean {
+export function canTake(card: PackCard, targets: readonly string[], profile: DeckProfile, jokers: readonly JokerId[], focuses: readonly FocusId[]): boolean {
   if (card.kind === 'joker') return jokers.length < MAX_JOKERS;
+  if (card.kind === 'focus') return focuses.length < MAX_FOCUSES;
   if (card.kind === 'tarot') return targetsOk(card.tarotId, targets, profile);
   return true;
 }

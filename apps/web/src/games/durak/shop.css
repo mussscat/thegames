@@ -6,7 +6,7 @@
   --ticket-h: calc(2.6em + 0.7em + 4px);
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-areas: 'side' 'owned' 'panel' 'status';
+  grid-template-areas: 'side' 'owned' 'focuses' 'panel' 'status';
   align-content: start;
   gap: 8px;
   min-height: 100dvh;
@@ -184,7 +184,7 @@
   .shop {
     --slot-h: clamp(130px, 24vh, 220px);
     grid-template-columns: minmax(200px, 20vw) minmax(0, 1fr);
-    grid-template-areas: 'side owned' 'side panel' 'side status';
+    grid-template-areas: 'side owned' 'side focuses' 'side panel' 'side status';
     max-width: min(1280px, 100%);
     padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
   }
@@ -198,3 +198,13 @@
   .sheet-backdrop { align-items: center; }
   .sheet { border-radius: 14px; }
 }
+
+/* ---------- focuses ---------- */
+.shop-card--focus { background: linear-gradient(180deg, #2b6b8f, #12324a); }
+.owned--focuses { grid-area: focuses; }
+.owned-focus { display: flex; align-items: center; justify-content: center; width: 52px; height: 70px; }
+.owned-focus .shop-card { --slot-h: 66px; --slot-w: 48px; padding: 2px; gap: 1px; }
+.owned-focus .shop-card__name { font-size: 0.55rem; }
+.owned-focus .shop-card__glyph { font-size: 1.3em; }
+.owned-focus--selected .shop-card { outline: 3px solid #ffffff; outline-offset: 2px; }
+.owned--focuses .owned__list { justify-content: flex-start; gap: 10px; }

@@ -1,9 +1,10 @@
-import { JOKERS, packCardRarity, TAROTS, type PackCard, type TarotId } from '@game/durak';
+import { FOCUSES, JOKERS, packCardRarity, TAROTS, type FocusId, type PackCard, type TarotId } from '@game/durak';
 import { PixelCard } from '../../../ui/PixelCard';
 import { emblemUrl } from '../../../ui/pixel/jokerEmblem';
 import { deckCard } from './shopCopy';
 
 const TAROT_GLYPHS: Readonly<Record<TarotId, string>> = { sun: '☀', tower: '♜', star: '★', chariot: '♞', emperor: '♔', death: '☠', hermit: '☾', wheel: '☸' };
+export const FOCUS_GLYPHS: Readonly<Record<FocusId, string>> = { peek: '◎', foresight: '✧', redeal: '↻', boost: '▲', pad: '◆', shield: '⬡', piggy: '¤', swap: '⇄', doubler: '×2', suitShift: '♤' };
 const CARD_WIDTH = { slot: 76, big: 104 } as const;
 
 type PackCardFaceProps = { readonly card: PackCard; readonly size?: 'slot' | 'big'; readonly faceDown?: boolean };
@@ -21,6 +22,14 @@ export function PackCardFace({ card, size = 'slot', faceDown = false }: PackCard
       <span className={`${classes} shop-card--joker`}>
         <img className="sprite shop-card__art" src={emblemUrl(card.jokerId)} alt="" draggable={false} />
         <span className="shop-card__name">{JOKERS[card.jokerId].name}</span>
+      </span>
+    );
+  }
+  if (card.kind === 'focus') {
+    return (
+      <span className={`${classes} shop-card--focus`}>
+        <span className="shop-card__glyph">{FOCUS_GLYPHS[card.focusId]}</span>
+        <span className="shop-card__name">{FOCUSES[card.focusId].name}</span>
       </span>
     );
   }

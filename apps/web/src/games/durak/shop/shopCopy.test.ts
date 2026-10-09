@@ -1,7 +1,7 @@
 import { rankLabel } from '@game/core';
-import { JOKERS } from '@game/durak';
+import { FOCUSES, JOKERS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { cardLabel, cardTipLines, PACK_TEXT, packCardText, packCardTitle, packSizeText, packTipLines, SCORE_HELP } from './shopCopy';
+import { cardLabel, cardTipLines, PACK_NAMES, PACK_TEXT, packCardText, packCardTitle, packSizeText, packTipLines, SCORE_HELP } from './shopCopy';
 
 describe('shop copy', () => {
   it('names a deck card by rank and suit', () => {
@@ -44,5 +44,14 @@ describe('tip lines', () => {
 
   it('a pack names its kind and size', () => {
     expect(packTipLines({ kind: 'arcana', size: 'big', price: 6 })).toEqual([{ name: 'Таро', owner: 'Большой · 5 карт · бери 1', description: PACK_TEXT.arcana }]);
+  });
+});
+
+describe('focus copy', () => {
+  it('names and describes a focus, and the focus pack', () => {
+    expect(packCardTitle({ kind: 'focus', focusId: 'boost' })).toBe('Разгон');
+    expect(packCardText({ kind: 'focus', focusId: 'boost' })).toBe(FOCUSES.boost.description);
+    expect(PACK_NAMES.focuses).toBe('Фокусы');
+    expect(cardTipLines({ kind: 'focus', focusId: 'boost' }, {}).at(-1)).toEqual(SCORE_HELP);
   });
 });
