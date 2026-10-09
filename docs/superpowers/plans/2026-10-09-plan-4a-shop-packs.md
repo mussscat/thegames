@@ -18,6 +18,7 @@
 - Tarot price 3; enhanced card price = enhancement price + 1; jokers at catalogue prices; max 5 jokers; sell for half.
 - Tarots: Солнце (≤2 → Золотые), Башня (≤2 → Острые), Звезда (≤2 → Монетные), Колесница (1 → Тяжёлая), Император (1 → Козырная) — common; Смерть (2: first gets the second's enhancement, second must be enhanced), Отшельник (coins ×2, at most +10) — rare; Колесо Фортуны (1 in 3: random joker if room) — legendary. Tarot targets come from a hand of 5 random deck cards.
 - A pack is opened at once and kept in shop state until done; «Пропустить» closes it with no refund. Joker pack with full slots: sell on the opening screen or skip.
+- A tarot bought from the shelf never goes through the pack screen: after «Купить за 3» the money is spent and the slot sold; the same sheet then shows a hand of 5 for targets with «Применить» / «Пропустить» (no refund). Tarots without targets (Отшельник, Колесо Фортуны) work at once on purchase. While a tarot waits, other shop actions are refused; a reload brings the same sheet and hand back.
 - Replacing an enhancement: label «В колоде: <old>» and a confirm «<old> → <new>»; the same card with the same enhancement never appears in a Колода pack.
 - Save version 8; v7 saves are reported invalid.
 - Animations use the existing «Скорость анимации» setting; rarity glow: common grey, rare blue, legendary gold.
@@ -27,9 +28,9 @@
 
 ## Review Focus
 
-- Reload during a pack opening: the opening must come back with the same cards and picks left — pinned by a save round-trip with `opened` (Task 4) and an e2e reload test (Task 8).
+- Reload during a pack opening or while a shelf tarot waits for targets: the same cards / hand must come back — pinned by save round-trips with `opened` and `casting` (Task 4) and e2e reload tests (Task 8).
 - A joker pack with all 5 slots full: «Взять» must not lose the pick; selling a joker on the opening screen makes the pick possible — pinned in Task 3 (unit) and Task 6 (`canTake`).
-- Shop actions while a pack is open (buy, reroll, leave): refused with a clear message, never a half-state — pinned in Task 3 and Task 4.
+- Shop actions while a pack is open or a shelf tarot waits (buy, reroll, leave): refused with a clear message, never a half-state — pinned in Task 3 and Task 4.
 - Invalid tarot targets (Смерть with an unenhanced source, duplicates, a card outside the hand, too many): refused by the engine and «Применить» disabled in the UI — pinned in Task 1, Task 3 and Task 6.
 - A 375×667 phone: the whole shop (jokers, 2 items, 2 packs, both buttons) fits without scrolling — pinned by an e2e layout test in Task 8.
 
@@ -629,17 +630,21 @@ export const SHOP_ITEM_COUNT = 2; export const SHOP_PACK_COUNT = 2; export const
 export const ITEM_KIND_WEIGHT: Readonly<Record<PackCard['kind'], number>>;
 export type ShopItem = { readonly card: PackCard; readonly price: number };
 export type OpenedPack = { readonly kind: PackKind; readonly cards: readonly (PackCard | null)[]; readonly picksLeft: number; readonly hand: readonly string[] };
-export type ShopState = { readonly items: readonly (ShopItem | null)[]; readonly packs: readonly (Pack | null)[]; readonly rerollCost: number; readonly opened: OpenedPack | null };
+export type TarotCast = { readonly tarotId: TarotId; readonly hand: readonly string[] };
+export type ShopState = { readonly items: readonly (ShopItem | null)[]; readonly packs: readonly (Pack | null)[]; readonly rerollCost: number; readonly opened: OpenedPack | null; readonly casting: TarotCast | null };
 export type Purse = TarotSubject;
 export type Wallet = { readonly coins: number; readonly jokers: readonly JokerId[] };
 export type ShopStep = { readonly shop: ShopState; readonly purse: Purse };
-export type ShopError = 'noOffer' | 'notEnoughCoins' | 'jokerSlotsFull' | 'jokerNotOwned' | 'cardNotOffered' | 'packOpen' | 'noPackOpen' | 'badTargets';
+export type ShopError = 'noOffer' | 'notEnoughCoins' | 'jokerSlotsFull' | 'jokerNotOwned' | 'cardNotOffered' | 'packOpen' | 'noPackOpen' | 'tarotPending' | 'noTarotPending' | 'badTargets';
 export function priceOf(card: PackCard): number;
 export function createShop(rng: RngState, owned: readonly JokerId[], profile: DeckProfile): readonly [ShopState, RngState];
+/** A shelf tarot with targets → `casting`; Отшельник / Колесо Фортуны apply at once. */
 export function buyItem(shop: ShopState, purse: Purse, index: number): Result<ShopStep, ShopError>;
 export function buyPack(shop: ShopState, purse: Purse, index: number): Result<ShopStep, ShopError>;
 export function pickFromPack(shop: ShopState, purse: Purse, index: number, targets: readonly string[]): Result<ShopStep, ShopError>;
 export function skipPack(shop: ShopState): Result<ShopState, ShopError>;
+export function castShopTarot(shop: ShopState, purse: Purse, targets: readonly string[]): Result<ShopStep, ShopError>;
+export function skipTarot(shop: ShopState): Result<ShopState, ShopError>;
 export function rerollShop(shop: ShopState, purse: Purse): Result<ShopStep, ShopError>;
 export function sellPrice(jokerId: JokerId): number;                                   // unchanged
 export function sellJoker(wallet: Wallet, jokerId: JokerId): Result<Wallet, ShopError>; // unchanged
@@ -657,6 +662,7 @@ import { JOKERS } from '../jokers/catalog';
 import {
   buyItem,
   buyPack,
+  castShopTarot,
   createShop,
   moveJoker,
   pickFromPack,
@@ -665,6 +671,7 @@ import {
   sellJoker,
   sellPrice,
   skipPack,
+  skipTarot,
   type OpenedPack,
   type Purse,
   type ShopState,
@@ -685,9 +692,11 @@ const shop: ShopState = {
   ],
   rerollCost: 2,
   opened: null,
+  casting: null,
 };
 
 const opened = (patch: Partial<OpenedPack>): ShopState => ({ ...shop, opened: { kind: 'jokers', cards: [], picksLeft: 1, hand: [], ...patch } });
+const casting: ShopState = { ...shop, casting: { tarotId: 'sun', hand: HAND } };
 
 function expectOk<T>(result: { ok: true; value: T } | { ok: false; error: string }): T {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -702,6 +711,7 @@ describe('createShop', () => {
     expect(created.packs).toHaveLength(2);
     expect(created.packs.every((pack) => pack !== null)).toBe(true);
     expect(created.opened).toBeNull();
+    expect(created.casting).toBeNull();
     expect(created.rerollCost).toBe(2);
   });
 
@@ -740,19 +750,56 @@ describe('buyItem', () => {
     expect(paid.profile).toEqual({ 'hearts-14': 'golden' });
   });
 
-  it('a tarot opens a one-card arcana with a hand of 5 to target', () => {
+  it('a tarot with targets is paid and sold at once, then waits in `casting` with a hand of 5 — no pack opens', () => {
     const tarotShop: ShopState = { ...shop, items: [{ card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }, null] };
     const { shop: after, purse: paid } = expectOk(buyItem(tarotShop, purse(), 0));
-    expect(after.opened).toMatchObject({ kind: 'arcana', cards: [{ kind: 'tarot', tarotId: 'sun' }], picksLeft: 1 });
-    expect(after.opened?.hand).toHaveLength(5);
+    expect(after.opened).toBeNull();
+    expect(after.items[0]).toBeNull();
+    expect(after.casting?.tarotId).toBe('sun');
+    expect(after.casting?.hand).toHaveLength(5);
     expect(paid.coins).toBe(17);
   });
 
-  it('refuses a sold slot, a short purse, full joker slots and an open pack', () => {
+  it('Отшельник from the shelf works at once, with nothing left waiting', () => {
+    const hermitShop: ShopState = { ...shop, items: [{ card: { kind: 'tarot', tarotId: 'hermit' }, price: 3 }, null] };
+    const { shop: after, purse: paid } = expectOk(buyItem(hermitShop, purse(), 0));
+    expect(after.casting).toBeNull();
+    expect(paid.coins).toBe(17 + 10);
+  });
+
+  it('refuses a sold slot, a short purse, full joker slots, an open pack and a waiting tarot', () => {
     expect(buyItem({ ...shop, items: [null, null] }, purse(), 0)).toEqual({ ok: false, error: 'noOffer' });
     expect(buyItem(shop, purse({ coins: 1 }), 0)).toEqual({ ok: false, error: 'notEnoughCoins' });
     expect(buyItem(shop, purse({ jokers: FULL }), 0)).toEqual({ ok: false, error: 'jokerSlotsFull' });
     expect(buyItem(opened({}), purse(), 0)).toEqual({ ok: false, error: 'packOpen' });
+    expect(buyItem(casting, purse(), 0)).toEqual({ ok: false, error: 'tarotPending' });
+  });
+});
+
+describe('a shelf tarot waiting for targets', () => {
+  it('is cast on targets from its hand and stops waiting', () => {
+    const { shop: after, purse: next } = expectOk(castShopTarot(casting, purse(), ['clubs-7', 'clubs-10']));
+    expect(next.profile).toEqual({ 'clubs-7': 'golden', 'clubs-10': 'golden' });
+    expect(after.casting).toBeNull();
+  });
+
+  it('refuses targets outside the hand or of the wrong count, and keeps waiting', () => {
+    expect(castShopTarot(casting, purse(), ['hearts-14'])).toEqual({ ok: false, error: 'cardNotOffered' });
+    expect(castShopTarot(casting, purse(), [])).toEqual({ ok: false, error: 'badTargets' });
+  });
+
+  it('can be skipped — the money stays spent', () => {
+    expect(expectOk(skipTarot(casting)).casting).toBeNull();
+  });
+
+  it('refuses cast and skip when nothing waits', () => {
+    expect(castShopTarot(shop, purse(), ['clubs-7'])).toEqual({ ok: false, error: 'noTarotPending' });
+    expect(skipTarot(shop)).toEqual({ ok: false, error: 'noTarotPending' });
+  });
+
+  it('blocks packs and rerolls while waiting', () => {
+    expect(buyPack(casting, purse(), 0)).toEqual({ ok: false, error: 'tarotPending' });
+    expect(rerollShop(casting, purse())).toEqual({ ok: false, error: 'tarotPending' });
   });
 });
 
@@ -894,7 +941,7 @@ import {
   type PackCard,
   type PackKind,
 } from '../shop/packs';
-import { applyTarot, TAROT_IDS, TAROT_PRICE, type TarotId, type TarotSubject } from '../shop/tarot';
+import { applyTarot, TAROT_IDS, TAROT_PRICE, TAROTS, type TarotId, type TarotSubject } from '../shop/tarot';
 import { pickWeighted } from '../shop/weighted';
 
 export const SHOP_ITEM_COUNT = 2;
@@ -914,12 +961,16 @@ export type OpenedPack = {
   readonly hand: readonly string[];
 };
 
+/** A tarot bought from the shelf, paid and sold, waiting for «Применить» / «Пропустить» on its hand. */
+export type TarotCast = { readonly tarotId: TarotId; readonly hand: readonly string[] };
+
 /** A `null` item or pack has been bought this visit. */
 export type ShopState = {
   readonly items: readonly (ShopItem | null)[];
   readonly packs: readonly (Pack | null)[];
   readonly rerollCost: number;
   readonly opened: OpenedPack | null;
+  readonly casting: TarotCast | null;
 };
 
 /** What the shop spends and changes: coins, jokers, the deck profile and the run rng. */
@@ -927,7 +978,24 @@ export type Purse = TarotSubject;
 export type Wallet = { readonly coins: number; readonly jokers: readonly JokerId[] };
 export type ShopStep = { readonly shop: ShopState; readonly purse: Purse };
 
-export type ShopError = 'noOffer' | 'notEnoughCoins' | 'jokerSlotsFull' | 'jokerNotOwned' | 'cardNotOffered' | 'packOpen' | 'noPackOpen' | 'badTargets';
+export type ShopError =
+  | 'noOffer'
+  | 'notEnoughCoins'
+  | 'jokerSlotsFull'
+  | 'jokerNotOwned'
+  | 'cardNotOffered'
+  | 'packOpen'
+  | 'noPackOpen'
+  | 'tarotPending'
+  | 'noTarotPending'
+  | 'badTargets';
+
+/** An open pack or a waiting shelf tarot must be finished first. */
+function busy(shop: ShopState): ShopError | null {
+  if (shop.opened) return 'packOpen';
+  if (shop.casting) return 'tarotPending';
+  return null;
+}
 
 export function priceOf(card: PackCard): number {
   switch (card.kind) {
@@ -989,7 +1057,7 @@ function rollPacks(rng: RngState): readonly [readonly Pack[], RngState] {
 export function createShop(rng: RngState, owned: readonly JokerId[], profile: DeckProfile): readonly [ShopState, RngState] {
   const [items, afterItems] = rollItems(rng, owned, profile);
   const [packs, next] = rollPacks(afterItems);
-  return [{ items, packs, rerollCost: BASE_REROLL_COST, opened: null }, next];
+  return [{ items, packs, rerollCost: BASE_REROLL_COST, opened: null, casting: null }, next];
 }
 
 function emptied<T>(list: readonly (T | null)[], index: number): readonly (T | null)[] {
@@ -1011,23 +1079,32 @@ function openArcana(cards: readonly PackCard[], picksLeft: number, rng: RngState
   return [{ kind: 'arcana', cards, picksLeft, hand }, next];
 }
 
+/** A shelf tarot is paid and sold at once; with targets it waits in `casting`, without them it is cast right away. */
+function buyTarot(shop: ShopState, paid: Purse, items: ShopState['items'], tarotId: TarotId): Result<ShopStep, ShopError> {
+  if (TAROTS[tarotId].maxTargets === 0) {
+    const cast = castTarot(paid, tarotId, [], []);
+    return cast.ok ? ok({ shop: { ...shop, items }, purse: cast.value }) : cast;
+  }
+  const [hand, rng] = rollTarotHand(paid.rng);
+  return ok({ shop: { ...shop, items, casting: { tarotId, hand } }, purse: { ...paid, rng } });
+}
+
 export function buyItem(shop: ShopState, purse: Purse, index: number): Result<ShopStep, ShopError> {
-  if (shop.opened) return err('packOpen');
+  const blocked = busy(shop);
+  if (blocked) return err(blocked);
   const item = shop.items[index];
   if (!item) return err('noOffer');
   if (purse.coins < item.price) return err('notEnoughCoins');
   const paid: Purse = { ...purse, coins: purse.coins - item.price };
   const items = emptied(shop.items, index);
-  if (item.card.kind === 'tarot') {
-    const [opened, rng] = openArcana([item.card], 1, paid.rng);
-    return ok({ shop: { ...shop, items, opened }, purse: { ...paid, rng } });
-  }
+  if (item.card.kind === 'tarot') return buyTarot(shop, paid, items, item.card.tarotId);
   const taken = take(paid, item.card);
   return taken.ok ? ok({ shop: { ...shop, items }, purse: taken.value }) : taken;
 }
 
 export function buyPack(shop: ShopState, purse: Purse, index: number): Result<ShopStep, ShopError> {
-  if (shop.opened) return err('packOpen');
+  const blocked = busy(shop);
+  if (blocked) return err(blocked);
   const pack = shop.packs[index];
   if (!pack) return err('noOffer');
   if (purse.coins < pack.price) return err('notEnoughCoins');
@@ -1069,9 +1146,23 @@ export function skipPack(shop: ShopState): Result<ShopState, ShopError> {
   return shop.opened ? ok({ ...shop, opened: null }) : err('noPackOpen');
 }
 
+/** Casts the waiting shelf tarot on targets from its hand. */
+export function castShopTarot(shop: ShopState, purse: Purse, targets: readonly string[]): Result<ShopStep, ShopError> {
+  const { casting } = shop;
+  if (!casting) return err('noTarotPending');
+  const cast = castTarot(purse, casting.tarotId, targets, casting.hand);
+  return cast.ok ? ok({ shop: { ...shop, casting: null }, purse: cast.value }) : cast;
+}
+
+/** Drops the waiting shelf tarot; it stays sold and the money is not returned. */
+export function skipTarot(shop: ShopState): Result<ShopState, ShopError> {
+  return shop.casting ? ok({ ...shop, casting: null }) : err('noTarotPending');
+}
+
 /** New single items; the packs stay — two per visit is the whole supply. */
 export function rerollShop(shop: ShopState, purse: Purse): Result<ShopStep, ShopError> {
-  if (shop.opened) return err('packOpen');
+  const blocked = busy(shop);
+  if (blocked) return err(blocked);
   if (purse.coins < shop.rerollCost) return err('notEnoughCoins');
   const [items, rng] = rollItems(purse.rng, purse.jokers, purse.profile);
   return ok({ shop: { ...shop, items, rerollCost: shop.rerollCost + 1 }, purse: { ...purse, coins: purse.coins - shop.rerollCost, rng } });
@@ -1120,7 +1211,7 @@ git commit -m "feat(durak): shop of 2 items and 2 packs with an opened pack kept
 
 **Interfaces:**
 - Consumes: Task 3 shop API.
-- Produces: `RunAction` gains `{ type: 'buyItem'; index: number }`, `{ type: 'buyPack'; index: number }`, `{ type: 'pickFromPack'; index: number; targets: readonly string[] }`, `{ type: 'skipPack' }`; loses `buyJoker` and `buyEnhancement`. `leaveShop` and `reroll` with an open pack → `'packOpen'`. `export function botTargets(id: TarotId, hand: readonly string[], profile: DeckProfile): readonly string[] | null;` from `sim/simulate.ts`. `SAVE_VERSION = 8`.
+- Produces: `RunAction` gains `{ type: 'buyItem'; index: number }`, `{ type: 'buyPack'; index: number }`, `{ type: 'pickFromPack'; index: number; targets: readonly string[] }`, `{ type: 'skipPack' }`, `{ type: 'castTarot'; targets: readonly string[] }`, `{ type: 'skipTarot' }`; loses `buyJoker` and `buyEnhancement`. `leaveShop` and `reroll` with an open pack → `'packOpen'`, with a waiting shelf tarot → `'tarotPending'`. `export function botTargets(id: TarotId, hand: readonly string[], profile: DeckProfile): readonly string[] | null;` from `sim/simulate.ts`. `SAVE_VERSION = 8`.
 
 - [ ] **Step 1: Write the failing tests.** In `run.test.ts` add `import type { ShopState } from './shop';`, add the helper below `inShop`, replace the `describe('shop phase', …)` block, and replace the two tests «a bought enhancement lands in the profile and in the next fight» and «cannot buy enhancements during a fight» inside `describe('deck profiles in a run', …)` with the pack test below:
 
@@ -1164,6 +1255,21 @@ describe('shop phase', () => {
     expect(applyRunAction(opened, { type: 'reroll' })).toEqual({ ok: false, error: 'packOpen' });
     const skipped = expectOk(applyRunAction(opened, { type: 'skipPack' }));
     expect(skipped.coins).toBe(46);
+    expect(expectOk(applyRunAction(skipped, { type: 'leaveShop' })).stage).toBe(1);
+  });
+
+  it('a shelf tarot waits for targets, blocks leaving, and is cast or skipped', () => {
+    const shop = withShop({ ...inShop(createRun(1)), coins: 50 }, { items: [{ card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }, null] });
+    const bought = expectOk(applyRunAction(shop, { type: 'buyItem', index: 0 }));
+    if (bought.phase.kind !== 'shop' || !bought.phase.shop.casting) throw new Error('no tarot waiting');
+    expect(bought.coins).toBe(47);
+    expect(applyRunAction(bought, { type: 'leaveShop' })).toEqual({ ok: false, error: 'tarotPending' });
+    const [first] = bought.phase.shop.casting.hand;
+    const cast = expectOk(applyRunAction(bought, { type: 'castTarot', targets: [first!] }));
+    expect(cast.profile).toEqual({ [first!]: 'golden' });
+    const skipped = expectOk(applyRunAction(bought, { type: 'skipTarot' }));
+    expect(skipped.coins).toBe(47);
+    expect(skipped.profile).toEqual({});
     expect(expectOk(applyRunAction(skipped, { type: 'leaveShop' })).stage).toBe(1);
   });
 
@@ -1232,6 +1338,18 @@ In `runStorage.test.ts` add (use the file's existing `shopRun`, `memoryStore`, `
     expect(loadRun(store)).toEqual({ status: 'ok', run: opened });
   });
 
+  it('round-trips a shop with a shelf tarot waiting for targets', () => {
+    const run = shopRun();
+    if (run.phase.kind !== 'shop') throw new Error('not in shop');
+    const waiting: RunState = {
+      ...run,
+      phase: { ...run.phase, shop: { ...run.phase.shop, casting: { tarotId: 'death', hand: ['clubs-6', 'clubs-7', 'clubs-8', 'clubs-9', 'clubs-10'] } } },
+    };
+    const store = memoryStore();
+    saveRun(store, waiting);
+    expect(loadRun(store)).toEqual({ status: 'ok', run: waiting });
+  });
+
   it('rejects saves from version 7', () => {
     const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: 7, run: shopRun() }) });
     expect(loadRun(store)).toEqual({ status: 'invalid' });
@@ -1246,7 +1364,23 @@ Expected: FAIL — `run.ts` does not compile against the new shop (`buyJoker` no
 - [ ] **Step 3: Implement `run.ts`.** Replace the shop import:
 
 ```ts
-import { buyItem, buyPack, createShop, moveJoker, pickFromPack, rerollShop, sellJoker, skipPack, type Purse, type ShopError, type ShopState, type ShopStep, type Wallet } from './shop';
+import {
+  buyItem,
+  buyPack,
+  castShopTarot,
+  createShop,
+  moveJoker,
+  pickFromPack,
+  rerollShop,
+  sellJoker,
+  skipPack,
+  skipTarot,
+  type Purse,
+  type ShopError,
+  type ShopState,
+  type ShopStep,
+  type Wallet,
+} from './shop';
 ```
 
 `RunAction` becomes:
@@ -1259,6 +1393,8 @@ export type RunAction =
   | { readonly type: 'buyPack'; readonly index: number }
   | { readonly type: 'pickFromPack'; readonly index: number; readonly targets: readonly string[] }
   | { readonly type: 'skipPack' }
+  | { readonly type: 'castTarot'; readonly targets: readonly string[] }
+  | { readonly type: 'skipTarot' }
   | { readonly type: 'sellJoker'; readonly jokerId: JokerId }
   | { readonly type: 'moveJoker'; readonly from: number; readonly to: number }
   | { readonly type: 'reroll' }
@@ -1279,10 +1415,21 @@ The shop cases of `applyRunAction` become (replacing `buyJoker`, `buyEnhancement
         const result = skipPack(phase.shop);
         return result.ok ? ok({ ...state, phase: { ...phase, shop: result.value } }) : result;
       });
+    case 'castTarot':
+      return inShop(state, (phase) => withStep(state, phase, castShopTarot(phase.shop, purse(state), action.targets)));
+    case 'skipTarot':
+      return inShop(state, (phase) => {
+        const result = skipTarot(phase.shop);
+        return result.ok ? ok({ ...state, phase: { ...phase, shop: result.value } }) : result;
+      });
     case 'reroll':
       return inShop(state, (phase) => withStep(state, phase, rerollShop(phase.shop, purse(state))));
     case 'leaveShop':
-      return inShop(state, (phase) => (phase.shop.opened ? err('packOpen') : ok(startFight({ ...state, stage: state.stage + 1 }))));
+      return inShop(state, (phase) => {
+        if (phase.shop.opened) return err('packOpen');
+        if (phase.shop.casting) return err('tarotPending');
+        return ok(startFight({ ...state, stage: state.stage + 1 }));
+      });
 ```
 
 Helpers (next to `wallet`):
@@ -1337,6 +1484,10 @@ function packAction(run: RunState, opened: OpenedPack): RunAction {
 /** Buys an affordable joker item, then a joker pack, then an arcana pack; otherwise moves on. */
 function shopAction(run: RunState, shop: ShopState): RunAction {
   if (shop.opened) return packAction(run, shop.opened);
+  if (shop.casting) {
+    const targets = botTargets(shop.casting.tarotId, shop.casting.hand, run.profile);
+    return targets ? { type: 'castTarot', targets } : { type: 'skipTarot' };
+  }
   const room = run.jokers.length < MAX_JOKERS;
   const item = shop.items.findIndex((entry) => entry !== null && entry.card.kind === 'joker' && room && entry.price <= run.coins);
   if (item >= 0) return { type: 'buyItem', index: item };
@@ -1362,6 +1513,7 @@ const shop = z.object({
   opened: z
     .object({ kind: z.enum(PACK_KINDS), cards: z.array(packCard.nullable()), picksLeft: count, hand: z.array(z.string()) })
     .nullable(),
+  casting: z.object({ tarotId: z.enum(TAROT_IDS), hand: z.array(z.string()) }).nullable(),
 });
 ```
 
@@ -1370,6 +1522,8 @@ Add to `ERROR_MESSAGES` in `messages.ts`:
 ```ts
   packOpen: 'Сначала возьми карту из пака или пропусти его',
   noPackOpen: 'Пак не открыт',
+  tarotPending: 'Сначала примени таро или пропусти его',
+  noTarotPending: 'Таро не ждёт применения',
   badTargets: 'Выбери подходящие карты',
 ```
 
@@ -1414,7 +1568,7 @@ export function packSizeText(size: PackSize): string;
 // components
 export function PackCardFace(props: { card: PackCard; size?: 'slot' | 'big'; faceDown?: boolean }): JSX.Element;
 export function PackArt(props: { kind: PackKind; size?: PackSize }): JSX.Element;
-export function DetailSheet(props: { title: string; subtitle?: string; text: string; warning?: string | null; art: ReactNode; actions: ReactNode; onClose: () => void }): JSX.Element;
+export function DetailSheet(props: { title: string; subtitle?: string; text: string; warning?: string | null; art: ReactNode; actions: ReactNode; children?: ReactNode; onClose: (() => void) | null }): JSX.Element;
 ```
 
 - [ ] **Step 1: Write the failing test** — `shopCopy.test.ts`:
@@ -1614,18 +1768,22 @@ type DetailSheetProps = {
   readonly warning?: string | null;
   readonly art: ReactNode;
   readonly actions: ReactNode;
-  readonly onClose: () => void;
+  /** Extra content under the text (the tarot target hand). */
+  readonly children?: ReactNode;
+  /** null — the sheet cannot be dismissed (a bought tarot waits for «Применить» / «Пропустить»). */
+  readonly onClose: (() => void) | null;
 };
 
 /** A bottom sheet on phones (a centred card on wide screens): big art, text, and the actions in thumb reach. */
-export function DetailSheet({ title, subtitle, text, warning = null, art, actions, onClose }: DetailSheetProps) {
+export function DetailSheet({ title, subtitle, text, warning = null, art, actions, children, onClose }: DetailSheetProps) {
   return createPortal(
-    <div className="sheet-backdrop" data-testid="detail-sheet" onClick={onClose}>
+    <div className="sheet-backdrop" data-testid="detail-sheet" onClick={onClose ?? undefined}>
       <div className="sheet panel" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
         <div className="sheet__art">{art}</div>
         <h3 className="sheet__title">{title}</h3>
         {subtitle && <p className="sheet__subtitle">{subtitle}</p>}
         <p className="sheet__text">{text}</p>
+        {children}
         {warning && (
           <p className="sheet__warning" role="alert">
             {warning}
@@ -1633,9 +1791,11 @@ export function DetailSheet({ title, subtitle, text, warning = null, art, action
         )}
         <div className="sheet__actions">
           {actions}
-          <PixelButton tone="blue" onClick={onClose}>
-            Закрыть
-          </PixelButton>
+          {onClose && (
+            <PixelButton tone="blue" onClick={onClose}>
+              Закрыть
+            </PixelButton>
+          )}
         </div>
       </div>
     </div>,
@@ -2087,7 +2247,7 @@ git commit -m "feat(web): Balatro-style shop — items, packs, price tags, detai
 
 **Files:**
 - Create: `apps/web/src/games/durak/shop/opening.ts`, `apps/web/src/games/durak/shop/opening.test.ts`
-- Create: `apps/web/src/games/durak/shop/PackOpening.tsx`, `TarotTargets.tsx`, `ConfirmReplace.tsx`, `opening.css`
+- Create: `apps/web/src/games/durak/shop/PackOpening.tsx`, `TarotTargets.tsx`, `ConfirmReplace.tsx`, `TarotCastSheet.tsx`, `opening.css`
 - Modify: `apps/web/src/games/durak/ShopScreen.tsx`, `apps/web/src/ui/sound.ts`
 
 **Interfaces:**
@@ -2104,6 +2264,8 @@ export function replacementsFor(card: PackCard, targets: readonly string[], prof
 export function canTake(card: PackCard, targets: readonly string[], profile: DeckProfile, jokers: readonly JokerId[]): boolean;
 // PackOpening.tsx
 export function PackOpening(props: { opened: OpenedPack; profile: DeckProfile; jokers: readonly JokerId[]; speed: number; error?: string | null; onPick: (index: number, targets: readonly string[]) => void; onSkip: () => void; onSell: (jokerId: JokerId) => void }): JSX.Element;
+// TarotCastSheet.tsx — the shelf tarot's sheet after purchase: hand, «Применить», «Пропустить»
+export function TarotCastSheet(props: { cast: TarotCast; profile: DeckProfile; error?: string | null; onCast: (targets: readonly string[]) => void; onSkip: () => void }): JSX.Element;
 // sound.ts SOUNDS gains: tear, reveal, revealRare, revealLegendary
 ```
 
@@ -2338,6 +2500,75 @@ export function ConfirmReplace({ changes, onConfirm, onCancel }: ConfirmReplaceP
         </div>
       </div>
     </div>
+  );
+}
+```
+
+`TarotCastSheet.tsx` — the sheet a shelf tarot turns into once bought (the purchase is final; «Пропустить» refunds nothing):
+
+```tsx
+import { TAROTS, targetsOk, type DeckProfile, type PackCard, type TarotCast } from '@game/durak';
+import { useState } from 'react';
+import { PixelButton } from '../../../ui/PixelButton';
+import { ConfirmReplace } from './ConfirmReplace';
+import { DetailSheet } from './DetailSheet';
+import { replacementsFor, type Replacement } from './opening';
+import { PackCardFace } from './PackCardFace';
+import { TarotTargets } from './TarotTargets';
+import './opening.css';
+
+type TarotCastSheetProps = {
+  readonly cast: TarotCast;
+  readonly profile: DeckProfile;
+  readonly error?: string | null;
+  readonly onCast: (targets: readonly string[]) => void;
+  readonly onSkip: () => void;
+};
+
+/** A bought shelf tarot: pick targets from its hand and apply, or skip it — it is sold either way. */
+export function TarotCastSheet({ cast, profile, error = null, onCast, onSkip }: TarotCastSheetProps) {
+  const [targets, setTargets] = useState<readonly string[]>([]);
+  const [confirm, setConfirm] = useState<readonly Replacement[] | null>(null);
+  const tarot = TAROTS[cast.tarotId];
+  const card: PackCard = { kind: 'tarot', tarotId: cast.tarotId };
+  const apply = (): void => {
+    const changes = replacementsFor(card, targets, profile);
+    if (changes.length > 0) setConfirm(changes);
+    else onCast(targets);
+  };
+  return (
+    <>
+      <DetailSheet
+        title={tarot.name}
+        subtitle="Куплено — выбери карты"
+        text={tarot.description}
+        warning={error}
+        art={<PackCardFace card={card} size="big" />}
+        onClose={null}
+        actions={
+          <>
+            <PixelButton tone="orange" disabled={!targetsOk(cast.tarotId, targets, profile)} onClick={apply}>
+              Применить
+            </PixelButton>
+            <PixelButton tone="blue" onClick={onSkip}>
+              Пропустить
+            </PixelButton>
+          </>
+        }
+      >
+        <TarotTargets tarotId={cast.tarotId} hand={cast.hand} profile={profile} picked={targets} onChange={setTargets} />
+      </DetailSheet>
+      {confirm && (
+        <ConfirmReplace
+          changes={confirm}
+          onConfirm={() => {
+            setConfirm(null);
+            onCast(targets);
+          }}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+    </>
   );
 }
 ```
@@ -2590,12 +2821,15 @@ export function PackOpening({ opened, profile, jokers, speed, error = null, onPi
 @media (prefers-reduced-motion: reduce) { .opening__pack { animation: none; } }
 ```
 
-- [ ] **Step 5: Wire into `ShopScreen.tsx`.** Add imports `JOKERS` (from `@game/durak`), `useRef`, `PackOpening` from `./shop/PackOpening`; take `settings` from `useSettings()`; add inside the component:
+- [ ] **Step 5: Wire into `ShopScreen.tsx`.** Add imports `JOKERS` (from `@game/durak`), `useRef`, `PackOpening` from `./shop/PackOpening`, `TarotCastSheet` from `./shop/TarotCastSheet`; take `settings` from `useSettings()`; add inside the component:
 
 ```tsx
   const [notice, setNotice] = useState<string | null>(null);
-  /** Set when Колесо Фортуны is picked: the jokers count and the open pack then, to tell the result once the pick lands. */
-  const wheel = useRef<{ readonly jokers: number; readonly opened: ShopState['opened'] } | null>(null);
+  /**
+   * Set when Колесо Фортуны is used — from a pack or straight off the shelf: the jokers count and the shop state it changes
+   * (`opened` or `items`), to tell the result once the action lands.
+   */
+  const wheel = useRef<{ readonly jokers: number; readonly marker: unknown } | null>(null);
   const [openingKey, setOpeningKey] = useState(0);
   const previousOpened = usePrevious(shop.opened);
   useEffect(() => {
@@ -2603,23 +2837,39 @@ export function PackOpening({ opened, profile, jokers, speed, error = null, onPi
   }, [shop.opened, previousOpened]);
   useEffect(() => {
     const pending = wheel.current;
-    if (!pending || pending.opened === shop.opened) return;
+    if (!pending || (pending.marker === shop.opened || pending.marker === shop.items)) return;
     wheel.current = null;
     const gained = run.jokers.length > pending.jokers ? run.jokers.at(-1) : undefined;
     setNotice(gained ? `Колесо Фортуны: ${JOKERS[gained].name}!` : 'Колесо Фортуны: не повезло');
-  }, [shop.opened, run.jokers]);
+  }, [shop.opened, shop.items, run.jokers]);
 
+  const isWheel = (card: PackCard | null | undefined): boolean => card?.kind === 'tarot' && card.tarotId === 'wheel';
   const pick = (index: number, targets: readonly string[]): void => {
-    const card = shop.opened?.cards[index];
-    if (card?.kind === 'tarot' && card.tarotId === 'wheel') wheel.current = { jokers: run.jokers.length, opened: shop.opened };
+    if (isWheel(shop.opened?.cards[index])) wheel.current = { jokers: run.jokers.length, marker: shop.opened };
     setNotice(null);
     onAct({ type: 'pickFromPack', index, targets });
   };
+  /** The detail sheet's actions; a shelf Колесо Фортуны is cast on purchase, so its result is told here too. */
+  const actFromSheet = (action: RunAction): void => {
+    if (action.type === 'buyItem' && isWheel(shop.items[action.index]?.card)) wheel.current = { jokers: run.jokers.length, marker: shop.items };
+    setNotice(null);
+    onAct(action);
+  };
 ```
 
-The status line becomes `{error ?? notice ?? ''}`. After the `ShopDetail` render:
+(import `type PackCard` from `@game/durak`). Pass `onAct={actFromSheet}` to `ShopDetail`. The status line becomes `{error ?? notice ?? ''}`. After the `ShopDetail` render add the shelf tarot sheet and the pack overlay:
 
 ```tsx
+      {shop.casting && (
+        <TarotCastSheet
+          key={`${shop.casting.tarotId}-${shop.casting.hand.join()}`}
+          cast={shop.casting}
+          profile={run.profile}
+          error={error}
+          onCast={(targets) => onAct({ type: 'castTarot', targets })}
+          onSkip={() => onAct({ type: 'skipTarot' })}
+        />
+      )}
       {shop.opened && (
         <PackOpening
           key={openingKey}
@@ -2640,7 +2890,7 @@ The status line becomes `{error ?? notice ?? ''}`. After the `ShopDetail` render
 Run: `npm test && npm run typecheck && npm run build`
 Expected: PASS, no type errors, build succeeds.
 
-- [ ] **Step 7: Manual check** (dev server, portrait 412×860 and wide 1280×800): buy each pack kind; the pack shakes, cards flip with sounds; a tap during the reveal shows all; a tarot shows the hand and «Применить» enables only on valid targets; a deck card over another enhancement shows the label and the confirm; a full joker row shows the sell buttons. Ledger anything off.
+- [ ] **Step 7: Manual check** (dev server, portrait 412×860 and wide 1280×800): buy a shelf tarot — the same sheet turns into the target hand, «Пропустить» keeps it sold; buy each pack kind; the pack shakes, cards flip with sounds; a tap during the reveal shows all; a tarot shows the hand and «Применить» enables only on valid targets; a deck card over another enhancement shows the label and the confirm; a full joker row shows the sell buttons. Ledger anything off.
 
 - [ ] **Step 8: Commit**
 
@@ -2689,7 +2939,7 @@ import { SettingsProvider, useSettings } from '../ui/SettingsContext';
 
 type Bench = { readonly shop: ShopState; readonly purse: Purse };
 
-const EMPTY_SHOP: ShopState = { items: [], packs: [], rerollCost: 0, opened: null };
+const EMPTY_SHOP: ShopState = { items: [], packs: [], rerollCost: 0, opened: null, casting: null };
 
 function PacksBench() {
   const { settings } = useSettings();
@@ -2829,6 +3079,7 @@ const BASE_SHOP = {
   packs: [{ kind: 'deck', size: 'normal', price: 4 }, { kind: 'jokers', size: 'normal', price: 4 }],
   rerollCost: 2,
   opened: null,
+  casting: null,
 };
 
 async function openShop(page: Page, run: object): Promise<void> {
@@ -2864,7 +3115,36 @@ test('a bought pack opens, reveals its cards and a pick lands in the deck', asyn
   expect(Object.keys(await savedProfile(page))).toHaveLength(1);
 });
 
-test('a tarot is applied to chosen cards of the hand', async ({ page }) => {
+test('a shelf tarot is bought, then applied right in its sheet — no pack screen', async ({ page }) => {
+  await openShop(page, shopRun(BASE_SHOP));
+  await page.getByTestId('shop-item-1').getByRole('button').click();
+  await page.getByRole('button', { name: 'Купить Солнце за 3' }).click();
+  await expect(page.getByTestId('pack-opening')).toHaveCount(0);
+  const targets = page.getByTestId('tarot-targets');
+  await expect(targets).toBeVisible();
+  await targets.getByRole('button').nth(1).click();
+  await targets.getByRole('button').nth(2).click();
+  await page.getByRole('button', { name: 'Применить' }).click();
+  await expect(targets).toHaveCount(0);
+  expect(Object.values(await savedProfile(page))).toEqual(['golden', 'golden']);
+  await expect(page.getByTestId('shop-item-1')).toContainText('Продано');
+});
+
+test('a bought shelf tarot survives a reload and can be skipped with the money spent', async ({ page }) => {
+  await openShop(page, shopRun(BASE_SHOP));
+  await page.getByTestId('shop-item-1').getByRole('button').click();
+  await page.getByRole('button', { name: 'Купить Солнце за 3' }).click();
+  await expect(page.getByTestId('tarot-targets')).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await expect(page.getByTestId('tarot-targets')).toBeVisible();
+  await page.getByRole('button', { name: 'Пропустить' }).click();
+  await expect(page.getByTestId('tarot-targets')).toHaveCount(0);
+  expect(await savedProfile(page)).toEqual({});
+  await expect(page.getByLabel('Монеты: 27')).toBeVisible();
+});
+
+test('a tarot from an arcana pack is applied to chosen cards of the hand', async ({ page }) => {
   await openShop(page, shopRun({ ...BASE_SHOP, opened: { kind: 'arcana', cards: [{ kind: 'tarot', tarotId: 'sun' }], picksLeft: 1, hand: HAND } }));
   const opening = page.getByTestId('pack-opening');
   await opening.click({ position: { x: 5, y: 5 } });
@@ -2939,7 +3219,7 @@ test('the lab opens any pack', async ({ page }) => {
 });
 ```
 
-In `e2e/jokers.spec.ts`: change `SHOP_RUN.phase.shop` to `{ items: [null, null], packs: [null, null], rerollCost: 2, opened: null }`, both `version: 7` → `version: 8`, `/В бой/` → `/Следующий бой/`, and rewrite «jokers can be bought and reordered in the shop»:
+In `e2e/jokers.spec.ts`: change `SHOP_RUN.phase.shop` to `{ items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }`, both `version: 7` → `version: 8`, `/В бой/` → `/Следующий бой/`, and rewrite «jokers can be bought and reordered in the shop»:
 
 ```ts
 test('jokers can be bought and reordered in the shop', async ({ page }) => {
@@ -2950,7 +3230,7 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
       bosses: ['general', 'witch'],
       phase: {
         kind: 'shop',
-        shop: { items: [{ card: { kind: 'joker', jokerId: 'clubs' }, price: 4 }, null], packs: [null, null], rerollCost: 2, opened: null },
+        shop: { items: [{ card: { kind: 'joker', jokerId: 'clubs' }, price: 4 }, null], packs: [null, null], rerollCost: 2, opened: null, casting: null },
         reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 },
       },
     };
@@ -2970,7 +3250,7 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
 });
 ```
 
-In `e2e/landscape.spec.ts`: switch its shop fixture to v8 (`items` / `packs` / `opened` like `BASE_SHOP` above, `version: 8`) and replace the final assertions with the Balatro layout check:
+In `e2e/landscape.spec.ts`: switch its shop fixture to v8 (`items` / `packs` / `opened` / `casting` like `BASE_SHOP` above, `version: 8`) and replace the final assertions with the Balatro layout check:
 
 ```ts
   const side = await page.getByTestId('shop-reward').boundingBox();
@@ -2983,7 +3263,7 @@ In `e2e/landscape.spec.ts`: switch its shop fixture to v8 (`items` / `packs` / `
 - [ ] **Step 2: Run to verify**
 
 Run: `npx playwright test`
-Expected: all e2e PASS — the 22 existing (with `jokers.spec.ts` and `landscape.spec.ts` updated) plus 8 in `shop.spec.ts`. Fix UI bugs the tests expose under systematic-debugging; ledger any test change.
+Expected: all e2e PASS — the 22 existing (with `jokers.spec.ts` and `landscape.spec.ts` updated) plus 10 in `shop.spec.ts`. Fix UI bugs the tests expose under systematic-debugging; ledger any test change.
 
 - [ ] **Step 3: Commit**
 
