@@ -122,3 +122,24 @@ describe('scoring properties', () => {
     );
   });
 });
+
+describe('focus charges', () => {
+  it('chips and mult come after the cards and before the jokers, × after them', () => {
+    const score = scoreTake(input([t(c(7, 'clubs'))], { boost: { chips: 8, mult: 3, times: 2 } }, ['clubs']));
+    const sources = score.steps.map((step) => (step.source.kind === 'focus' ? `focus:${step.source.focus}` : step.source.kind));
+    expect(sources).toEqual(['card', 'joker', 'focus:pad', 'focus:boost', 'focus:doubler']);
+    // (1 + 3 Трефовик + 8) chips × (1 + 3) mult × 2
+    expect(score.damage).toBe(12 * 4 * 2);
+  });
+
+  it('neutral charges add no steps', () => {
+    const score = scoreTake(input([t(c(7, 'clubs'))], { boost: { chips: 0, mult: 0, times: 1 }, shield: 1 }));
+    expect(score.steps.map((step) => step.source.kind)).toEqual(['card']);
+  });
+
+  it('a shield is the last step of a hit on the shielded side', () => {
+    const score = scoreTake(input([t(c(14, 'clubs')), t(c(14, 'hearts'))], { shield: 0.5 }));
+    expect(score.steps.at(-1)?.source).toEqual({ kind: 'focus', focus: 'shield' });
+    expect(score.damage).toBe(3);
+  });
+});

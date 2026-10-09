@@ -178,12 +178,15 @@ function chargeTake(state: FightState, bout: BoutResult, before: RoundState): Fi
     baseMult: state.baseMult[attacker],
     attacker: { jokers: state.jokers[attacker], state: state.jokerState[attacker] },
     defender: { jokers: state.jokers[taker], state: state.jokerState[taker] },
+    boost: attacker === 'player' ? state.focusCharges : undefined,
+    shield: taker === 'player' ? state.focusCharges.shield : 1,
   });
   const afterAttacker = withSide(state.jokerState, attacker, afterHitDealt(state.jokerState[attacker], state.jokers[attacker], taken));
   const counted: FightState = {
     ...state,
     jokerState: withSide(afterAttacker, taker, afterOwnTake(afterAttacker[taker])),
     lastScore: { ...score, target: taker },
+    focusCharges: attacker === 'player' ? { ...state.focusCharges, chips: 0, mult: 0, times: 1 } : { ...state.focusCharges, shield: 1 },
     roundTakes: increment(state.roundTakes, taker),
     fightTakes: increment(state.fightTakes, taker),
   };

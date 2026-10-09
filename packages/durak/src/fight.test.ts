@@ -321,3 +321,41 @@ describe('reveals', () => {
     expect(result.value.reveal).toEqual(NO_REVEAL);
   });
 });
+
+/** Plays one attack card from the attacker and lets `taker` take it. */
+function takeBy(fight: FightState, taker: 'player' | 'enemy'): FightState {
+  const attacker = taker === 'player' ? 'enemy' : 'player';
+  const card = fight.round.hands[attacker][0];
+  if (!card) throw new Error('no card to attack with');
+  const setUp: FightState = { ...fight, round: { ...fight.round, attacker, table: [], defenderTaking: false, outcome: null } };
+  const steps: readonly (readonly [PlayerId, FightAction])[] = [
+    [attacker, { type: 'attack', cardId: card.id }],
+    [taker, { type: 'take' }],
+    [attacker, { type: 'endAttack' }],
+  ];
+  return steps.reduce((current, [actor, action]) => {
+    const result = applyFightAction(current, actor, action);
+    if (!result.ok) throw new Error(`${actor} ${action.type}: ${result.error}`);
+    return result.value;
+  }, setUp);
+}
+
+describe('focus charges in a fight', () => {
+  it('are spent on the player hit, and the shield on the enemy hit', () => {
+    const base = createFight({ seed: 5, playerHp: 40, enemyHp: 500 });
+    const charged: FightState = { ...base, focusCharges: { chips: 8, mult: 3, times: 2, shield: 0.5 } };
+    const afterPlayerHit = takeBy(charged, 'enemy');
+    expect(afterPlayerHit.focusCharges).toEqual({ chips: 0, mult: 0, times: 1, shield: 0.5 });
+    expect(afterPlayerHit.lastScore?.steps.some((step) => step.source.kind === 'focus')).toBe(true);
+    const afterEnemyHit = takeBy(afterPlayerHit, 'player');
+    expect(afterEnemyHit.focusCharges).toEqual(NO_CHARGES);
+  });
+
+  it('survive a new deal', () => {
+    const base = createFight({ seed: 5, playerHp: 40, enemyHp: 50 });
+    const ended: FightState = { ...base, focusCharges: { chips: 8, mult: 0, times: 1, shield: 1 }, round: { ...base.round, outcome: { loser: 'enemy', cardsLeft: 1 } } };
+    const result = applyFightAction(ended, 'player', { type: 'nextRound' });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.value.focusCharges.chips).toBe(8);
+  });
+});

@@ -1,5 +1,6 @@
 import type { Card, Rank, Suit } from '@game/core';
 import type { EnhancementId } from '../enhancements';
+import type { FocusId } from '../focus/catalog';
 import { isTrumpCard } from '../rules';
 import type { BossRule } from '../types';
 import {
@@ -25,7 +26,8 @@ export type StepSource =
   | { readonly kind: 'tier' }
   | { readonly kind: 'card'; readonly card: Card }
   | { readonly kind: 'enhancement'; readonly card: Card; readonly enhancement: EnhancementId }
-  | { readonly kind: 'joker'; readonly side: 'attacker' | 'defender'; readonly slot: number; readonly joker: JokerId; readonly acting: JokerId };
+  | { readonly kind: 'joker'; readonly side: 'attacker' | 'defender'; readonly slot: number; readonly joker: JokerId; readonly acting: JokerId }
+  | { readonly kind: 'focus'; readonly focus: FocusId };
 
 export type Effect = { readonly kind: 'chips' | 'mult' | 'times'; readonly value: number };
 
@@ -49,6 +51,10 @@ export type ScoreInput = {
   readonly attacker: ScoreSide;
   /** The taker: only its defensive jokers act. */
   readonly defender: ScoreSide;
+  /** The attacker's focus charges (only the player has them). */
+  readonly boost?: { readonly chips: number; readonly mult: number; readonly times: number };
+  /** The taker's Щит: × on the final mult (1 — none). */
+  readonly shield?: number;
 };
 
 type Tally = { readonly chips: number; readonly mult: number; readonly steps: readonly ScoreStep[] };
@@ -146,8 +152,13 @@ function scoreCard(tally: Tally, taken: TakenCard, input: ScoreInput): Tally {
 export function scoreTake(input: ScoreInput): TakeScore {
   const start = apply({ chips: 0, mult: 1, steps: [] }, { kind: 'tier' }, times(input.baseMult));
   const afterCards = input.taken.reduce((tally, taken) => scoreCard(tally, taken, input), start);
-  const afterAttack = jokerPass(afterCards, input.attacker.jokers, 'attacker', (acting) => takeEffect(acting, input));
-  const final = jokerPass(afterAttack, input.defender.jokers, 'defender', defenseEffect);
+  const boost = input.boost ?? { chips: 0, mult: 0, times: 1 };
+  const afterPad = apply(afterCards, { kind: 'focus', focus: 'pad' }, chips(boost.chips));
+  const afterBoost = apply(afterPad, { kind: 'focus', focus: 'boost' }, mult(boost.mult));
+  const afterAttack = jokerPass(afterBoost, input.attacker.jokers, 'attacker', (acting) => takeEffect(acting, input));
+  const afterDoubler = apply(afterAttack, { kind: 'focus', focus: 'doubler' }, times(boost.times));
+  const afterDefense = jokerPass(afterDoubler, input.defender.jokers, 'defender', defenseEffect);
+  const final = apply(afterDefense, { kind: 'focus', focus: 'shield' }, times(input.shield ?? 1));
   const damage = Math.max(0, Math.floor(final.chips * final.mult + EPSILON));
   return { chips: final.chips, mult: final.mult, damage, steps: final.steps };
 }
