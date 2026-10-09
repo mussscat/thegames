@@ -21,6 +21,9 @@ const ERROR_MESSAGES: Readonly<Record<RunError, string>> = {
   tarotPending: 'Сначала примени таро или пропусти его',
   noTarotPending: 'Таро не ждёт применения',
   badTargets: 'Выбери подходящие карты',
+  focusSlotsFull: 'Оба слота фокусов заняты — продай фокус',
+  focusNotOwned: 'Такого фокуса нет',
+  focusUnavailable: 'Этот фокус сейчас не сыграть',
   wrongPhase: 'Сейчас это недоступно',
   fightNotOver: 'Бой ещё идёт',
 };

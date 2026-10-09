@@ -1,8 +1,8 @@
 import { RANKS, SUITS, type Rank } from '@game/core';
-import { BOSS_RULES, ENHANCEMENT_IDS, JOKER_IDS, MAX_JOKERS, PACK_KINDS, PACK_SIZES, RUN_SCHEDULE, TAROT_IDS, type RunState } from '@game/durak';
+import { BOSS_RULES, ENHANCEMENT_IDS, FOCUS_IDS, JOKER_IDS, MAX_FOCUSES, MAX_JOKERS, PACK_KINDS, PACK_SIZES, RUN_SCHEDULE, TAROT_IDS, type RunState } from '@game/durak';
 import { z } from 'zod';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 const count = z.number().int().min(0);
 const rank = z.custom<Rank>((value) => typeof value === 'number' && (RANKS as readonly number[]).includes(value));
@@ -15,6 +15,7 @@ const boss = z.enum(BOSS_RULES).nullable();
 const enhancement = z.enum(ENHANCEMENT_IDS);
 const profile = z.record(z.string(), enhancement);
 const joker = z.enum(JOKER_IDS);
+const focus = z.enum(FOCUS_IDS);
 const jokerList = z.array(joker).max(MAX_JOKERS);
 const jokerState = z.object({ rage: count, cleanStreak: count, collected: count });
 const stepSource = z.discriminatedUnion('kind', [
@@ -22,6 +23,7 @@ const stepSource = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('card'), card }),
   z.object({ kind: z.literal('enhancement'), card, enhancement }),
   z.object({ kind: z.literal('joker'), side: z.enum(['attacker', 'defender']), slot: count, joker, acting: joker }),
+  z.object({ kind: z.literal('focus'), focus }),
 ]);
 const step = z.object({
   source: stepSource,
@@ -68,12 +70,15 @@ const fight = z.object({
   fightTakes: perPlayer,
   boss,
   cardCoins: perPlayer,
+  focusCharges: z.object({ chips: z.number(), mult: z.number(), times: z.number().positive(), shield: z.number().positive() }),
+  reveal: z.object({ enemyHand: z.boolean(), topCards: count }),
 });
 
 const reward = z.object({ base: count, hpBonus: count, interest: count, jokerBonus: count, cardBonus: count, total: count });
 const packCard = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('joker'), jokerId: joker }),
   z.object({ kind: z.literal('tarot'), tarotId: z.enum(TAROT_IDS) }),
+  z.object({ kind: z.literal('focus'), focusId: focus }),
   z.object({ kind: z.literal('card'), cardId: z.string(), enhancement }),
 ]);
 const shop = z.object({
@@ -100,6 +105,7 @@ const run = z.object({
   jokers: jokerList,
   collected: count,
   profile,
+  focuses: z.array(focus).max(MAX_FOCUSES),
   bosses: z.array(z.enum(BOSS_RULES)).max(RUN_SCHEDULE.length),
   phase,
 });
