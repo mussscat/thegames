@@ -3177,7 +3177,7 @@ test('replacing an enhancement asks first and shows both versions', async ({ pag
 test('a reload during an opening brings the same pack back', async ({ page }) => {
   await openShop(page, shopRun(BASE_SHOP));
   await page.getByTestId('shop-pack-1').getByRole('button').click();
-  await page.getByRole('button', { name: 'Купить Пак джокеров за 4' }).click();
+  await page.getByRole('button', { name: 'Купить Джокеры за 4' }).click();
   await expect(page.getByTestId('pack-opening')).toBeVisible();
   const read = () => page.evaluate(() => JSON.parse(window.localStorage.getItem('thegame.durak.run') ?? '{}').run.phase.shop.opened);
   const before = await read();

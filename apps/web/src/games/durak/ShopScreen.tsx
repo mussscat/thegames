@@ -1,33 +1,17 @@
-import { createDeck, rankLabel, SUIT_SYMBOLS, type Card } from '@game/core';
-import {
-  ENHANCEMENTS,
-  JOKERS,
-  MAX_JOKERS,
-  sellPrice,
-  stageEnemy,
-  stageLabel,
-  type FightReward,
-  type RunAction,
-  type RunState,
-  type ShopState,
-} from '@game/durak';
-
-import { useEffect } from 'react';
+import { stageEnemy, stageLabel, type FightReward, type RunAction, type RunState, type ShopState } from '@game/durak';
+import { useEffect, useState } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
-import { PixelCard } from '../../ui/PixelCard';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
-import { JokerCard } from './JokerCard';
+import { OwnedJokers } from './shop/OwnedJokers';
+import { PackArt } from './shop/PackArt';
+import { PackCardFace } from './shop/PackCardFace';
+import { ShopDetail, type ShopFocus } from './shop/ShopDetail';
+import { ShopSlot } from './shop/ShopSlot';
+import { PACK_NAMES, PACK_SIZE_NAMES, packCardTitle } from './shop/shopCopy';
 import { coinSound, isNewError } from './sounds';
 import './fight.css';
 import './shop.css';
-
-const CARDS_BY_ID: ReadonlyMap<string, Card> = new Map(createDeck(6).map((card) => [card.id, card]));
-
-function cardLabel(cardId: string): string {
-  const card = CARDS_BY_ID.get(cardId);
-  return card ? `${rankLabel(card.rank)}${SUIT_SYMBOLS[card.suit]}` : cardId;
-}
 
 type ShopScreenProps = {
   readonly run: RunState;
@@ -39,8 +23,10 @@ type ShopScreenProps = {
   readonly onExit: () => void;
 };
 
+/** Balatro's shop: owned jokers on top, a «МАГАЗИН» panel with 2 items and 2 packs, reroll and next fight. */
 export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }: ShopScreenProps) {
   const { play } = useSettings();
+  const [focus, setFocus] = useState<ShopFocus | null>(null);
   const previousCoins = usePrevious(run.coins);
   useEffect(() => {
     if (previousCoins === undefined) return;
@@ -52,155 +38,70 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
     if (isNewError(previousErrorSeq, errorSeq)) play('deny');
   }, [errorSeq, previousErrorSeq, play]);
   const next = stageEnemy(run, run.stage + 1);
+  const { circle, fight } = stageLabel(run.stage + 1);
+
   return (
     <main className="screen shop" data-testid="shop">
-      <header className="fight__header">
+      <header className="shop__side panel">
         <PixelButton tone="blue" small onClick={onExit}>
           Меню
         </PixelButton>
-        <span className="chip">Магазин · круг {stageLabel(run.stage).circle}</span>
-        <span className="shop__coins">● {run.coins}</span>
+        <span className="shop__coins" aria-label={`Монеты: ${run.coins}`}>
+          ● {run.coins}
+        </span>
+        <span className="shop__stage">
+          Круг {circle} · бой {fight}
+        </span>
+        <span className="shop__reward" data-testid="shop-reward">
+          Награда +{reward.total}
+        </span>
       </header>
 
-      <section className="panel shop__reward" data-testid="shop-reward">
-        <h2 className="shop__title">Награда за бой: +{reward.total}</h2>
-        <p>
-          Победа {reward.base} · HP {reward.hpBonus} · проценты {reward.interest}
-          {reward.jokerBonus > 0 && ` · джокеры ${reward.jokerBonus}`}
-        </p>
-      </section>
+      <OwnedJokers jokers={run.jokers} onAct={onAct} />
 
-      <section className="panel shop__offers" data-testid="shop-offers">
-        <h3 className="shop__title">Товары</h3>
-        <div className="shop__shelf">
-          {shop.offers.map((offer, index) =>
-            offer ? (
-              <JokerCard
-                key={offer.jokerId}
-                jokerId={offer.jokerId}
-                action={
-                  <PixelButton
-                    tone="orange"
-                    small
-                    onClick={() => onAct({ type: 'buyJoker', index })}
-                    aria-label={`Купить ${JOKERS[offer.jokerId].name} за ${offer.price}`}
-                  >
-                    ● {offer.price}
-                  </PixelButton>
-                }
-              />
-            ) : (
-              <div key={`sold-${index}`} className="joker joker--sold">
-                Продано
-              </div>
-            ),
-          )}
+      <section className="shop__panel panel" aria-label="Магазин">
+        <h2 className="shop__head">Магазин</h2>
+        <nav className="shop__bar">
+          <PixelButton tone="red" onClick={() => onAct({ type: 'leaveShop' })}>
+            Следующий бой: {next.name}
+          </PixelButton>
+          <PixelButton tone="green" onClick={() => onAct({ type: 'reroll' })}>
+            Рерол ● {shop.rerollCost}
+          </PixelButton>
+        </nav>
+        <div className="shop__items">
+          {shop.items.map((item, index) => (
+            <ShopSlot
+              key={`item-${index}`}
+              testId={`shop-item-${index}`}
+              price={item?.price ?? null}
+              label={item ? `${packCardTitle(item.card)}, ${item.price} монет` : 'Продано'}
+              onOpen={() => setFocus({ kind: 'item', index })}
+            >
+              {item && <PackCardFace card={item.card} />}
+            </ShopSlot>
+          ))}
         </div>
-      </section>
-
-      <section className="panel shop__enh">
-        <h3 className="shop__title">Усиления карт</h3>
-        {shop.enhancementOffers.map((offer, index) =>
-          offer ? (
-            <div key={offer.enhancementId} className="shop__enhancement">
-              <p className="shop__enhancement-text">
-                <strong>{ENHANCEMENTS[offer.enhancementId].name}</strong> · ● {offer.price}
-                <br />
-                {ENHANCEMENTS[offer.enhancementId].description}
-              </p>
-              <div className="shop__cards">
-                {offer.cardIds.map((cardId) => {
-                  const card = CARDS_BY_ID.get(cardId);
-                  const current = run.profile[cardId];
-                  if (!card) return null;
-                  return (
-                    <button
-                      key={cardId}
-                      type="button"
-                      className="shop__card"
-                      onClick={() => onAct({ type: 'buyEnhancement', index, cardId })}
-                      aria-label={`${ENHANCEMENTS[offer.enhancementId].name} на ${cardLabel(cardId)}${current ? `, заменит ${ENHANCEMENTS[current].name}` : ''}`}
-                    >
-                      <PixelCard card={card} width={56} enhancement={offer.enhancementId} idle={false} />
-                      <span className="shop__card-caption">
-                        {cardLabel(cardId)}
-                        {current ? ` (заменит: ${ENHANCEMENTS[current].name})` : ''}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <p key={`sold-enh-${index}`} className="shop__sold">
-              Продано
-            </p>
-          ),
-        )}
-      </section>
-
-      <section className="panel shop__owned" data-testid="owned-jokers">
-        <h3 className="shop__title">
-          Твои джокеры ({run.jokers.length}/{MAX_JOKERS})
-        </h3>
-        {run.jokers.length === 0 && <p className="shop__empty">Пока нет</p>}
-        <div className="shop__shelf">
-          {run.jokers.map((id, i) => (
-            <JokerCard
-              key={id}
-              jokerId={id}
-              action={
-                <span className="joker__actions">
-                  <PixelButton
-                    tone="blue"
-                    small
-                    disabled={i === 0}
-                    aria-label={`${JOKERS[id].name} левее`}
-                    onClick={() => onAct({ type: 'moveJoker', from: i, to: i - 1 })}
-                  >
-                    ◀
-                  </PixelButton>
-                  <PixelButton tone="blue" small onClick={() => onAct({ type: 'sellJoker', jokerId: id })}>
-                    Продать +{sellPrice(id)}
-                  </PixelButton>
-                  <PixelButton
-                    tone="blue"
-                    small
-                    disabled={i === run.jokers.length - 1}
-                    aria-label={`${JOKERS[id].name} правее`}
-                    onClick={() => onAct({ type: 'moveJoker', from: i, to: i + 1 })}
-                  >
-                    ▶
-                  </PixelButton>
-                </span>
-              }
-            />
+        <div className="shop__packs">
+          {shop.packs.map((pack, index) => (
+            <ShopSlot
+              key={`pack-${index}`}
+              testId={`shop-pack-${index}`}
+              price={pack?.price ?? null}
+              label={pack ? `${PACK_NAMES[pack.kind]}, ${PACK_SIZE_NAMES[pack.size]}, ${pack.price} монет` : 'Продано'}
+              onOpen={() => setFocus({ kind: 'pack', index })}
+            >
+              {pack && <PackArt kind={pack.kind} size={pack.size} />}
+            </ShopSlot>
           ))}
         </div>
       </section>
 
-      <section className="panel shop__mydeck">
-        <h3 className="shop__title">Твоя колода</h3>
-        {Object.keys(run.profile).length === 0 && <p className="shop__empty">Усилений пока нет</p>}
-        <div className="shop__deck">
-          {Object.entries(run.profile).map(([cardId, id]) => {
-            const card = CARDS_BY_ID.get(cardId);
-            return card && id ? <PixelCard key={cardId} card={card} width={44} enhancement={id} idle={false} /> : null;
-          })}
-        </div>
-      </section>
-
-      <p className={error ? 'fight__status panel' : 'fight__status'} role="status">
+      <p className={error ? 'shop__status panel' : 'shop__status'} role="status">
         {error ?? ''}
       </p>
-      <div className="actions">
-        <PixelButton tone="green" onClick={() => onAct({ type: 'reroll' })}>
-          Рерол · ● {shop.rerollCost}
-        </PixelButton>
-        <PixelButton tone="red" onClick={() => onAct({ type: 'leaveShop' })}>
-          В бой: {next.name}
-        </PixelButton>
-      </div>
+
+      {focus && <ShopDetail focus={focus} shop={shop} run={run} onAct={onAct} onClose={() => setFocus(null)} />}
     </main>
   );
 }

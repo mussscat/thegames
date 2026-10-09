@@ -1,76 +1,166 @@
-.shop { overflow-y: auto; }
-.shop .panel { display: flex; flex-direction: column; gap: 8px; }
-.shop__title { margin: 0; font-size: 0.75rem; color: var(--gold); }
-.shop__coins { font-family: var(--font-head); font-size: 1.05rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }
-.shop__reward p { margin: 0; font-size: 0.85rem; }
-.shop__empty, .shop__sold { margin: 0; opacity: 0.6; font-size: 0.9rem; }
+/* ---------- shop: portrait ---------- */
+.shop {
+  --slot-h: clamp(92px, 16vh, 200px);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: 'side' 'owned' 'panel' 'status';
+  align-content: start;
+  gap: 8px;
+  min-height: 100dvh;
+  padding: 8px 10px calc(78px + env(safe-area-inset-bottom, 0px));
+}
+.shop__side { grid-area: side; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 10px; }
+.shop__coins { font-family: var(--font-head); color: var(--gold); font-size: 1.1rem; }
+.shop__stage, .shop__reward { font-size: 0.85rem; opacity: 0.9; }
+.shop__reward { margin-left: auto; }
 
-.shop__shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.joker {
-  display: flex;
+.owned { grid-area: owned; display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.owned__list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; flex: 1; margin: 0; padding: 0; list-style: none; justify-items: center; }
+.owned__ticket { padding: 0; border: 0; background: none; cursor: pointer; }
+.owned__count { font-size: 0.8rem; opacity: 0.8; }
+
+.shop__panel {
+  grid-area: panel;
+  display: grid;
+  grid-template-areas: 'head' 'items' 'packs';
+  gap: 10px;
+  padding: 0 10px 12px;
+  overflow: hidden;
+}
+.shop__head {
+  grid-area: head;
+  margin: 0 -10px;
+  padding: 6px;
+  border-bottom: 3px solid #000000;
+  background: #c8323a;
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000000;
+}
+.shop__items { grid-area: items; }
+.shop__packs { grid-area: packs; }
+.shop__items, .shop__packs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; justify-items: center; }
+
+/* The bottom bar: both buttons in thumb reach. */
+.shop__bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 8px;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 3px solid #000000;
+  background: rgb(14 10 22 / 94%);
+}
+.shop__status { grid-area: status; margin: 0; min-height: 1.4em; text-align: center; }
+
+/* ---------- slots, tags, cards, packs ---------- */
+.shop-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.shop-slot--sold { justify-content: center; height: var(--slot-h); opacity: 0.5; font-size: 0.85rem; }
+.shop-slot__face { padding: 0; border: 0; background: none; cursor: pointer; }
+.price-tag {
+  padding: 1px 8px;
+  border: 2px solid #000000;
+  border-radius: 4px 4px 8px 8px;
+  background: #f4efe2;
+  color: #1b1426;
+  font-family: var(--font-head);
+  font-size: 0.75rem;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 55%);
+}
+
+.pcard {
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 8px;
+  width: calc(var(--slot-h) * 0.7);
+  height: var(--slot-h);
   border: 3px solid #000000;
   border-radius: 8px;
-  background: linear-gradient(180deg, #3a2a4f, #241833);
-  box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+  background: #2a2140;
+  color: #ffffff;
   text-align: center;
 }
-.joker--sold { justify-content: center; min-height: 120px; opacity: 0.5; }
-.joker__emblem { width: 48px; height: 48px; }
-.joker__name { margin: 0; font-size: 0.62rem; }
-.joker__text { margin: 0; flex: 1; font-size: 0.72rem; line-height: 1.3; opacity: 0.85; }
+.pcard--big { width: clamp(110px, 30vw, 170px); height: clamp(156px, 42vw, 240px); }
+.pcard--playing { border: 0; background: none; }
+.pcard--common { box-shadow: 0 0 0 2px #9a93a8, 0 0 10px rgb(154 147 168 / 55%); }
+.pcard--rare { box-shadow: 0 0 0 3px #3a7bd5, 0 0 16px rgb(58 123 213 / 80%); }
+.pcard--legendary { box-shadow: 0 0 0 3px #f5c542, 0 0 20px rgb(245 197 66 / 90%); }
+.pcard--down { background: repeating-linear-gradient(45deg, #8e1f2c 0 6px, #b52a3a 6px 12px); box-shadow: none; }
+.pcard--tarot { background: linear-gradient(180deg, #3b2a63, #1c1430); }
+.pcard__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
+.pcard__glyph { font-size: 2.2em; line-height: 1; }
+.pcard__name { padding: 0 4px; font-size: 0.75rem; font-weight: 800; }
+.pcard__art { width: 60%; image-rendering: pixelated; }
 
-.shop__enhancement { display: flex; flex-direction: column; gap: 6px; }
-.shop__enhancement-text { margin: 0; font-size: 0.8rem; line-height: 1.35; }
-.shop__cards { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.shop__card {
-  font: inherit;
-  color: inherit;
+.pack {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  width: calc(var(--slot-h) * 0.72);
+  height: var(--slot-h);
+  padding: 6px 4px;
+  overflow: hidden;
+  border: 3px solid #000000;
+  border-radius: 6px 6px 10px 10px;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 1px 1px 0 #000000;
+  box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+}
+.pack--jokers { background: linear-gradient(180deg, #8b4fd8, #3e1f73); }
+.pack--arcana { background: linear-gradient(180deg, #2fb6a8, #135a55); }
+.pack--deck { background: linear-gradient(180deg, #e2593f, #7a1f1f); }
+.pack--mega { box-shadow: 0 0 0 3px #f5c542, 0 4px 0 rgb(0 0 0 / 55%); }
+.pack__foil { position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgb(255 255 255 / 18%) 0 3px, transparent 3px 12px); pointer-events: none; }
+.pack__name { font-family: var(--font-head); font-size: 0.6rem; line-height: 1.3; overflow-wrap: anywhere; }
+.pack__size { font-size: 0.75rem; font-weight: 800; }
+.pack__count { font-size: 0.65rem; opacity: 0.9; }
+
+/* ---------- detail sheet ---------- */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 55%); }
+.sheet {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 0;
-  background: none;
-  cursor: pointer;
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-radius: 14px 14px 0 0;
+  animation: sheet-up 0.2s ease-out;
 }
-.shop__card-caption { font-size: 0.75rem; }
-.shop__deck { display: flex; flex-wrap: wrap; gap: 8px 10px; padding-bottom: 14px; }
+.sheet__title { margin: 0; font-family: var(--font-head); font-size: 1rem; }
+.sheet__subtitle, .sheet__text { margin: 0; text-align: center; }
+.sheet__subtitle { font-size: 0.8rem; opacity: 0.8; }
+.sheet__warning { margin: 0; padding: 6px 10px; border: 2px solid #000000; border-radius: 6px; background: #f39c32; color: #1b1426; font-weight: 800; }
+.sheet__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+@keyframes sheet-up { from { transform: translateY(40%); opacity: 0; } }
 
-/* ---------- wide screens and landscape: shelf on the left, run summary on the right (owner-picked) ---------- */
+/* ---------- shop: wide screens, Balatro layout ---------- */
 @media (min-aspect-ratio: 5/4) {
   .shop {
-    max-width: 1100px;
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    grid-template-rows: auto auto auto auto auto 1fr;
-    grid-template-areas:
-      'header header'
-      'offers reward'
-      'offers owned'
-      'enh owned'
-      'enh mydeck'
-      'enh status'
-      'enh actions';
-    column-gap: 16px;
-    row-gap: 10px;
-    align-content: start;
+    --slot-h: clamp(120px, 24vh, 240px);
+    grid-template-columns: minmax(200px, 22vw) 1fr;
+    grid-template-areas: 'side owned' 'side panel' 'side status';
+    max-width: min(1400px, 100%);
+    padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
   }
-  .shop > .fight__header { grid-area: header; }
-  .shop > .shop__offers { grid-area: offers; }
-  .shop > .shop__reward { grid-area: reward; }
-  .shop > .shop__enh { grid-area: enh; align-self: start; }
-  .shop > .shop__owned { grid-area: owned; }
-  .shop > .shop__mydeck { grid-area: mydeck; }
-  .shop > .fight__status { grid-area: status; }
-  .shop > .actions { grid-area: actions; justify-content: flex-end; }
+  .shop__items, .shop__packs { justify-content: start; grid-template-columns: repeat(2, max-content); gap: 24px; }
+  .shop__side { flex-direction: column; align-items: stretch; align-self: start; }
+  .shop__reward { margin-left: 0; }
+  .shop__panel { grid-template-columns: auto 1fr; grid-template-areas: 'head head' 'bar items' 'bar packs'; }
+  .shop__bar { position: static; grid-area: bar; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 0; border: 0; background: none; }
+  .sheet-backdrop { align-items: center; }
+  .sheet { border-radius: 14px; }
 }
-
-.joker__actions { display: flex; gap: 4px; }
-.joker--rare { border-color: #22509c; }
-.joker--legendary { border-color: #7e3fbf; }
-.joker__rarity { font-size: 0.65rem; opacity: 0.8; }
