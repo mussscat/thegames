@@ -20,7 +20,7 @@ test('landscape shop shows offers and the run summary side by side', async ({ pa
   await page.goto('/');
   await page.evaluate(() => {
     const run = {
-      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 24, jokers: ['looter'], collected: 0, profile: { 'hearts-12': 'golden' },
+      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 24, jokers: ['looter'], collected: 0, profile: { 'hearts-12': 'golden' }, focuses: [],
       bosses: ['general', 'witch'],
       phase: {
         kind: 'shop',
@@ -34,7 +34,7 @@ test('landscape shop shows offers and the run summary side by side', async ({ pa
         reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 },
       },
     };
-    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 8, run }));
+    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run }));
   });
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
