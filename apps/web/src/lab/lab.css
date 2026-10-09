@@ -141,3 +141,7 @@
 .gallery__cards--hand { gap: 10px; }
 .gallery__jokers { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .gallery__joker { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; font-size: 0.9rem; }
+
+.lab__packs { display: flex; flex-direction: column; gap: 12px; }
+.lab__tarots { display: flex; flex-wrap: wrap; gap: 10px; }
+.lab__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }

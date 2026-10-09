@@ -11,6 +11,7 @@ import { SwirlBackground } from '../ui/SwirlBackground';
 import { FontTab } from './FontTab';
 import { GalleryTab } from './GalleryTab';
 import { HighlightTab } from './HighlightTab';
+import { PacksTab } from './PacksTab';
 import './labFonts';
 import '../games/durak/shop.css';
 import './lab.css';
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'highlight', name: 'Подсветка' },
   { id: 'trump', name: 'Козырь' },
   { id: 'gallery', name: 'Галерея' },
+  { id: 'packs', name: 'Паки' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
@@ -89,6 +91,7 @@ export function CardLab() {
         {tab === 'highlight' && <HighlightTab />}
         {tab === 'trump' && <TrumpTab />}
         {tab === 'gallery' && <GalleryTab />}
+        {tab === 'packs' && <PacksTab />}
         {tab === 'card' && (
           <>
         <div className="lab__hero">
