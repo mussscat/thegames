@@ -25,18 +25,22 @@ test('landscape shop shows offers and the run summary side by side', async ({ pa
       phase: {
         kind: 'shop',
         shop: {
-          offers: [{ jokerId: 'cardSharp', price: 6 }, { jokerId: 'trumpAce', price: 7 }],
-          enhancementOffers: [{ enhancementId: 'coin', price: 3, cardIds: ['diamonds-6', 'diamonds-10', 'clubs-7'] }, null],
+          items: [{ card: { kind: 'joker', jokerId: 'cardSharp' }, price: 6 }, { card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }],
+          packs: [{ kind: 'deck', size: 'normal', price: 4 }, { kind: 'jokers', size: 'normal', price: 4 }],
           rerollCost: 2,
+          opened: null,
+          casting: null,
         },
         reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 },
       },
     };
-    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 7, run }));
+    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 8, run }));
   });
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
-  const offers = await page.getByTestId('shop-offers').boundingBox();
-  const reward = await page.getByTestId('shop-reward').boundingBox();
-  expect(offers && reward && offers.x + offers.width <= reward.x).toBe(true);
+  const side = await page.getByTestId('shop-reward').boundingBox();
+  const items = await page.getByTestId('shop-item-0').boundingBox();
+  const owned = await page.getByTestId('owned-jokers').boundingBox();
+  expect(side && items && side.x + side.width <= items.x).toBe(true);
+  expect(owned && items && owned.y + owned.height <= items.y).toBe(true);
 });
