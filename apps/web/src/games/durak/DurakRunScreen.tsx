@@ -11,7 +11,7 @@ type DurakRunScreenProps = {
 };
 
 export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenProps) {
-  const { run, error, errorSeq, act } = useDurakRun(initialRun);
+  const { run, error, errorSeq, scoring, finishScoring, act } = useDurakRun(initialRun);
   const { phase } = run;
   switch (phase.kind) {
     case 'fight':
@@ -21,6 +21,8 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
           error={error}
           errorSeq={errorSeq}
           run={run}
+          scoring={scoring}
+          onScoringDone={finishScoring}
           onFightAction={(action) => act({ type: 'fight', actor: 'player', action })}
           onLeaveFight={() => act({ type: 'leaveFight' })}
           onExit={onExit}

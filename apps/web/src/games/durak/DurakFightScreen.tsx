@@ -6,6 +6,7 @@ import {
   type FightAction,
   type FightState,
   type RunState,
+  type ScoredHit,
 } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
 import { useEffect } from 'react';
@@ -20,22 +21,29 @@ import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
 import { JokerPanel } from './JokerPanel';
 import { RunHeader } from './RunHeader';
+import { ScoreBoard } from './ScoreBoard';
+import { ScorePops } from './ScorePops';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
+import { useScorePlayback } from './useScorePlayback';
 import './fight.css';
+import './score.css';
 
 type DurakFightScreenProps = {
   readonly fight: FightState;
   readonly error: string | null;
   readonly errorSeq: number;
   readonly run: RunState;
+  /** The take being replayed (the screen shows the state before it), or null. */
+  readonly scoring: ScoredHit | null;
+  readonly onScoringDone: () => void;
   readonly onFightAction: (action: FightAction) => void;
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
 };
 
-export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -48,7 +56,8 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
   useEffect(() => {
     if (isNewError(previousErrorSeq, errorSeq)) playSfx('deny');
   }, [errorSeq, previousErrorSeq, playSfx]);
-  const myTurn = !fight.winner && currentActor(round) === 'player';
+  const playback = useScorePlayback(scoring, settings.animSpeed, onScoringDone);
+  const myTurn = !playback.active && !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
@@ -86,7 +95,9 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
         </aside>
         <section className="fight__board">
           <EnemyHand cards={round.hands.enemy} />
-          <TableView table={round.table} attacker={round.attacker} />
+          <TableView table={round.table} attacker={round.attacker}>
+            {playback.board && <ScoreBoard board={playback.board} />}
+          </TableView>
           <p className="fight__status panel" role="status">
             {error ?? statusText(fight)}
           </p>
@@ -95,6 +106,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, onFightAction, o
         </section>
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />
+      <ScorePops playback={playback} />
     </LayoutGroup>
   );
 }
