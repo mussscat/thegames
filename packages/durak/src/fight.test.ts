@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { applyFightAction, createFight, type FightState } from './fight';
+import { applyFightAction, createFight, NO_CHARGES, NO_REVEAL, type FightAction, type FightState } from './fight';
 import { c, filler, roundState } from './fixtures';
 import type { JokerId } from './jokers/catalog';
-import type { RoundState } from './types';
+import type { PlayerId, RoundState } from './types';
 
 function expectOk(result: ReturnType<typeof applyFightAction>): FightState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error}`);
@@ -309,5 +309,15 @@ describe('enhancements in a fight', () => {
     expect(fight.round.profiles).toEqual(profiles);
     expect(fight.cardCoins).toEqual({ player: 0, enemy: 0 });
     expect(fight).not.toHaveProperty('sturdy');
+  });
+});
+
+describe('reveals', () => {
+  it('end with the deal', () => {
+    const fight = createFight({ seed: 3, playerHp: 40, enemyHp: 15 });
+    const revealed = { ...fight, reveal: { enemyHand: true, topCards: 3 }, round: { ...fight.round, outcome: { loser: 'enemy' as const, cardsLeft: 1 } } };
+    const result = applyFightAction(revealed, 'player', { type: 'nextRound' });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.value.reveal).toEqual(NO_REVEAL);
   });
 });
