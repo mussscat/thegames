@@ -166,8 +166,8 @@
     grid-area: side;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
-    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'stats stats' 'jokers jokers' 'menu actions';
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'charges charges' 'stats stats' 'jokers jokers' 'focus focus' 'menu actions';
     gap: 0.5em;
     padding: max(0.6em, env(safe-area-inset-top)) 0.6em max(0.6em, env(safe-area-inset-bottom)) max(0.6em, env(safe-area-inset-left));
     background: rgb(20 14 30 / 82%);
@@ -193,6 +193,8 @@
   .fight .hp__label { grid-area: label; }
   .fight .hp__value { grid-area: value; font-family: var(--font-head); font-size: 0.8em; }
   .fight .hp__track { grid-area: track; height: 0.9em; }
+  /* The sidebar is narrow: the focus chips show their picture only (the name is in the tooltip). */
+  .focus-chip__name { display: none; }
   .fight .stats { justify-content: stretch; }
   .fight .stats__tile { flex: 1; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.4em; }
   .fight .stats__label { font-size: 0.8em; }
@@ -260,3 +262,22 @@
 .hand__slot--picked .card { outline: 3px solid var(--gold); outline-offset: 2px; }
 .deck__peek { display: flex; gap: 4px; }
 .charges { grid-area: charges; }
+
+/* ---------- short portrait screens (iPhone SE class): everything must fit without scrolling ---------- */
+@media (max-aspect-ratio: 5/4) and (max-height: 700px) {
+  .fight { --card-w: min(11.8vw, 52px); gap: 4px 8px; }
+  .jokers { gap: 0; }
+  .jokers__head { display: none; }
+  .jokers__list { --jface-w: 2.3em; }
+  .focus-bar { padding: 4px 6px; gap: 4px; }
+  .focus-chip__name { display: none; }
+  .focus-chip__face { padding: 3px 6px; }
+  .focus-chip__face .fface { --fface-w: 1.7em; }
+  /* Chips and the play buttons share one row, so selecting a focus does not make the screen taller. */
+  .focus-bar { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .focus-bar__list { flex: none; }
+  .focus-chip { flex: none; }
+  .focus-bar__actions { flex: 1; justify-content: flex-end; }
+  .fight .run-header { padding: 4px 10px; gap: 2px; }
+  .fight .stats__tile { padding-block: 2px; }
+}

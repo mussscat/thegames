@@ -37,6 +37,7 @@ export function FocusBar({ focuses, fight, myTurn, pick, onPick, onPlay }: Focus
   const id = pick ? focuses[pick.slot] : undefined;
   const ready = Boolean(id && pick && myTurn && focusReady(fight, id) && applyFocus(fight, id, pick.targets).ok);
   const hint = id ? targetHint(id) : null;
+  if (focuses.length === 0) return null;
   return (
     <section className="focus-bar panel" data-testid="focus-bar" aria-label="Фокусы">
       <ul className="focus-bar__list">

@@ -63,3 +63,49 @@ test('Пересдача needs chosen cards before it can be played', async ({ p
   await play.click();
   await expect(page.getByTestId('focus-bar').getByRole('button', { name: 'Пересдача' })).toHaveCount(0);
 });
+
+test('«Сыграть» is enabled on the player turn and goes disabled as soon as the turn passes to the enemy', async ({ page }) => {
+  await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost'] }));
+  await toMyTurn(page);
+  await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+  const play = page.getByRole('button', { name: 'Сыграть' });
+  await expect(play).toBeEnabled();
+  await page.getByTestId('player-hand').locator('.hand__slot').first().click();
+  // Playwright polls, so the enemy turn only has to last one poll for this to be seen.
+  await expect(play).toBeDisabled();
+});
+
+test.describe('two focuses on a small portrait screen', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('the whole fight, including the player HP bar, fits without scrolling', async ({ page }) => {
+    await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'], jokers: ['looter', 'small'] }));
+    await page.getByRole('button', { name: /Следующий бой/ }).click();
+    await expect(page.getByTestId('focus-bar')).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+    await expect(page.getByRole('button', { name: 'Сыграть' })).toBeVisible();
+    const withButtons = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    expect(withButtons).toBeLessThanOrEqual(0);
+  });
+});
+
+test.describe('two focuses in landscape', () => {
+  test.use({ viewport: { width: 915, height: 412 } });
+
+  test('the focus bar sits inside the sidebar and on screen, with both chips tappable', async ({ page }) => {
+    await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'], jokers: ['looter', 'small'] }));
+    await page.getByRole('button', { name: /Следующий бой/ }).click();
+    const bar = await page.getByTestId('focus-bar').boundingBox();
+    const side = await page.locator('.fight__side').boundingBox();
+    const view = page.viewportSize();
+    expect(bar).not.toBeNull();
+    expect(bar!.x + bar!.width).toBeLessThanOrEqual((side?.x ?? 0) + (side?.width ?? 0) + 1);
+    expect(bar!.y + bar!.height).toBeLessThanOrEqual((view?.height ?? 0) + 1);
+    for (const name of ['Разгон', 'Подглядывание']) {
+      const chip = await page.getByTestId('focus-bar').getByRole('button', { name }).boundingBox();
+      expect(chip?.width ?? 0).toBeGreaterThan(60);
+    }
+  });
+});
