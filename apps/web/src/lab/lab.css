@@ -145,3 +145,17 @@
 .lab__packs { display: flex; flex-direction: column; gap: 12px; }
 .lab__tarots { display: flex; flex-wrap: wrap; gap: 10px; }
 .lab__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* ---------- sprites tab ---------- */
+.sprites { width: 100%; display: flex; flex-direction: column; gap: 12px; font-family: var(--font-text); font-weight: 600; }
+.sprites__controls { display: flex; flex-direction: column; gap: 8px; }
+.sprites__fit { display: flex; flex-direction: column; gap: 10px; }
+.sprites__row { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 12px; }
+.sprites__row--hand { gap: 4px; }
+.sprites__card { position: relative; flex: none; }
+.sprites__card .face__sprite { width: 100%; height: 100%; }
+.sprites__rank { transform: translateX(-50%); }
+.sprites__rank--bottom { top: auto; transform: translateX(-50%) rotate(180deg); }
+.sprites__rank--outline {
+  text-shadow: 0.06em 0 0 #ffffff, -0.06em 0 0 #ffffff, 0 0.06em 0 #ffffff, 0 -0.06em 0 #ffffff, 0.06em 0.06em 0 #ffffff, -0.06em -0.06em 0 #ffffff, 0.06em -0.06em 0 #ffffff, -0.06em 0.06em 0 #ffffff;
+}
