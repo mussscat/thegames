@@ -1,5 +1,5 @@
 import { isRedSuit, type Card } from '@game/core';
-import { ENHANCEMENT_IDS, JOKERS, RARITIES, TAROTS, type EnhancementId, type JokerId, type Rarity, type TarotId } from '@game/durak';
+import { ENHANCEMENT_IDS, FOCUSES, JOKERS, RARITIES, TAROTS, type EnhancementId, type FocusId, type JokerId, type Rarity, type TarotId } from '@game/durak';
 import backSheetUrl from '../../assets/back.png';
 import enhancementSheetUrl from '../../assets/enhancements.png';
 import jokerBgCommonUrl from '../../assets/joker_bg_common.png';
@@ -8,6 +8,11 @@ import jokerBgRareUrl from '../../assets/joker_bg_rare.png';
 import jokerPers1Url from '../../assets/jokers_pers_1.png';
 import jokerPers2Url from '../../assets/jokers_pers_2.png';
 import jokerPers3Url from '../../assets/jokers_pers_3.png';
+import trickBgCommonUrl from '../../assets/tricks_bg_common.png';
+import trickBgLegendaryUrl from '../../assets/tricks_bg_legendary.png';
+import trickBgRareUrl from '../../assets/tricks_bg_rare.png';
+import trickSheet1Url from '../../assets/tricks_1.png';
+import trickSheet2Url from '../../assets/tricks_2.png';
 import taroBgCommonUrl from '../../assets/taro_bg_common.png';
 import taroBgLegendaryUrl from '../../assets/taro_bg_legendary.png';
 import taroBgRareUrl from '../../assets/taro_bg_rare.png';
@@ -16,7 +21,7 @@ import taroSheet2Url from '../../assets/taro_2.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, type Pixels, type Rect } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -66,9 +71,20 @@ export function composeTarot(background: Pixels, character: Pixels): Pixels {
   return composeCard(background, character, TARO_BOX);
 }
 
+/** Focus card: the rarity background (107–108×150, a teal circuit board) with the picture in the middle. */
+export const TRICK_W = 107;
+export const TRICK_H = 150;
+const TRICK_BOX: Rect = { x: 7, y: 9, w: 93, h: 132 };
+
+export function composeTrick(background: Pixels, character: Pixels): Pixels {
+  return composeCard(background, character, TRICK_BOX);
+}
+
 const JOKER_BACKGROUNDS: Readonly<Record<Rarity, string>> = { common: jokerBgCommonUrl, rare: jokerBgRareUrl, legendary: jokerBgLegendaryUrl };
 const JOKER_PERS_URLS: readonly string[] = [jokerPers1Url, jokerPers2Url, jokerPers3Url];
 const TARO_BACKGROUNDS: Readonly<Record<Rarity, string>> = { common: taroBgCommonUrl, rare: taroBgRareUrl, legendary: taroBgLegendaryUrl };
+const TRICK_BACKGROUNDS: Readonly<Record<Rarity, string>> = { common: trickBgCommonUrl, rare: trickBgRareUrl, legendary: trickBgLegendaryUrl };
+const TRICK_URLS: readonly string[] = [trickSheet1Url, trickSheet2Url];
 const TARO_URLS: readonly string[] = [taroSheet1Url, taroSheet2Url];
 
 const INK = '#1b1426';
@@ -105,6 +121,9 @@ let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
 let plainUrl: string | undefined;
 let backUrl: string | undefined;
 let jokerUrls: Readonly<Partial<Record<JokerId, string>>> = {};
+/** One common-rarity card back per pack kind: the emblem stand-in of the pack art. */
+let backdropUrls: Readonly<Partial<Record<'jokers' | 'arcana' | 'focuses' | 'deck', string>>> = {};
+let trickUrls: Readonly<Partial<Record<FocusId, string>>> = {};
 let tarotUrls: Readonly<Partial<Record<TarotId, string>>> = {};
 const suitUrls = new Map<string, string>();
 
@@ -122,9 +141,11 @@ export async function preloadCardArt(): Promise<void> {
     }),
     loadPixels(backSheetUrl).then((sheet) => {
       backUrl = pixelsToUrl(fitWholeCard(crop(sheet, BACK_FRAME)));
+      backdropUrls = { ...backdropUrls, deck: backUrl };
     }),
     loadJokerArt(),
     loadTarotArt(),
+    loadTrickArt(),
   ]);
 }
 
@@ -132,6 +153,7 @@ export async function preloadCardArt(): Promise<void> {
 async function loadJokerArt(): Promise<void> {
   const loaded = await Promise.all(RARITIES.map((rarity) => loadPixels(JOKER_BACKGROUNDS[rarity])));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
+  backdropUrls = { ...backdropUrls, jokers: pixelsToUrl(backgrounds.common) };
   await Promise.allSettled(
     JOKER_PERS_SHEETS.map(async (sheet, index) => {
       const url = JOKER_PERS_URLS[index];
@@ -150,6 +172,7 @@ async function loadJokerArt(): Promise<void> {
 async function loadTarotArt(): Promise<void> {
   const loaded = await Promise.all(RARITIES.map(async (rarity) => keyOut(await loadPixels(TARO_BACKGROUNDS[rarity]), TARO_BG_KEY)));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
+  backdropUrls = { ...backdropUrls, arcana: pixelsToUrl(backgrounds.common) };
   await Promise.allSettled(
     TARO_SHEETS.map(async (sheet, index) => {
       const url = TARO_URLS[index];
@@ -164,6 +187,25 @@ async function loadTarotArt(): Promise<void> {
   );
 }
 
+/** Same as the jokers and tarots: three backgrounds first, then each picture sheet on its own. */
+async function loadTrickArt(): Promise<void> {
+  const loaded = await Promise.all(RARITIES.map((rarity) => loadPixels(TRICK_BACKGROUNDS[rarity])));
+  const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
+  backdropUrls = { ...backdropUrls, focuses: pixelsToUrl(backgrounds.common) };
+  await Promise.allSettled(
+    TRICK_SHEETS.map(async (sheet, index) => {
+      const url = TRICK_URLS[index];
+      if (!url) return;
+      const pixels = keyOut(await loadPixels(url), sheet.key);
+      const cards = sheet.ids.flatMap((id, cell) => {
+        const frame = TRICK_CELLS[cell];
+        return frame ? [[id, pixelsToUrl(composeTrick(backgrounds[FOCUSES[id].rarity], crop(pixels, frame)))] as const] : [];
+      });
+      trickUrls = { ...trickUrls, ...Object.fromEntries(cards) };
+    }),
+  );
+}
+
 export function enhancementArtUrl(id: EnhancementId): string | undefined {
   return artUrls[id];
 }
@@ -174,6 +216,15 @@ export function plainArtUrl(): string | undefined {
 
 export function backArtUrl(): string | undefined {
   return backUrl;
+}
+
+/** A card back in the colours of the pack kind (jokers, tarots, focuses, playing cards). */
+export function packBackdropUrl(kind: 'jokers' | 'arcana' | 'focuses' | 'deck'): string | undefined {
+  return backdropUrls[kind];
+}
+
+export function focusArtUrl(id: FocusId): string | undefined {
+  return trickUrls[id];
 }
 
 export function tarotArtUrl(id: TarotId): string | undefined {

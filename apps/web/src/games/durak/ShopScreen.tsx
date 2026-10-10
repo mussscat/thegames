@@ -19,6 +19,8 @@ import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
 import { OwnedFocuses } from './shop/OwnedFocuses';
 import { OwnedJokers } from './shop/OwnedJokers';
+import { Coin } from '../../ui/Coin';
+import { Icon } from '../../ui/Icon';
 import { PackArt } from './shop/PackArt';
 import { PackCardFace } from './shop/PackCardFace';
 import { PackOpening } from './shop/PackOpening';
@@ -117,7 +119,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
           Меню
         </PixelButton>
         <span className="shop__coins" aria-label={`Монеты: ${run.coins}`}>
-          ● {run.coins}
+          <Coin /> {run.coins}
         </span>
         <span className="shop__stage">
           Круг {circle} · бой {fight}
@@ -154,7 +156,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
             Следующий бой: {next.name}
           </PixelButton>
           <PixelButton tone="green" onClick={() => onAct({ type: 'reroll' })}>
-            Рерол ● {shop.rerollCost}
+            <Icon id="reroll" /> Рерол <Coin /> {shop.rerollCost}
           </PixelButton>
         </nav>
         <div className="shop__items">

@@ -1,6 +1,7 @@
 import { FOCUSES, packCardRarity, TAROTS, type FocusId, type PackCard, type TarotId } from '@game/durak';
 import { PixelCard } from '../../../ui/PixelCard';
-import { tarotArtUrl } from '../../../ui/pixel/cardArt';
+import { focusArtUrl, tarotArtUrl } from '../../../ui/pixel/cardArt';
+import { FocusFace } from '../FocusFace';
 import { JokerFace } from '../JokerFace';
 import { TarotFace } from '../TarotFace';
 import { deckCard } from './shopCopy';
@@ -23,6 +24,13 @@ export function PackCardFace({ card, size = 'slot', faceDown = false }: PackCard
     return (
       <span className={`${classes} shop-card--joker`}>
         <JokerFace id={card.jokerId} />
+      </span>
+    );
+  }
+  if (card.kind === 'focus' && focusArtUrl(card.focusId)) {
+    return (
+      <span className={`${classes} shop-card--focus-art`}>
+        <FocusFace id={card.focusId} />
       </span>
     );
   }

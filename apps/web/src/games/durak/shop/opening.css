@@ -13,7 +13,7 @@
 }
 .opening__title { flex: none; margin: 0 0 6px; font-family: var(--font-head); font-size: 1rem; text-align: center; }
 .opening__pack { animation: pack-shake 0.6s ease-in-out infinite; }
-.opening__pack .pack { width: 150px; height: 210px; }
+.opening__pack .pack { height: 210px; }
 .opening__cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; perspective: 800px; }
 .opening__card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; cursor: pointer; }
 .opening__card--selected .shop-card { transform: translateY(-10px); outline: 3px solid #ffffff; outline-offset: 2px; }

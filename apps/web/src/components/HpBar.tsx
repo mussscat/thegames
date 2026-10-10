@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { Icon } from '../ui/Icon';
 import { hpSegments } from './hpSegments';
 
 const SHAKE = { x: [0, -5, 5, -3, 3, 0] };
@@ -26,7 +27,9 @@ export function HpBar({ label, hp, maxHp, shakeKey = 0, scoreTarget, className =
       aria-valuenow={hp}
       data-score-hp={scoreTarget}
     >
-      <span className="hp__label">{label}</span>
+      <span className="hp__label">
+        <Icon id="heart" /> {label}
+      </span>
       <motion.div key={shakeKey} className="hp__track" animate={shakeKey ? SHAKE : {}} transition={{ duration: 0.35 }}>
         {hpSegments(hp, maxHp).map((fill, i) => (
           <span key={i} className="hp__seg">

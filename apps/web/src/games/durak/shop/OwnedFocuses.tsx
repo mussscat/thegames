@@ -9,7 +9,7 @@ function FocusSlot({ id, selected, onSelect }: { readonly id: FocusId; readonly 
   const { anchor, handlers } = useCardTip(true, false);
   return (
     <li className={selected ? 'owned-focus owned-focus--selected' : 'owned-focus'}>
-      <button type="button" className="owned__ticket" aria-label={FOCUSES[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
+      <button type="button" className="owned__card" aria-label={FOCUSES[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
         <PackCardFace card={{ kind: 'focus', focusId: id }} />
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'focus', focusId: id }, {})} />}

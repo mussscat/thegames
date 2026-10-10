@@ -170,3 +170,20 @@
 .jokerlab__text { font-size: 0.65rem; line-height: 1.3; }
 .jokerlab__grid--tarot { --jface-w: 88px; }
 .jokerlab__item .shop-card { --slot-h: 140px; --slot-w: 92px; }
+
+/* ---------- interface tab ---------- */
+.uilab__row { display: flex; flex-direction: column; gap: 6px; }
+.uilab__packs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.uilab__pack { --slot-h: 130px; display: flex; justify-content: center; }
+.uilab__coins { display: flex; flex-wrap: wrap; gap: 14px; }
+.uilab__figure { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; font-size: 0.7rem; }
+.uilab__spin { width: 48px; height: 48px; image-rendering: auto; }
+.uilab__big { display: inline-flex; width: 48px; height: 48px; font-size: 48px; }
+.uilab__big .coin, .uilab__big .icon { width: 100%; height: 100%; }
+.uilab__text { margin: 0; font-size: 1rem; }
+.uilab__small { font-size: 0.7rem; }
+.uilab__large { font-size: 1.6rem; }
+.uilab__icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px 8px; margin: 0; padding: 0; list-style: none; }
+.uilab__icon { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.75rem; }
+.uilab__icon code { font-size: 0.6rem; opacity: 0.75; }
+.uilab__inline { font-size: 0.85rem; }

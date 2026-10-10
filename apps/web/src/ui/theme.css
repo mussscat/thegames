@@ -150,3 +150,7 @@ body {
 /* ---------- enhanced card drawn from the sprite sheet (74×104 art, corner column centred at x = 12) ---------- */
 .face--art .face__rank { font-size: 1.05em; top: 4.8%; left: 16.2%; transform: translateX(-50%); }
 .face--art .face__rank--bottom { top: auto; left: auto; right: 16.2%; bottom: 4.8%; transform: translateX(50%) rotate(180deg); }
+
+/* ---------- coin and icons: sprites far larger than the text, so they are scaled down smoothly ---------- */
+.coin, .icon { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; object-fit: contain; image-rendering: auto; }
+.icon { width: 1.05em; height: 1.05em; }

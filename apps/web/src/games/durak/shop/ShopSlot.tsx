@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import type { TipLine } from '../../../components/tipLines';
+import { Coin } from '../../../ui/Coin';
 import { PixelButton } from '../../../ui/PixelButton';
 
 type ShopSlotProps = {
@@ -39,7 +40,7 @@ export function ShopSlot({ price, coins, title, testId, tip, selected, verb, war
   return (
     <div className={selected ? 'shop-slot shop-slot--selected' : 'shop-slot'} data-testid={testId} onClick={stop}>
       <span className={affordable ? 'price-tag' : 'price-tag price-tag--short'} aria-hidden="true">
-        <span className="price-tag__coin" />
+        <Coin />
         {price}
       </span>
       <button

@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import './ui/theme.css';
 import { App } from './App';
 import { preloadCardArt } from './ui/pixel/cardArt';
+import { preloadUiArt } from './ui/pixel/uiArt';
 
 /** `?lab` opens the card lab — a tuning tool kept out of the main bundle. */
 const CardLab = lazy(() => import('./lab/CardLab').then((module) => ({ default: module.CardLab })));
@@ -32,4 +33,4 @@ function render(root: HTMLElement): void {
 /* The card sprites are sliced before the first frame, so cards never swap art mid-game.
    A sheet that fails to load is not fatal: its cards keep the procedural art. */
 const root = rootElement;
-void preloadCardArt().then(() => render(root));
+void Promise.all([preloadCardArt(), preloadUiArt()]).then(() => render(root));

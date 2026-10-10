@@ -1,4 +1,4 @@
-import type { EnhancementId, JokerId, TarotId } from '@game/durak';
+import type { EnhancementId, FocusId, JokerId, TarotId } from '@game/durak';
 
 /** Raw RGBA pixels, row by row — the same layout as canvas ImageData. */
 export type Pixels = { readonly w: number; readonly h: number; readonly data: Uint8ClampedArray };
@@ -104,6 +104,61 @@ export const TARO_SHEETS: readonly TaroSheet[] = [
 /** The tarot backgrounds come with their rounded corners filled with this key colour. */
 export const TARO_BG_KEY: readonly [number, number, number] = [250, 5, 247];
 
+/** A sheet of focus pictures (3×2 cells) on a magenta key background. */
+export type TrickSheet = { readonly key: readonly [number, number, number]; readonly ids: readonly FocusId[] };
+
+/** The six cells of a focus sheet; the split after column one is wide because the flag of Разгон reaches x = 118. */
+export const TRICK_CELLS: readonly Rect[] = [
+  { x: 0, y: 0, w: 122, h: 96 },
+  { x: 122, y: 0, w: 110, h: 96 },
+  { x: 232, y: 0, w: 112, h: 96 },
+  { x: 0, y: 96, w: 122, h: 96 },
+  { x: 122, y: 96, w: 110, h: 96 },
+  { x: 232, y: 96, w: 112, h: 96 },
+];
+
+/** `assets/tricks_1.png`, `assets/tricks_2.png`: the 10 focuses in catalog order. */
+export const TRICK_SHEETS: readonly TrickSheet[] = [
+  { key: [249, 8, 239], ids: ['peek', 'foresight', 'redeal', 'boost', 'pad', 'shield'] },
+  { key: [249, 8, 239], ids: ['piggy', 'swap', 'doubler', 'suitShift'] },
+];
+
+/** Tight boxes of the coins on `assets/coin.png` (the third row repeats the second and is unused). */
+export const COIN_FRAMES = {
+  spin: [
+    { x: 4, y: 5, w: 55, h: 55 },
+    { x: 69, y: 5, w: 42, h: 55 },
+    { x: 127, y: 5, w: 35, h: 55 },
+    { x: 195, y: 5, w: 12, h: 55 },
+    { x: 241, y: 5, w: 34, h: 55 },
+    { x: 292, y: 5, w: 44, h: 55 },
+  ],
+  face: { x: 4, y: 68, w: 55, h: 56 },
+  red: { x: 94, y: 68, w: 57, h: 56 },
+  grey: { x: 183, y: 68, w: 57, h: 56 },
+  plate: { x: 286, y: 68, w: 54, h: 56 },
+} as const satisfies { readonly spin: readonly Rect[]; readonly face: Rect; readonly red: Rect; readonly grey: Rect; readonly plate: Rect };
+export const COIN_KEY: readonly [number, number, number] = [253, 6, 230];
+
+/** Interface icons in sheet order (icons_1..3, 4×2 cells each). */
+export const ICON_IDS = [
+  'chip', 'mult', 'heart', 'heartEmpty', 'shield', 'suitHearts', 'suitDiamonds', 'suitClubs',
+  'suitSpades', 'boost', 'pad', 'doubler', 'crown', 'deck', 'reroll', 'tag',
+  'skull', 'skullStrong', 'skullBoss', 'hand', 'check', 'eye', 'ball',
+] as const;
+export type IconId = (typeof ICON_IDS)[number];
+
+export type IconSheet = { readonly key: readonly [number, number, number]; readonly ids: readonly IconId[] };
+
+/** Eight icon cells, 4 across and 2 down. */
+export const ICON_CELLS: readonly Rect[] = [0, 96].flatMap((y) => [0, 86, 172, 258].map((x) => ({ x, y, w: 86, h: 96 })));
+
+export const ICON_SHEETS: readonly IconSheet[] = [
+  { key: [236, 23, 224], ids: ICON_IDS.slice(0, 8) },
+  { key: [249, 8, 239], ids: ICON_IDS.slice(8, 16) },
+  { key: [236, 23, 224], ids: ICON_IDS.slice(16) },
+];
+
 /** How far (per channel) a colour may stray from the key and still count as background. */
 const KEY_TOLERANCE = 30;
 
@@ -113,6 +168,26 @@ export function keyOut(src: Pixels, key: readonly [number, number, number]): Pix
   for (let i = 0; i < data.length; i += 4) {
     const near = key.every((v, c) => Math.abs((data[i + c] ?? 0) - v) <= KEY_TOLERANCE);
     if (near) data.fill(0, i, i + 4);
+  }
+  return { w: src.w, h: src.h, data };
+}
+
+/** Darker blends of the key (key × t) count as background down to this brightness. */
+const FRINGE_MIN_BRIGHTNESS = 0.35;
+const FRINGE_TOLERANCE = 28;
+
+/**
+ * `keyOut` plus the fringe: where a sprite's outline meets the key colour the generator leaves darker shades of the
+ * key (key × t, t from 0.35 to 1). Use it on icons and coins; on sheets whose ground shadow is a dark purple, plain
+ * `keyOut` keeps that shadow.
+ */
+export function keyOutFringe(src: Pixels, key: readonly [number, number, number]): Pixels {
+  const data = new Uint8ClampedArray(src.data);
+  const keySum = key[0] + key[2];
+  for (let i = 0; i < data.length; i += 4) {
+    const t = ((data[i] ?? 0) + (data[i + 2] ?? 0)) / keySum;
+    const shade = t >= FRINGE_MIN_BRIGHTNESS && t <= 1.08 && key.every((v, c) => Math.abs((data[i + c] ?? 0) - v * t) <= FRINGE_TOLERANCE);
+    if (shade) data.fill(0, i, i + 4);
   }
   return { w: src.w, h: src.h, data };
 }
@@ -157,6 +232,13 @@ export function fitInside(src: Pixels, maxW: number, maxH: number): Pixels {
   if (src.w <= maxW && src.h <= maxH) return src;
   const scale = Math.min(maxW / src.w, maxH / src.h);
   return downscale(src, Math.max(1, Math.round(src.w * scale)), Math.max(1, Math.round(src.h * scale)));
+}
+
+/** Centres the image on a transparent square as wide as its longer side, so differently shaped icons share one box. */
+export function padSquare(src: Pixels): Pixels {
+  if (src.w === src.h) return src;
+  const side = Math.max(src.w, src.h);
+  return overlay({ w: side, h: side, data: new Uint8ClampedArray(side * side * 4) }, src, Math.floor((side - src.w) / 2), Math.floor((side - src.h) / 2));
 }
 
 /** Index of the most common colour among the given pixel offsets (the first one wins a tie). */

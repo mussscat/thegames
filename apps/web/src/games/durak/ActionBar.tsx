@@ -1,3 +1,4 @@
+import { Icon } from '../../ui/Icon';
 import { PixelButton } from '../../ui/PixelButton';
 import type { FightAction, RoundState } from '@game/durak';
 
@@ -15,7 +16,7 @@ export function ActionBar({ round, myTurn, onAct }: ActionBarProps) {
     return (
       <div className="actions">
         <PixelButton tone="blue" onClick={() => onAct({ type: 'take' })}>
-          Беру
+          <Icon id="hand" /> Беру
         </PixelButton>
       </div>
     );
@@ -23,7 +24,7 @@ export function ActionBar({ round, myTurn, onAct }: ActionBarProps) {
   return (
     <div className="actions">
       <PixelButton tone="red" onClick={() => onAct({ type: 'endAttack' })}>
-        {round.defenderTaking ? 'Готово' : 'Бито'}
+        <Icon id="check" /> {round.defenderTaking ? 'Готово' : 'Бито'}
       </PixelButton>
     </div>
   );

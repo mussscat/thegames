@@ -1,7 +1,9 @@
 import { applyFocus, FOCUSES, focusReady, MAX_FOCUSES, type FightState, type FocusId } from '@game/durak';
 import { CardTip, useCardTip } from '../../components/CardTip';
 import { PixelButton } from '../../ui/PixelButton';
+import { focusArtUrl } from '../../ui/pixel/cardArt';
 import { targetHint } from './focusView';
+import { FocusFace } from './FocusFace';
 import { FOCUS_GLYPHS } from './shop/PackCardFace';
 import { cardTipLines } from './shop/shopCopy';
 
@@ -12,7 +14,7 @@ function FocusChip({ id, selected, onSelect }: { readonly id: FocusId; readonly 
   return (
     <li className={selected ? 'focus-chip focus-chip--selected' : 'focus-chip'}>
       <button type="button" className="focus-chip__face" aria-label={FOCUSES[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
-        <span className="focus-chip__glyph">{FOCUS_GLYPHS[id]}</span>
+        {focusArtUrl(id) ? <FocusFace id={id} /> : <span className="focus-chip__glyph">{FOCUS_GLYPHS[id]}</span>}
         <span className="focus-chip__name">{FOCUSES[id].name}</span>
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'focus', focusId: id }, {})} />}

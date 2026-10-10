@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, composeJoker, composeTarot, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W } from './cardArt';
+import { ART_H, ART_W, composeJoker, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -74,6 +74,26 @@ describe('composeTarot', () => {
     expect(at(out, 0, TARO_H / 2)).toEqual([1, 2, 3, 255]);
     expect(at(out, TARO_W - 1, TARO_H / 2)).toEqual([1, 2, 3, 255]);
     expect(at(out, TARO_W / 2, TARO_H / 2)).toEqual([200, 0, 0, 255]);
+  });
+});
+
+describe('composeTrick', () => {
+  const flat = (w: number, h: number, rgba: readonly number[]): Pixels => ({ w, h, data: new Uint8ClampedArray(Array.from({ length: w * h }, () => rgba).flat()) });
+  const at = (p: Pixels, x: number, y: number) => Array.from(p.data.subarray((y * p.w + x) * 4, (y * p.w + x) * 4 + 4));
+  const bg = () => flat(TRICK_W, TRICK_H, [1, 2, 3, 255]);
+
+  it('puts the picture in the middle of the background and keeps the frame around it', () => {
+    const out = composeTrick(bg(), flat(40, 40, [200, 0, 0, 255]));
+    expect([out.w, out.h]).toEqual([TRICK_W, TRICK_H]);
+    expect(at(out, Math.floor(TRICK_W / 2), Math.floor(TRICK_H / 2))).toEqual([200, 0, 0, 255]);
+    expect(at(out, 0, 0)).toEqual([1, 2, 3, 255]);
+    expect(at(out, TRICK_W - 1, TRICK_H - 1)).toEqual([1, 2, 3, 255]);
+  });
+
+  it('shrinks a picture wider than the frame so it stays inside', () => {
+    const out = composeTrick(bg(), flat(122, 80, [200, 0, 0, 255]));
+    expect(at(out, 0, TRICK_H / 2)).toEqual([1, 2, 3, 255]);
+    expect(at(out, TRICK_W - 1, TRICK_H / 2)).toEqual([1, 2, 3, 255]);
   });
 });
 

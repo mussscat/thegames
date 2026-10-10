@@ -96,7 +96,6 @@
   box-shadow: 0 2px 0 rgb(0 0 0 / 55%);
   transform: translateX(-50%);
 }
-.price-tag__coin { width: 0.8em; height: 0.8em; border: 2px solid #8a5a00; border-radius: 50%; background: #f5c542; }
 .price-tag--short { background: #e24a3b; color: #ffffff; }
 
 /* ---------- shop cards ---------- */
@@ -124,39 +123,36 @@
 .shop-card__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
 .shop-card__glyph { font-size: 2.2em; line-height: 1; }
 .shop-card__name { padding: 0 4px; font-size: 0.75rem; font-weight: 800; line-height: 1.15; }
+.shop-card--focus-art { --fface-w: 100%; padding: 0; border: 0; background: none; }
+.shop-card--focus-art .fface { height: 100%; width: auto; }
 .shop-card--tarot-art { --tface-w: 100%; padding: 0; border: 0; background: none; }
 .shop-card--tarot-art .tface { height: 100%; width: auto; }
 .shop-card--joker { --jface-w: 100%; padding: 0; border: 0; background: none; }
 .shop-card--joker .jface { height: 100%; width: auto; }
 .shop-card__art { width: 72%; height: auto; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; }
 
-/* ---------- packs ---------- */
+/* ---------- packs: the foil sprite of the size, a fan of the kind's card backs, the label underneath ---------- */
 .pack {
   position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 2px;
-  width: var(--slot-w, 120px);
+  display: inline-block;
+  aspect-ratio: 98 / 159;
   height: var(--slot-h, 170px);
-  padding: 6px 4px;
-  overflow: hidden;
-  border: 3px solid #000000;
-  border-radius: 6px 6px 10px 10px;
   color: #ffffff;
   text-align: center;
-  text-shadow: 1px 1px 0 #000000;
-  box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+  text-shadow: -1px 0 #000000, 1px 0 #000000, 0 -1px #000000, 0 1px #000000, 1px 1px 0 #000000;
+  filter: drop-shadow(0 4px 0 rgb(0 0 0 / 55%));
 }
-.pack--jokers { background: linear-gradient(180deg, #8b4fd8, #3e1f73); }
-.pack--arcana { background: linear-gradient(180deg, #2fb6a8, #135a55); }
-.pack--deck { background: linear-gradient(180deg, #e2593f, #7a1f1f); }
-.pack--mega { box-shadow: 0 0 0 3px #f5c542, 0 4px 0 rgb(0 0 0 / 55%); }
-.pack__foil { position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgb(255 255 255 / 18%) 0 3px, transparent 3px 12px); pointer-events: none; }
-.pack__name { font-family: var(--font-head); font-size: 0.6rem; line-height: 1.3; overflow-wrap: anywhere; }
-.pack__size { font-size: 0.75rem; font-weight: 800; }
-.pack__count { font-size: 0.58rem; white-space: nowrap; opacity: 0.9; }
+.pack__foil { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pack { container-type: inline-size; }
+.pack__fan { position: absolute; left: 0; right: 0; top: 14%; height: 36%; }
+.pack__card { position: absolute; top: 0; left: 35%; width: 30%; height: auto; transform-origin: 50% 110%; }
+.pack__card--left { rotate: -16deg; translate: -45% 6%; }
+.pack__card--right { rotate: 16deg; translate: 45% 6%; }
+.pack__card--middle { translate: 0 -3%; }
+.pack__name, .pack__size, .pack__count { position: absolute; left: 6%; right: 6%; line-height: 1; white-space: nowrap; }
+.pack__name { top: 56%; font-family: var(--font-head); font-size: 10.5cqw; }
+.pack__size { top: 69%; font-size: 11cqw; font-weight: 800; }
+.pack__count { top: 80%; font-size: 9cqw; opacity: 0.95; }
 
 /* ---------- detail sheet (the shelf tarot's targets) ---------- */
 .sheet-backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 60%); }
@@ -209,5 +205,5 @@
 .owned-focus .shop-card { --slot-h: 66px; --slot-w: 48px; padding: 2px; gap: 1px; }
 .owned-focus .shop-card__name { font-size: 0.55rem; }
 .owned-focus .shop-card__glyph { font-size: 1.3em; }
-.owned-focus--selected .shop-card { outline: 3px solid #ffffff; outline-offset: 2px; }
+.owned-focus--selected .fface, .owned-focus--selected .shop-card { outline: 3px solid #ffffff; outline-offset: 2px; }
 .owned--focuses .owned__list { justify-content: flex-start; gap: 10px; }

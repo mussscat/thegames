@@ -1,0 +1,9 @@
+/* ---------- focus as a card: picture on a rarity background ---------- */
+.fface {
+  position: relative;
+  display: block;
+  width: var(--fface-w, 3em);
+  aspect-ratio: 107 / 150;
+  filter: drop-shadow(0 3px 0 rgb(0 0 0 / 55%));
+}
+.fface__art { position: absolute; inset: 0; width: 100%; height: 100%; }

@@ -10,11 +10,13 @@ import { playSound, setVolume } from '../ui/sound';
 import { SwirlBackground } from '../ui/SwirlBackground';
 import { FontTab } from './FontTab';
 import { GalleryTab } from './GalleryTab';
+import { FocusesTab } from './FocusesTab';
 import { HighlightTab } from './HighlightTab';
 import { JokersTab } from './JokersTab';
 import { PacksTab } from './PacksTab';
 import { SpritesTab } from './SpritesTab';
 import { TarotsTab } from './TarotsTab';
+import { UiTab } from './UiTab';
 import './labFonts';
 import '../games/durak/shop.css';
 import './lab.css';
@@ -28,6 +30,8 @@ const TABS = [
   { id: 'gallery', name: 'Галерея' },
   { id: 'jokers', name: 'Джокеры' },
   { id: 'tarots', name: 'Таро' },
+  { id: 'focuses', name: 'Фокусы' },
+  { id: 'ui', name: 'Интерфейс' },
   { id: 'packs', name: 'Паки' },
   { id: 'sprites', name: 'Спрайты' },
 ] as const;
@@ -99,6 +103,8 @@ export function CardLab() {
         {tab === 'gallery' && <GalleryTab />}
         {tab === 'jokers' && <JokersTab />}
         {tab === 'tarots' && <TarotsTab />}
+        {tab === 'focuses' && <FocusesTab />}
+        {tab === 'ui' && <UiTab />}
         {tab === 'packs' && <PacksTab />}
         {tab === 'sprites' && <SpritesTab />}
         {tab === 'card' && (

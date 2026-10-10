@@ -1,7 +1,7 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { JOKER_IDS, TAROT_IDS } from '@game/durak';
-import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, overlay, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, type Pixels } from './sheet';
+import { FOCUS_IDS, JOKER_IDS, TAROT_IDS } from '@game/durak';
+import { COIN_FRAMES, crop, keyOutFringe, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, ICON_CELLS, ICON_IDS, ICON_SHEETS, overlay, padSquare, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -142,6 +142,23 @@ describe('fitInside', () => {
   });
 });
 
+describe('keyOutFringe', () => {
+  const key = [250, 5, 247] as const;
+  const run = (pixels: readonly (readonly number[])[]) => {
+    const data = new Uint8ClampedArray(pixels.flatMap((p) => [...p, 255]));
+    return Array.from(keyOutFringe({ w: pixels.length, h: 1, data }, key).data);
+  };
+
+  it('clears the key and its darker blends with an outline, which are what is left on the edge of a sprite', () => {
+    expect(run([[250, 5, 247], [158, 23, 157], [207, 10, 216]])).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('keeps every colour that is not a shade of the key', () => {
+    const kept = [[40, 60, 200], [200, 200, 200], [60, 20, 70], [10, 10, 10], [240, 200, 40]];
+    expect(run(kept)).toEqual(kept.flatMap((p) => [...p, 255]));
+  });
+});
+
 describe('JOKER_PERS_SHEETS', () => {
   it('names all 18 jokers once, in catalog order, six per sheet', () => {
     expect(JOKER_PERS_SHEETS).toHaveLength(3);
@@ -177,6 +194,67 @@ describe('TARO_SHEETS', () => {
     expect(TARO_CELLS).toHaveLength(4);
     for (const cell of TARO_CELLS) {
       expect(cell.x + cell.w).toBeLessThanOrEqual(343);
+      expect(cell.y + cell.h).toBeLessThanOrEqual(192);
+    }
+  });
+});
+
+describe('padSquare', () => {
+  it('centres the image on a transparent square as wide as its longer side', () => {
+    const src: Pixels = { w: 4, h: 2, data: new Uint8ClampedArray(4 * 2 * 4).fill(255) };
+    const out = padSquare(src);
+    expect([out.w, out.h]).toEqual([4, 4]);
+    expect(Array.from(out.data.subarray(0, 4))).toEqual([0, 0, 0, 0]);
+    expect(Array.from(out.data.subarray((1 * 4 + 0) * 4, (1 * 4 + 0) * 4 + 4))).toEqual([255, 255, 255, 255]);
+    expect(Array.from(out.data.subarray((3 * 4 + 3) * 4, (3 * 4 + 3) * 4 + 4))).toEqual([0, 0, 0, 0]);
+  });
+
+  it('returns a square as is', () => {
+    const src = coords(3, 3);
+    expect(padSquare(src)).toBe(src);
+  });
+});
+
+describe('TRICK_SHEETS', () => {
+  it('names all 10 focuses once, in catalog order, six then four', () => {
+    expect(TRICK_SHEETS.map((sheet) => sheet.ids.length)).toEqual([6, 4]);
+    expect(TRICK_SHEETS.flatMap((sheet) => sheet.ids)).toEqual([...FOCUS_IDS]);
+  });
+
+  it('has six cells inside the sheet whose column splits clear the wide flag of the first sheet', () => {
+    expect(TRICK_CELLS).toHaveLength(6);
+    for (const cell of TRICK_CELLS) {
+      expect(cell.x + cell.w).toBeLessThanOrEqual(344);
+      expect(cell.y + cell.h).toBeLessThanOrEqual(192);
+    }
+    expect(TRICK_CELLS[0]?.x).toBe(0);
+    expect((TRICK_CELLS[0]?.w ?? 0)).toBeGreaterThanOrEqual(119);
+  });
+});
+
+describe('COIN_FRAMES', () => {
+  it('has six spin frames and the four states inside the sheet', () => {
+    expect(COIN_FRAMES.spin).toHaveLength(6);
+    for (const frame of [...COIN_FRAMES.spin, COIN_FRAMES.face, COIN_FRAMES.red, COIN_FRAMES.grey, COIN_FRAMES.plate]) {
+      expect(frame.x + frame.w).toBeLessThanOrEqual(344);
+      expect(frame.y + frame.h).toBeLessThanOrEqual(192);
+    }
+  });
+});
+
+describe('ICON_SHEETS', () => {
+  it('lists every icon id once across three sheets of at most eight', () => {
+    expect(ICON_SHEETS).toHaveLength(3);
+    for (const sheet of ICON_SHEETS) expect(sheet.ids.length).toBeLessThanOrEqual(8);
+    expect(ICON_SHEETS.flatMap((sheet) => sheet.ids)).toEqual([...ICON_IDS]);
+    expect(new Set(ICON_IDS).size).toBe(ICON_IDS.length);
+    expect(ICON_IDS).toHaveLength(23);
+  });
+
+  it('has eight cells in a 4×2 grid inside the sheet', () => {
+    expect(ICON_CELLS).toHaveLength(8);
+    for (const cell of ICON_CELLS) {
+      expect(cell.x + cell.w).toBeLessThanOrEqual(344);
       expect(cell.y + cell.h).toBeLessThanOrEqual(192);
     }
   });

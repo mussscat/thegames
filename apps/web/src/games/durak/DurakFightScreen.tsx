@@ -21,7 +21,8 @@ import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
 import { FocusBar, type FocusPick } from './FocusBar';
-import { chargeBadges, toggleTarget } from './focusView';
+import { chargeChips, toggleTarget } from './focusView';
+import { Icon } from '../../ui/Icon';
 import { JokerPanel } from './JokerPanel';
 import { RunHeader } from './RunHeader';
 import { ScoreBoard } from './ScoreBoard';
@@ -98,11 +99,11 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             shakeKey={fight.hits.some((h) => h.target === 'player') ? fight.hitSeq : 0}
             scoreTarget="player"
           />
-          {chargeBadges(fight.focusCharges).length > 0 && (
+          {chargeChips(fight.focusCharges).length > 0 && (
             <p className="charges" data-testid="focus-charges">
-              {chargeBadges(fight.focusCharges).map((badge) => (
-                <span key={badge} className="chip">
-                  {badge}
+              {chargeChips(fight.focusCharges).map((chip) => (
+                <span key={chip.text} className="chip">
+                  <Icon id={chip.icon} /> {chip.text}
                 </span>
               ))}
             </p>
