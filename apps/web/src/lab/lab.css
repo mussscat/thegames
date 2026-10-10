@@ -168,3 +168,5 @@
 .jokerlab__name { font-size: 0.8rem; }
 .jokerlab__meta { font-size: 0.65rem; opacity: 0.75; }
 .jokerlab__text { font-size: 0.65rem; line-height: 1.3; }
+.jokerlab__grid--tarot { --jface-w: 88px; }
+.jokerlab__item .shop-card { --slot-h: 140px; --slot-w: 92px; }

@@ -124,6 +124,8 @@
 .shop-card__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
 .shop-card__glyph { font-size: 2.2em; line-height: 1; }
 .shop-card__name { padding: 0 4px; font-size: 0.75rem; font-weight: 800; line-height: 1.15; }
+.shop-card--tarot-art { --tface-w: 100%; padding: 0; border: 0; background: none; }
+.shop-card--tarot-art .tface { height: 100%; width: auto; }
 .shop-card--joker { --jface-w: 100%; padding: 0; border: 0; background: none; }
 .shop-card--joker .jface { height: 100%; width: auto; }
 .shop-card__art { width: 72%; height: auto; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; }

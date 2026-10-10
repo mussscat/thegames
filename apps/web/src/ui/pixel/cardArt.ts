@@ -1,5 +1,5 @@
 import { isRedSuit, type Card } from '@game/core';
-import { ENHANCEMENT_IDS, JOKERS, RARITIES, type EnhancementId, type JokerId, type Rarity } from '@game/durak';
+import { ENHANCEMENT_IDS, JOKERS, RARITIES, TAROTS, type EnhancementId, type JokerId, type Rarity, type TarotId } from '@game/durak';
 import backSheetUrl from '../../assets/back.png';
 import enhancementSheetUrl from '../../assets/enhancements.png';
 import jokerBgCommonUrl from '../../assets/joker_bg_common.png';
@@ -8,10 +8,15 @@ import jokerBgRareUrl from '../../assets/joker_bg_rare.png';
 import jokerPers1Url from '../../assets/jokers_pers_1.png';
 import jokerPers2Url from '../../assets/jokers_pers_2.png';
 import jokerPers3Url from '../../assets/jokers_pers_3.png';
+import taroBgCommonUrl from '../../assets/taro_bg_common.png';
+import taroBgLegendaryUrl from '../../assets/taro_bg_legendary.png';
+import taroBgRareUrl from '../../assets/taro_bg_rare.png';
+import taroSheet1Url from '../../assets/taro_1.png';
+import taroSheet2Url from '../../assets/taro_2.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, trimToContent, type Pixels } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, type Pixels, type Rect } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -35,20 +40,36 @@ export function fitWholeCard(raw: Pixels): Pixels {
   return downscale(raw, ART_W, ART_H);
 }
 
+/** Lays the character in the middle of the box on a copy of the background; a character larger than the box is shrunk to it. */
+function composeCard(background: Pixels, character: Pixels, box: Rect): Pixels {
+  const fitted = fitInside(trimToContent(character), box.w, box.h);
+  return overlay(background, fitted, box.x + Math.floor((box.w - fitted.w) / 2), box.y + Math.floor((box.h - fitted.h) / 2));
+}
+
 /** Joker card: the rarity background (106×144) with the character on top. */
 export const JOKER_W = 106;
 export const JOKER_H = 144;
 /** Room for a character inside the background's frame; wider characters (the chain, the fist) are shrunk to it. */
-const JOKER_INNER_W = 94;
-const JOKER_INNER_H = 126;
+const JOKER_BOX: Rect = { x: 6, y: 9, w: 94, h: 126 };
 
 export function composeJoker(background: Pixels, character: Pixels): Pixels {
-  const fitted = fitInside(trimToContent(character), JOKER_INNER_W, JOKER_INNER_H);
-  return overlay(background, fitted, Math.floor((background.w - fitted.w) / 2), Math.floor((background.h - fitted.h) / 2));
+  return composeCard(background, character, JOKER_BOX);
+}
+
+/** Tarot card: the rarity background (106×160) with a banner on top for the numeral and a ribbon below for the name. */
+export const TARO_W = 106;
+export const TARO_H = 160;
+/** The picture sits between the banner and the ribbon. */
+const TARO_BOX: Rect = { x: 8, y: 28, w: 90, h: 102 };
+
+export function composeTarot(background: Pixels, character: Pixels): Pixels {
+  return composeCard(background, character, TARO_BOX);
 }
 
 const JOKER_BACKGROUNDS: Readonly<Record<Rarity, string>> = { common: jokerBgCommonUrl, rare: jokerBgRareUrl, legendary: jokerBgLegendaryUrl };
 const JOKER_PERS_URLS: readonly string[] = [jokerPers1Url, jokerPers2Url, jokerPers3Url];
+const TARO_BACKGROUNDS: Readonly<Record<Rarity, string>> = { common: taroBgCommonUrl, rare: taroBgRareUrl, legendary: taroBgLegendaryUrl };
+const TARO_URLS: readonly string[] = [taroSheet1Url, taroSheet2Url];
 
 const INK = '#1b1426';
 const RED = '#c2292e';
@@ -84,6 +105,7 @@ let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
 let plainUrl: string | undefined;
 let backUrl: string | undefined;
 let jokerUrls: Readonly<Partial<Record<JokerId, string>>> = {};
+let tarotUrls: Readonly<Partial<Record<TarotId, string>>> = {};
 const suitUrls = new Map<string, string>();
 
 /**
@@ -102,6 +124,7 @@ export async function preloadCardArt(): Promise<void> {
       backUrl = pixelsToUrl(fitWholeCard(crop(sheet, BACK_FRAME)));
     }),
     loadJokerArt(),
+    loadTarotArt(),
   ]);
 }
 
@@ -123,6 +146,24 @@ async function loadJokerArt(): Promise<void> {
   );
 }
 
+/** Same as the jokers: the three backgrounds first, then each picture sheet on its own. */
+async function loadTarotArt(): Promise<void> {
+  const loaded = await Promise.all(RARITIES.map(async (rarity) => keyOut(await loadPixels(TARO_BACKGROUNDS[rarity]), TARO_BG_KEY)));
+  const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
+  await Promise.allSettled(
+    TARO_SHEETS.map(async (sheet, index) => {
+      const url = TARO_URLS[index];
+      if (!url) return;
+      const pixels = keyOut(await loadPixels(url), sheet.key);
+      const cards = sheet.ids.flatMap((id, cell) => {
+        const frame = TARO_CELLS[cell];
+        return frame ? [[id, pixelsToUrl(composeTarot(backgrounds[TAROTS[id].rarity], crop(pixels, frame)))] as const] : [];
+      });
+      tarotUrls = { ...tarotUrls, ...Object.fromEntries(cards) };
+    }),
+  );
+}
+
 export function enhancementArtUrl(id: EnhancementId): string | undefined {
   return artUrls[id];
 }
@@ -133,6 +174,10 @@ export function plainArtUrl(): string | undefined {
 
 export function backArtUrl(): string | undefined {
   return backUrl;
+}
+
+export function tarotArtUrl(id: TarotId): string | undefined {
+  return tarotUrls[id];
 }
 
 export function jokerArtUrl(id: JokerId): string | undefined {

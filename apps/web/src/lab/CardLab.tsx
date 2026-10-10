@@ -14,6 +14,7 @@ import { HighlightTab } from './HighlightTab';
 import { JokersTab } from './JokersTab';
 import { PacksTab } from './PacksTab';
 import { SpritesTab } from './SpritesTab';
+import { TarotsTab } from './TarotsTab';
 import './labFonts';
 import '../games/durak/shop.css';
 import './lab.css';
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'trump', name: 'Козырь' },
   { id: 'gallery', name: 'Галерея' },
   { id: 'jokers', name: 'Джокеры' },
+  { id: 'tarots', name: 'Таро' },
   { id: 'packs', name: 'Паки' },
   { id: 'sprites', name: 'Спрайты' },
 ] as const;
@@ -96,6 +98,7 @@ export function CardLab() {
         {tab === 'trump' && <TrumpTab />}
         {tab === 'gallery' && <GalleryTab />}
         {tab === 'jokers' && <JokersTab />}
+        {tab === 'tarots' && <TarotsTab />}
         {tab === 'packs' && <PacksTab />}
         {tab === 'sprites' && <SpritesTab />}
         {tab === 'card' && (

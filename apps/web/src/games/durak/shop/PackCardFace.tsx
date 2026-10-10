@@ -1,6 +1,8 @@
 import { packCardRarity, TAROTS, type PackCard, type TarotId } from '@game/durak';
 import { PixelCard } from '../../../ui/PixelCard';
+import { tarotArtUrl } from '../../../ui/pixel/cardArt';
 import { JokerFace } from '../JokerFace';
+import { TarotFace } from '../TarotFace';
 import { deckCard } from './shopCopy';
 
 const TAROT_GLYPHS: Readonly<Record<TarotId, string>> = { sun: '☀', tower: '♜', star: '★', chariot: '♞', emperor: '♔', death: '☠', hermit: '☾', wheel: '☸' };
@@ -20,6 +22,13 @@ export function PackCardFace({ card, size = 'slot', faceDown = false }: PackCard
     return (
       <span className={`${classes} shop-card--joker`}>
         <JokerFace id={card.jokerId} />
+      </span>
+    );
+  }
+  if (tarotArtUrl(card.tarotId)) {
+    return (
+      <span className={`${classes} shop-card--tarot-art`}>
+        <TarotFace id={card.tarotId} />
       </span>
     );
   }

@@ -1,7 +1,7 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { JOKER_IDS } from '@game/durak';
-import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, overlay, PERS_CELLS, repeatColumns, trimToContent, type Pixels } from './sheet';
+import { JOKER_IDS, TAROT_IDS } from '@game/durak';
+import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, overlay, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -153,6 +153,30 @@ describe('JOKER_PERS_SHEETS', () => {
     expect(PERS_CELLS).toHaveLength(6);
     for (const cell of PERS_CELLS) {
       expect(cell.x + cell.w).toBeLessThanOrEqual(344);
+      expect(cell.y + cell.h).toBeLessThanOrEqual(192);
+    }
+  });
+});
+
+describe('TARO_BG_KEY', () => {
+  it('clears the pink corner pixel of a tarot background and keeps the card colours', () => {
+    const data = new Uint8ClampedArray([250, 5, 247, 255, 214, 170, 60, 255]);
+    const out = keyOut({ w: 2, h: 1, data }, TARO_BG_KEY);
+    expect(Array.from(out.data)).toEqual([0, 0, 0, 0, 214, 170, 60, 255]);
+  });
+});
+
+describe('TARO_SHEETS', () => {
+  it('names all 8 tarots once, in catalog order, four per sheet', () => {
+    expect(TARO_SHEETS).toHaveLength(2);
+    for (const sheet of TARO_SHEETS) expect(sheet.ids).toHaveLength(4);
+    expect(TARO_SHEETS.flatMap((sheet) => sheet.ids)).toEqual([...TAROT_IDS]);
+  });
+
+  it('has four cells inside the 344×192 sheet that stop before the stray pixel in the last column', () => {
+    expect(TARO_CELLS).toHaveLength(4);
+    for (const cell of TARO_CELLS) {
+      expect(cell.x + cell.w).toBeLessThanOrEqual(343);
       expect(cell.y + cell.h).toBeLessThanOrEqual(192);
     }
   });

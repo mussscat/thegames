@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, composeJoker, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer } from './cardArt';
+import { ART_H, ART_W, composeJoker, composeTarot, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -53,6 +53,27 @@ describe('composeJoker', () => {
     margin.data.set([200, 0, 0, 255], (20 * 40 + 20) * 4);
     const out = composeJoker(flat(JOKER_W, JOKER_H, [1, 2, 3, 255]), margin);
     expect(at(out, Math.floor((JOKER_W - 1) / 2), Math.floor((JOKER_H - 1) / 2))).toEqual([200, 0, 0, 255]);
+  });
+});
+
+describe('composeTarot', () => {
+  const flat = (w: number, h: number, rgba: readonly number[]): Pixels => ({ w, h, data: new Uint8ClampedArray(Array.from({ length: w * h }, () => rgba).flat()) });
+  const at = (p: Pixels, x: number, y: number) => Array.from(p.data.subarray((y * p.w + x) * 4, (y * p.w + x) * 4 + 4));
+  const bg = () => flat(TARO_W, TARO_H, [1, 2, 3, 255]);
+
+  it('puts the picture in the middle of the card art area and leaves the banner and the ribbon clear', () => {
+    const out = composeTarot(bg(), flat(40, 40, [200, 0, 0, 255]));
+    expect([out.w, out.h]).toEqual([TARO_W, TARO_H]);
+    expect(at(out, TARO_W / 2, TARO_H / 2)).toEqual([200, 0, 0, 255]);
+    expect(at(out, TARO_W / 2, 6)).toEqual([1, 2, 3, 255]);
+    expect(at(out, TARO_W / 2, TARO_H - 6)).toEqual([1, 2, 3, 255]);
+  });
+
+  it('shrinks a picture wider than the frame so it stays inside', () => {
+    const out = composeTarot(bg(), flat(127, 87, [200, 0, 0, 255]));
+    expect(at(out, 0, TARO_H / 2)).toEqual([1, 2, 3, 255]);
+    expect(at(out, TARO_W - 1, TARO_H / 2)).toEqual([1, 2, 3, 255]);
+    expect(at(out, TARO_W / 2, TARO_H / 2)).toEqual([200, 0, 0, 255]);
   });
 });
 

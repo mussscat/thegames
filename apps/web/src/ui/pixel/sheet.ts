@@ -1,4 +1,4 @@
-import type { EnhancementId, JokerId } from '@game/durak';
+import type { EnhancementId, JokerId, TarotId } from '@game/durak';
 
 /** Raw RGBA pixels, row by row — the same layout as canvas ImageData. */
 export type Pixels = { readonly w: number; readonly h: number; readonly data: Uint8ClampedArray };
@@ -83,6 +83,26 @@ export const JOKER_PERS_SHEETS: readonly JokerPersSheet[] = [
   { key: [249, 8, 239], ids: ['looter', 'piggyBank', 'longArms', 'rage', 'trumpAce', 'serial'] },
   { key: [252, 2, 251], ids: ['cardSharp', 'usurer', 'cleanHands', 'mirror', 'collector', 'thickSkin'] },
 ];
+
+/** A sheet of tarot pictures (four per sheet, 2×2 cells) on a magenta key background. */
+export type TaroSheet = { readonly key: readonly [number, number, number]; readonly ids: readonly TarotId[] };
+
+/** The four cells of a tarot sheet in reading order; they end at x = 342 because the last column holds a stray pixel. */
+export const TARO_CELLS: readonly Rect[] = [
+  { x: 0, y: 0, w: 172, h: 96 },
+  { x: 172, y: 0, w: 171, h: 96 },
+  { x: 0, y: 96, w: 172, h: 96 },
+  { x: 172, y: 96, w: 171, h: 96 },
+];
+
+/** `assets/taro_1.png`, `assets/taro_2.png`: the 8 tarots in catalog order. */
+export const TARO_SHEETS: readonly TaroSheet[] = [
+  { key: [249, 8, 239], ids: ['sun', 'tower', 'star', 'chariot'] },
+  { key: [249, 8, 239], ids: ['emperor', 'death', 'hermit', 'wheel'] },
+];
+
+/** The tarot backgrounds come with their rounded corners filled with this key colour. */
+export const TARO_BG_KEY: readonly [number, number, number] = [250, 5, 247];
 
 /** How far (per channel) a colour may stray from the key and still count as background. */
 const KEY_TOLERANCE = 30;
