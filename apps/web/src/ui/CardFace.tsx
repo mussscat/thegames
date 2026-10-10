@@ -1,17 +1,48 @@
 import { isRedSuit, rankLabel, type Card } from '@game/core';
 import type { EnhancementId } from '@game/durak';
 import { frontUrl } from './pixel/cardSprite';
+import { enhancementArtUrl, suitLayerUrl } from './pixel/enhancementArt';
 
 type CardFaceProps = {
   readonly card: Card;
   readonly enhancement?: EnhancementId;
-  /** Both enhancements available: own half top-right (icon top-right), foreign half bottom-left (icon bottom-left). */
+  /** Both enhancements available: own half top-right, foreign half bottom-left, split along the diagonal. */
   readonly split?: { readonly own: EnhancementId; readonly foreign: EnhancementId };
 };
+
+type ArtLayers = { readonly own: string; readonly foreign?: string };
+
+/** Sprite-sheet art for enhanced cards; undefined for plain cards or when the sheet did not load. */
+function artLayers(enhancement: EnhancementId | undefined, split: CardFaceProps['split']): ArtLayers | undefined {
+  if (split) {
+    const own = enhancementArtUrl(split.own);
+    const foreign = enhancementArtUrl(split.foreign);
+    return own && foreign ? { own, foreign } : undefined;
+  }
+  const own = enhancement && enhancementArtUrl(enhancement);
+  return own ? { own } : undefined;
+}
 
 export function CardFace({ card, enhancement, split }: CardFaceProps) {
   const rankClass = isRedSuit(card.suit) ? 'face__rank face__rank--red' : 'face__rank';
   const rank = rankLabel(card.rank);
+  const art = artLayers(enhancement, split);
+  const ranks = (
+    <>
+      <span className={rankClass}>{rank}</span>
+      <span className={`${rankClass} face__rank--bottom`}>{rank}</span>
+    </>
+  );
+  if (art) {
+    return (
+      <div className="face face--art">
+        <img className={art.foreign ? 'sprite face__sprite face__sprite--own' : 'sprite face__sprite'} src={art.own} alt="" draggable={false} />
+        {art.foreign && <img className="sprite face__sprite face__sprite--foreign" src={art.foreign} alt="" draggable={false} />}
+        <img className="sprite face__sprite" src={suitLayerUrl(card)} alt="" draggable={false} />
+        {ranks}
+      </div>
+    );
+  }
   return (
     <div className="face">
       {split ? (
@@ -22,8 +53,7 @@ export function CardFace({ card, enhancement, split }: CardFaceProps) {
       ) : (
         <img className="sprite face__sprite" src={frontUrl(card, enhancement)} alt="" draggable={false} />
       )}
-      <span className={rankClass}>{rank}</span>
-      <span className={`${rankClass} face__rank--bottom`}>{rank}</span>
+      {ranks}
     </div>
   );
 }

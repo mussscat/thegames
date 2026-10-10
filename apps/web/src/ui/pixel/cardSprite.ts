@@ -9,7 +9,7 @@ export const SPRITE_H = 70;
 const INK = '#1b1426';
 const RED = '#c2292e';
 
-const MINI_SUITS: Readonly<Record<Suit, readonly string[]>> = {
+export const MINI_SUITS: Readonly<Record<Suit, readonly string[]>> = {
   hearts: ['XX.XX', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
   diamonds: ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
   clubs: ['.XXX.', '.XXX.', 'XXXXX', 'XXXXX', '..X..'],

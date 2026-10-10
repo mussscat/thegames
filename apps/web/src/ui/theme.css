@@ -146,3 +146,7 @@ body {
   white-space: nowrap;
   box-shadow: 2px 2px 0 rgb(0 0 0 / 50%);
 }
+
+/* ---------- enhanced card drawn from the sprite sheet (74×104 art, corner column centred at x = 12) ---------- */
+.face--art .face__rank { font-size: 1.05em; top: 4.8%; left: 16.2%; transform: translateX(-50%); }
+.face--art .face__rank--bottom { top: auto; left: auto; right: 16.2%; bottom: 4.8%; transform: translateX(50%) rotate(180deg); }
