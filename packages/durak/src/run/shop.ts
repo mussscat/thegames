@@ -23,7 +23,7 @@ export const SHOP_PACK_COUNT = 2;
 export const BASE_REROLL_COST = 2;
 
 const ITEM_KINDS = ['joker', 'tarot', 'focus', 'card'] as const;
-export const ITEM_KIND_WEIGHT: Readonly<Record<PackCard['kind'], number>> = { joker: 50, tarot: 20, focus: 20, card: 10 };
+export const ITEM_KIND_WEIGHT: Readonly<Record<PackCard['kind'], number>> = { joker: 60, tarot: 15, focus: 15, card: 10 };
 
 export type ShopItem = { readonly card: PackCard; readonly price: number };
 
