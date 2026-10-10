@@ -10,8 +10,8 @@ type JokerFaceProps = {
 };
 
 /**
- * A joker as a 5:7 card with a rarity halo. Jokers with a sprite show it whole; the rest, until their
- * sprites arrive, show the procedural emblem on a plain card. The name and rule live in the tooltip.
+ * A joker as a card: its character on the background of its rarity. If the sprites did not load, a procedural
+ * emblem on a plain card stands in. The name and rule live in the tooltip.
  */
 export function JokerFace({ id, badge = null }: JokerFaceProps) {
   const joker = JOKERS[id];

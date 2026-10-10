@@ -64,20 +64,25 @@ export function repeatColumns(src: Pixels, columns: readonly number[]): Pixels {
 export const BACK_FRAME: Rect = { x: 112, y: 11, w: 120, h: 170 };
 export const PLAIN_FRAME: Rect = { x: 116, y: 22, w: 112, h: 148 };
 
-/** A sheet of joker cards (63–64×88, 5:7) on a magenta key background. */
-export type JokerSheet = { readonly key: readonly [number, number, number]; readonly frames: readonly { readonly id: JokerId; readonly frame: Rect }[] };
+/** A sheet of joker characters (six per sheet, 3×2 cells) on a magenta key background. */
+export type JokerPersSheet = { readonly key: readonly [number, number, number]; readonly ids: readonly JokerId[] };
 
-/** `assets/jokers1.png`: the five jokers after the suit ones, in catalog order. */
-export const JOKER_SHEET_1: JokerSheet = {
-  key: [254, 6, 245],
-  frames: [
-    { id: 'small', frame: { x: 6, y: 52, w: 63, h: 88 } },
-    { id: 'gloat', frame: { x: 73, y: 52, w: 63, h: 88 } },
-    { id: 'looter', frame: { x: 140, y: 52, w: 64, h: 88 } },
-    { id: 'piggyBank', frame: { x: 208, y: 52, w: 63, h: 88 } },
-    { id: 'longArms', frame: { x: 275, y: 52, w: 63, h: 88 } },
-  ],
-};
+/** The six cells of a character sheet, in reading order; a character may be wider than its drawing area but never leaves its cell. */
+export const PERS_CELLS: readonly Rect[] = [
+  { x: 0, y: 0, w: 115, h: 96 },
+  { x: 115, y: 0, w: 114, h: 96 },
+  { x: 229, y: 0, w: 115, h: 96 },
+  { x: 0, y: 96, w: 115, h: 96 },
+  { x: 115, y: 96, w: 114, h: 96 },
+  { x: 229, y: 96, w: 115, h: 96 },
+];
+
+/** `assets/jokers_pers_1..3.png`: the 18 jokers in catalog order. */
+export const JOKER_PERS_SHEETS: readonly JokerPersSheet[] = [
+  { key: [249, 8, 239], ids: ['hearts', 'diamonds', 'clubs', 'spades', 'small', 'gloat'] },
+  { key: [249, 8, 239], ids: ['looter', 'piggyBank', 'longArms', 'rage', 'trumpAce', 'serial'] },
+  { key: [252, 2, 251], ids: ['cardSharp', 'usurer', 'cleanHands', 'mirror', 'collector', 'thickSkin'] },
+];
 
 /** How far (per channel) a colour may stray from the key and still count as background. */
 const KEY_TOLERANCE = 30;
@@ -90,6 +95,48 @@ export function keyOut(src: Pixels, key: readonly [number, number, number]): Pix
     if (near) data.fill(0, i, i + 4);
   }
   return { w: src.w, h: src.h, data };
+}
+
+/** Crops to the bounding box of the non-transparent pixels. */
+export function trimToContent(src: Pixels): Pixels {
+  let x0 = src.w;
+  let y0 = src.h;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < src.h; y++) {
+    for (let x = 0; x < src.w; x++) {
+      if ((src.data[(y * src.w + x) * 4 + 3] ?? 0) === 0) continue;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+  }
+  if (x1 < 0) throw new Error('trimToContent: the image is fully transparent');
+  return crop(src, { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 });
+}
+
+/** A copy of `base` with the opaque pixels of `top` painted at (x, y); whatever falls outside the base is clipped. */
+export function overlay(base: Pixels, top: Pixels, x: number, y: number): Pixels {
+  const data = new Uint8ClampedArray(base.data);
+  for (let ty = 0; ty < top.h; ty++) {
+    for (let tx = 0; tx < top.w; tx++) {
+      const bx = x + tx;
+      const by = y + ty;
+      if (bx < 0 || by < 0 || bx >= base.w || by >= base.h) continue;
+      const i = (ty * top.w + tx) * 4;
+      if ((top.data[i + 3] ?? 0) === 0) continue;
+      data.set(top.data.subarray(i, i + 4), (by * base.w + bx) * 4);
+    }
+  }
+  return { w: base.w, h: base.h, data };
+}
+
+/** Shrinks (never grows) to fit the box, keeping the aspect ratio; an image that already fits is returned as is. */
+export function fitInside(src: Pixels, maxW: number, maxH: number): Pixels {
+  if (src.w <= maxW && src.h <= maxH) return src;
+  const scale = Math.min(maxW / src.w, maxH / src.h);
+  return downscale(src, Math.max(1, Math.round(src.w * scale)), Math.max(1, Math.round(src.h * scale)));
 }
 
 /** Index of the most common colour among the given pixel offsets (the first one wins a tie). */

@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, fitEnhancementFrame, fitJokerFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer } from './cardArt';
+import { ART_H, ART_W, composeJoker, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -29,16 +29,30 @@ describe('fitWholeCard', () => {
   });
 });
 
-describe('fitJokerFrame', () => {
-  it('brings both joker frame widths (63 and 64) to one size', () => {
-    for (const w of [63, 64]) {
-      const out = fitJokerFrame(solid(w, 88));
-      expect([out.w, out.h]).toEqual([JOKER_W, JOKER_H]);
-    }
+describe('composeJoker', () => {
+  const flat = (w: number, h: number, rgba: readonly number[]): Pixels => ({ w, h, data: new Uint8ClampedArray(Array.from({ length: w * h }, () => rgba).flat()) });
+  const at = (p: Pixels, x: number, y: number) => Array.from(p.data.subarray((y * p.w + x) * 4, (y * p.w + x) * 4 + 4));
+
+  it('puts the character in the middle of the background and keeps the background around it', () => {
+    const out = composeJoker(flat(JOKER_W, JOKER_H, [1, 2, 3, 255]), flat(10, 10, [200, 0, 0, 255]));
+    expect([out.w, out.h]).toEqual([JOKER_W, JOKER_H]);
+    expect(at(out, JOKER_W / 2, JOKER_H / 2)).toEqual([200, 0, 0, 255]);
+    expect(at(out, 0, 0)).toEqual([1, 2, 3, 255]);
+    expect(at(out, JOKER_W - 1, JOKER_H - 1)).toEqual([1, 2, 3, 255]);
   });
 
-  it('rejects a frame of another size', () => {
-    expect(() => fitJokerFrame(solid(63, 90))).toThrow();
+  it('shrinks a character wider than the card so it stays inside the frame', () => {
+    const out = composeJoker(flat(JOKER_W, JOKER_H, [1, 2, 3, 255]), flat(115, 96, [200, 0, 0, 255]));
+    expect(at(out, 0, JOKER_H / 2)).toEqual([1, 2, 3, 255]);
+    expect(at(out, JOKER_W - 1, JOKER_H / 2)).toEqual([1, 2, 3, 255]);
+    expect(at(out, JOKER_W / 2, JOKER_H / 2)).toEqual([200, 0, 0, 255]);
+  });
+
+  it('ignores the transparent margin around a character', () => {
+    const margin = flat(40, 40, [0, 0, 0, 0]);
+    margin.data.set([200, 0, 0, 255], (20 * 40 + 20) * 4);
+    const out = composeJoker(flat(JOKER_W, JOKER_H, [1, 2, 3, 255]), margin);
+    expect(at(out, Math.floor((JOKER_W - 1) / 2), Math.floor((JOKER_H - 1) / 2))).toEqual([200, 0, 0, 255]);
   });
 });
 

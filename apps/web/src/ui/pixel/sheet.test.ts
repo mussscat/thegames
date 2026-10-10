@@ -1,6 +1,7 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, JOKER_SHEET_1, keyOut, repeatColumns, type Pixels } from './sheet';
+import { JOKER_IDS } from '@game/durak';
+import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, overlay, PERS_CELLS, repeatColumns, trimToContent, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -92,13 +93,67 @@ describe('keyOut', () => {
   });
 });
 
-describe('JOKER_SHEET_1', () => {
-  it('lists five 5:7 jokers inside the 344×192 sheet', () => {
-    expect(JOKER_SHEET_1.frames).toHaveLength(5);
-    for (const { frame } of JOKER_SHEET_1.frames) {
-      expect(frame.x + frame.w).toBeLessThanOrEqual(344);
-      expect(frame.y + frame.h).toBeLessThanOrEqual(192);
-      expect(frame.h).toBe(88);
+describe('trimToContent', () => {
+  it('crops to the bounding box of the non-transparent pixels', () => {
+    const data = new Uint8ClampedArray(5 * 4 * 4);
+    for (const [x, y] of [[1, 1], [3, 2]] as const) data.set([9, 9, 9, 255], (y * 5 + x) * 4);
+    const out = trimToContent({ w: 5, h: 4, data });
+    expect([out.w, out.h]).toEqual([3, 2]);
+    expect(Array.from(out.data.subarray(0, 4))).toEqual([9, 9, 9, 255]);
+  });
+
+  it('rejects an image with nothing in it', () => {
+    expect(() => trimToContent({ w: 2, h: 2, data: new Uint8ClampedArray(16) })).toThrow();
+  });
+});
+
+describe('overlay', () => {
+  const flat = (w: number, h: number, rgba: readonly number[]): Pixels => ({ w, h, data: new Uint8ClampedArray(Array.from({ length: w * h }, () => rgba).flat()) });
+
+  it('paints opaque pixels of the top image onto a copy of the base, and skips transparent ones', () => {
+    const top = flat(2, 1, [200, 0, 0, 255]);
+    top.data.set([0, 0, 0, 0], 4);
+    const base = flat(4, 2, [1, 2, 3, 255]);
+    const out = overlay(base, top, 1, 1);
+    expect(Array.from(out.data.subarray((1 * 4 + 1) * 4, (1 * 4 + 1) * 4 + 4))).toEqual([200, 0, 0, 255]);
+    expect(Array.from(out.data.subarray((1 * 4 + 2) * 4, (1 * 4 + 2) * 4 + 4))).toEqual([1, 2, 3, 255]);
+    expect(Array.from(base.data.subarray(0, 4))).toEqual([1, 2, 3, 255]);
+  });
+
+  it('clips what falls outside the base', () => {
+    const out = overlay(flat(2, 2, [1, 1, 1, 255]), flat(3, 3, [5, 5, 5, 255]), 1, 1);
+    expect([out.w, out.h]).toEqual([2, 2]);
+    expect(Array.from(out.data.subarray(0, 4))).toEqual([1, 1, 1, 255]);
+    expect(Array.from(out.data.subarray(12, 16))).toEqual([5, 5, 5, 255]);
+  });
+});
+
+describe('fitInside', () => {
+  it('leaves an image that already fits alone', () => {
+    const src = coords(6, 4);
+    expect(fitInside(src, 10, 10)).toBe(src);
+  });
+
+  it('shrinks a too wide or too tall image to fit, keeping the aspect ratio', () => {
+    const wide = fitInside(coords(20, 10), 10, 10);
+    expect([wide.w, wide.h]).toEqual([10, 5]);
+    const tall = fitInside(coords(10, 40), 20, 20);
+    expect([tall.w, tall.h]).toEqual([5, 20]);
+  });
+});
+
+describe('JOKER_PERS_SHEETS', () => {
+  it('names all 18 jokers once, in catalog order, six per sheet', () => {
+    expect(JOKER_PERS_SHEETS).toHaveLength(3);
+    for (const sheet of JOKER_PERS_SHEETS) expect(sheet.ids).toHaveLength(6);
+    expect(JOKER_PERS_SHEETS.flatMap((sheet) => sheet.ids)).toEqual([...JOKER_IDS]);
+  });
+
+  it('has six cells inside the 344×192 sheet', () => {
+    expect(PERS_CELLS).toHaveLength(6);
+    for (const cell of PERS_CELLS) {
+      expect(cell.x + cell.w).toBeLessThanOrEqual(344);
+      expect(cell.y + cell.h).toBeLessThanOrEqual(192);
     }
   });
 });
