@@ -1,8 +1,7 @@
 import { makeCard } from '@game/core';
 import { ENHANCEMENT_IDS, JOKER_IDS, JOKERS } from '@game/durak';
 import { CardView } from '../components/CardView';
-import { JokerCard } from '../games/durak/JokerCard';
-import { TicketFace } from '../games/durak/JokerTicket';
+import { JokerFace } from '../games/durak/JokerFace';
 import { PixelCard } from '../ui/PixelCard';
 import '../games/durak/fight.css';
 
@@ -10,7 +9,7 @@ const SAMPLE = makeCard('hearts', 12);
 /** Distinct cards: CardView animates by card id, so equal ids would merge into one. */
 const HAND = [makeCard('spades', 10), makeCard('clubs', 9), makeCard('diamonds', 13), makeCard('spades', 14)] as const;
 
-/** Everything collectible at a glance: all jokers (wide ticket, compact ticket, shop card) and all card enhancements. */
+/** Everything collectible at a glance: all jokers (sprite or emblem fallback, with a badge sample) and all card enhancements. */
 export function GalleryTab() {
   return (
     <div className="gallery">
@@ -33,19 +32,15 @@ export function GalleryTab() {
       <section className="panel gallery__section">
         <h2 className="gallery__title">Джокеры</h2>
         <ul className="gallery__jokers">
-          {JOKER_IDS.map((id) => (
+          {JOKER_IDS.map((id, i) => (
             <li key={id} className="gallery__joker">
-              <TicketFace id={id} wide={false} />
-              <TicketFace id={id} wide />
+              <JokerFace id={id} badge={i === 9 ? 'заряд +8' : null} />
+              <span>
+                {JOKERS[id].name} · ● {JOKERS[id].price}
+              </span>
             </li>
           ))}
         </ul>
-        <h3 className="gallery__subtitle">В магазине</h3>
-        <div className="shop__shelf">
-          {JOKER_IDS.map((id) => (
-            <JokerCard key={id} jokerId={id} action={<span className="chip">● {JOKERS[id].price}</span>} />
-          ))}
-        </div>
       </section>
     </div>
   );

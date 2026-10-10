@@ -2,8 +2,7 @@
 .shop {
   --slot-h: clamp(92px, 16vh, 190px);
   --slot-w: calc(var(--slot-h) * 0.7);
-  --ticket-w: calc(2.6em + 1.2em + 4px);
-  --ticket-h: calc(2.6em + 0.7em + 4px);
+  --owned-w: 2.7em;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-areas: 'side' 'owned' 'panel' 'status';
@@ -20,9 +19,9 @@
 /* ---------- owned jokers: five equal slots ---------- */
 .owned { grid-area: owned; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; padding: 8px 10px; }
 .owned__list { display: flex; justify-content: space-between; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.owned__slot { display: flex; align-items: center; justify-content: center; width: var(--ticket-w); height: var(--ticket-h); }
-.owned__slot--selected .ticket { transform: translateY(-3px); outline: 3px solid #ffffff; outline-offset: 2px; border-radius: 4px; }
-.owned__ticket { padding: 0; border: 0; background: none; cursor: pointer; }
+.owned__slot { --jface-w: var(--owned-w); display: flex; align-items: center; justify-content: center; width: var(--owned-w); aspect-ratio: 5 / 7; }
+.owned__slot--selected .jface { transform: translateY(-3px); outline: 3px solid #ffffff; outline-offset: 2px; }
+.owned__card { padding: 0; border: 0; background: none; cursor: pointer; -webkit-touch-callout: none; }
 .owned__empty { width: 100%; height: 100%; border: 2px dashed rgb(255 255 255 / 25%); border-radius: 4px; }
 .owned__count { font-size: 0.8rem; opacity: 0.8; }
 .owned__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -125,6 +124,8 @@
 .shop-card__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
 .shop-card__glyph { font-size: 2.2em; line-height: 1; }
 .shop-card__name { padding: 0 4px; font-size: 0.75rem; font-weight: 800; line-height: 1.15; }
+.shop-card--joker { --jface-w: 100%; padding: 0; border: 0; background: none; }
+.shop-card--joker .jface { height: 100%; width: auto; }
 .shop-card__art { width: 72%; height: auto; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; }
 
 /* ---------- packs ---------- */

@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { JokerCard } from '../games/durak/JokerCard';
+import { JokerFace } from '../games/durak/JokerFace';
 import { FONT_OPTIONS, fontFamily, type FontId } from './labFonts';
 import { LabSelect } from './LabSelect';
 
@@ -26,7 +26,9 @@ export function FontTab() {
       <h2 className="fontlab__title">Карточный рогалик</h2>
       <p className="panel fontlab__text">{RULES}</p>
       <div className="fontlab__row">
-        <JokerCard jokerId="trumpAce" action={<button type="button" className="pbtn pbtn--orange pbtn--small">● 6</button>} />
+        <span className="fontlab__joker">
+          <JokerFace id="trumpAce" />
+        </span>
         <div className="fontlab__col">
           <p className="panel fontlab__status">Отбивайся или бери</p>
           <div className="panel fontlab__hp">

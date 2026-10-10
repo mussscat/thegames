@@ -18,23 +18,31 @@ async function fightWithLooter(page: Page): Promise<void> {
   await page.getByRole('button', { name: /Следующий бой/ }).click();
 }
 
-test('compact joker tickets show only the picture and open the description on tap', async ({ page }) => {
+test('a joker card in the fight shows its rule on tap and hides it on a second tap', async ({ page }) => {
   await fightWithLooter(page);
-  const ticket = page.getByRole('button', { name: /Мародёр/ });
-  await expect(ticket).toHaveAttribute('aria-expanded', 'false');
+  const joker = page.getByRole('button', { name: 'Мародёр' });
+  await expect(joker).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
-  await ticket.click();
-  await expect(ticket).toHaveAttribute('aria-expanded', 'true');
+  await joker.click();
+  await expect(joker).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
-  await ticket.click();
+  await joker.click();
   await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
+});
+
+test('the fight shows five joker slots: the owned joker as a card and four empty outlines', async ({ page }) => {
+  await fightWithLooter(page);
+  const panel = page.getByRole('region', { name: 'Джокеры' });
+  await expect(panel.locator('.jface')).toHaveCount(5);
+  await expect(panel.locator('.jface--empty')).toHaveCount(4);
 });
 
 test.describe('wide screen', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test('wide joker tickets show the picture and the description', async ({ page }) => {
+  test('hovering a joker card in the sidebar shows its rule', async ({ page }) => {
     await fightWithLooter(page);
+    await page.getByRole('button', { name: 'Мародёр' }).hover();
     await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
   });
 });
@@ -57,7 +65,7 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
   await page.getByTestId('shop-item-0').getByRole('button').click();
   await page.getByRole('button', { name: 'Купить Трефовик за 4' }).click();
-  const owned = page.getByTestId('owned-jokers').locator('.owned__ticket');
+  const owned = page.getByTestId('owned-jokers').locator('.owned__card');
   await expect(owned).toHaveCount(2);
   await expect(owned.nth(1)).toHaveAccessibleName('Трефовик');
   await owned.nth(1).click();

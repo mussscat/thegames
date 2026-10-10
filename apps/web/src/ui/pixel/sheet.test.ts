@@ -1,6 +1,6 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, repeatColumns, type Pixels } from './sheet';
+import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, JOKER_SHEET_1, keyOut, repeatColumns, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -80,6 +80,26 @@ describe('downscale', () => {
 
   it('rejects growing the image', () => {
     expect(() => downscale(coords(2, 2), 3, 2)).toThrow();
+  });
+});
+
+describe('keyOut', () => {
+  it('makes the key colour and colours close to it transparent, and leaves the rest alone', () => {
+    const data = new Uint8ClampedArray([254, 6, 245, 255, 250, 12, 240, 255, 40, 60, 200, 255]);
+    const out = keyOut({ w: 3, h: 1, data }, [254, 6, 245]);
+    expect(Array.from(out.data)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 40, 60, 200, 255]);
+    expect(Array.from(data.subarray(0, 4))).toEqual([254, 6, 245, 255]);
+  });
+});
+
+describe('JOKER_SHEET_1', () => {
+  it('lists five 5:7 jokers inside the 344×192 sheet', () => {
+    expect(JOKER_SHEET_1.frames).toHaveLength(5);
+    for (const { frame } of JOKER_SHEET_1.frames) {
+      expect(frame.x + frame.w).toBeLessThanOrEqual(344);
+      expect(frame.y + frame.h).toBeLessThanOrEqual(192);
+      expect(frame.h).toBe(88);
+    }
   });
 });
 

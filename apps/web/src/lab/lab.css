@@ -55,7 +55,7 @@
 /* ---------- font tab ---------- */
 .fontlab { width: 100%; display: flex; flex-direction: column; gap: 10px; text-shadow: 2px 2px 0 rgb(0 0 0 / 45%); }
 .fontlab, .fontlab * { font-family: var(--lab-body); }
-.fontlab .fontlab__title, .fontlab .joker__name { font-family: var(--lab-head); }
+.fontlab .fontlab__title { font-family: var(--lab-head); }
 .fontlab__title { margin: 0; text-align: center; font-size: 2.1em; color: var(--gold); text-shadow: 3px 3px 0 #000; }
 .fontlab__text { margin: 0; line-height: 1.4; }
 .fontlab__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

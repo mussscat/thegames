@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, fitEnhancementFrame, fitWholeCard, suitLayer } from './cardArt';
+import { ART_H, ART_W, fitEnhancementFrame, fitJokerFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -26,6 +26,19 @@ describe('fitWholeCard', () => {
       const out = fitWholeCard(solid(w, h));
       expect([out.w, out.h]).toEqual([ART_W, ART_H]);
     }
+  });
+});
+
+describe('fitJokerFrame', () => {
+  it('brings both joker frame widths (63 and 64) to one size', () => {
+    for (const w of [63, 64]) {
+      const out = fitJokerFrame(solid(w, 88));
+      expect([out.w, out.h]).toEqual([JOKER_W, JOKER_H]);
+    }
+  });
+
+  it('rejects a frame of another size', () => {
+    expect(() => fitJokerFrame(solid(63, 90))).toThrow();
   });
 });
 

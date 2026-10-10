@@ -1,4 +1,4 @@
-import type { EnhancementId } from '@game/durak';
+import type { EnhancementId, JokerId } from '@game/durak';
 
 /** Raw RGBA pixels, row by row — the same layout as canvas ImageData. */
 export type Pixels = { readonly w: number; readonly h: number; readonly data: Uint8ClampedArray };
@@ -63,6 +63,34 @@ export function repeatColumns(src: Pixels, columns: readonly number[]): Pixels {
 /** The card on `assets/back.png` and on `assets/plain.png` (344×192 sheets with one card each). */
 export const BACK_FRAME: Rect = { x: 112, y: 11, w: 120, h: 170 };
 export const PLAIN_FRAME: Rect = { x: 116, y: 22, w: 112, h: 148 };
+
+/** A sheet of joker cards (63–64×88, 5:7) on a magenta key background. */
+export type JokerSheet = { readonly key: readonly [number, number, number]; readonly frames: readonly { readonly id: JokerId; readonly frame: Rect }[] };
+
+/** `assets/jokers1.png`: the five jokers after the suit ones, in catalog order. */
+export const JOKER_SHEET_1: JokerSheet = {
+  key: [254, 6, 245],
+  frames: [
+    { id: 'small', frame: { x: 6, y: 52, w: 63, h: 88 } },
+    { id: 'gloat', frame: { x: 73, y: 52, w: 63, h: 88 } },
+    { id: 'looter', frame: { x: 140, y: 52, w: 64, h: 88 } },
+    { id: 'piggyBank', frame: { x: 208, y: 52, w: 63, h: 88 } },
+    { id: 'longArms', frame: { x: 275, y: 52, w: 63, h: 88 } },
+  ],
+};
+
+/** How far (per channel) a colour may stray from the key and still count as background. */
+const KEY_TOLERANCE = 30;
+
+/** Turns the key-coloured background transparent; returns a new image. */
+export function keyOut(src: Pixels, key: readonly [number, number, number]): Pixels {
+  const data = new Uint8ClampedArray(src.data);
+  for (let i = 0; i < data.length; i += 4) {
+    const near = key.every((v, c) => Math.abs((data[i + c] ?? 0) - v) <= KEY_TOLERANCE);
+    if (near) data.fill(0, i, i + 4);
+  }
+  return { w: src.w, h: src.h, data };
+}
 
 /** Index of the most common colour among the given pixel offsets (the first one wins a tie). */
 function commonest(data: Uint8ClampedArray, offsets: readonly number[]): number {

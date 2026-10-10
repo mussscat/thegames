@@ -1,11 +1,12 @@
 import { isRedSuit, type Card } from '@game/core';
-import { ENHANCEMENT_IDS, type EnhancementId } from '@game/durak';
+import { ENHANCEMENT_IDS, type EnhancementId, type JokerId } from '@game/durak';
 import backSheetUrl from '../../assets/back.png';
 import enhancementSheetUrl from '../../assets/enhancements.png';
+import jokerSheet1Url from '../../assets/jokers1.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, loadPixels, PLAIN_FRAME, pixelsToUrl, repeatColumns, type Pixels } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, JOKER_SHEET_1, keyOut, loadPixels, PLAIN_FRAME, pixelsToUrl, repeatColumns, type JokerSheet, type Pixels } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -28,6 +29,20 @@ export function fitEnhancementFrame(raw: Pixels): Pixels {
 export function fitWholeCard(raw: Pixels): Pixels {
   return downscale(raw, ART_W, ART_H);
 }
+
+/** Joker cards keep their own, slightly coarser pixel: 63×88 is already 5:7, and growing it would only duplicate pixels. */
+export const JOKER_W = 63;
+export const JOKER_H = 88;
+
+export function fitJokerFrame(raw: Pixels): Pixels {
+  if (raw.h !== JOKER_H || (raw.w !== JOKER_W && raw.w !== JOKER_W + 1)) {
+    throw new Error(`joker frame ${raw.w}×${raw.h}, expected ${JOKER_W}×${JOKER_H}`);
+  }
+  return raw.w > JOKER_W ? dropColumns(raw, [4]) : raw;
+}
+
+/** Joker sheets and their image files; jokers missing from every sheet get the procedural emblem. */
+const JOKER_SHEETS: readonly { readonly url: string; readonly sheet: JokerSheet }[] = [{ url: jokerSheet1Url, sheet: JOKER_SHEET_1 }];
 
 const INK = '#1b1426';
 const RED = '#c2292e';
@@ -62,6 +77,7 @@ export function suitLayer(card: Card): Grid {
 let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
 let plainUrl: string | undefined;
 let backUrl: string | undefined;
+let jokerUrls: Readonly<Partial<Record<JokerId, string>>> = {};
 const suitUrls = new Map<string, string>();
 
 /**
@@ -79,6 +95,13 @@ export async function preloadCardArt(): Promise<void> {
     loadPixels(backSheetUrl).then((sheet) => {
       backUrl = pixelsToUrl(fitWholeCard(crop(sheet, BACK_FRAME)));
     }),
+    ...JOKER_SHEETS.map(({ url, sheet }) =>
+      loadPixels(url).then((pixels) => {
+        const clear = keyOut(pixels, sheet.key);
+        const sliced = sheet.frames.map(({ id, frame }) => [id, pixelsToUrl(fitJokerFrame(crop(clear, frame)))] as const);
+        jokerUrls = { ...jokerUrls, ...Object.fromEntries(sliced) };
+      }),
+    ),
   ]);
 }
 
@@ -92,6 +115,10 @@ export function plainArtUrl(): string | undefined {
 
 export function backArtUrl(): string | undefined {
   return backUrl;
+}
+
+export function jokerArtUrl(id: JokerId): string | undefined {
+  return jokerUrls[id];
 }
 
 export function suitLayerUrl(card: Card): string {

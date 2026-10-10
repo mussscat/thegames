@@ -1,29 +1,20 @@
 import { JOKERS, MAX_JOKERS, type JokerId, type JokerState } from '@game/durak';
-import { useState } from 'react';
-import { useMediaQuery } from '../../ui/useMediaQuery';
+import { CardTip, useCardTip } from '../../components/CardTip';
 import { jokerBadge } from './jokerBadge';
-import { TicketFace } from './JokerTicket';
+import { JokerFace } from './JokerFace';
+import { cardTipLines } from './shop/shopCopy';
 
-/** The sidebar of a wide, tall screen has room for full tickets; elsewhere tickets are compact and open on tap. */
-const WIDE_JOKERS = '(min-aspect-ratio: 5/4) and (min-height: 521px)';
+type JokerSlotProps = { readonly id: JokerId; readonly slot: number; readonly badge: string | null };
 
-function CompactTicket({ id, slot, badge }: { readonly id: JokerId; readonly slot: number; readonly badge: string | null }) {
-  const [open, setOpen] = useState(false);
+/** One joker card; its rule opens on hover, long press or tap (the cards in the fight have no other tap action). */
+function JokerSlot({ id, slot, badge }: JokerSlotProps) {
+  const { anchor, handlers } = useCardTip(true, true);
   return (
-    <li className={open ? 'ticket-slot ticket-slot--open' : 'ticket-slot'} data-score-joker={`player-${slot}`}>
-      <button
-        type="button"
-        className="ticket-slot__button"
-        aria-expanded={open}
-        aria-label={JOKERS[id].name}
-        onClick={() => setOpen((value) => !value)}
-        onBlur={() => setOpen(false)}
-      >
-        <TicketFace id={id} wide={false} badge={badge} />
+    <li className="jslot" data-score-joker={`player-${slot}`}>
+      <button type="button" className="jslot__button" aria-label={JOKERS[id].name} aria-expanded={anchor !== null} {...handlers}>
+        <JokerFace id={id} badge={badge} />
       </button>
-      <span className="ticket-slot__pop" role="tooltip">
-        <TicketFace id={id} wide badge={badge} />
-      </span>
+      {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'joker', jokerId: id }, {})} />}
     </li>
   );
 }
@@ -35,9 +26,8 @@ type JokerPanelProps = {
   readonly enemyTakes: number;
 };
 
-/** The player's jokers in slot order: a framed list of tickets with live counters; an empty frame when there are none. */
+/** The player's jokers in slot order as cards with live counters; empty slots are dashed card outlines. */
 export function JokerPanel({ jokers, state, enemyTakes }: JokerPanelProps) {
-  const wide = useMediaQuery(WIDE_JOKERS);
   return (
     <section className={jokers.length > 0 ? 'jokers panel' : 'jokers jokers--empty panel'} aria-label="Джокеры">
       <header className="jokers__head">
@@ -46,23 +36,15 @@ export function JokerPanel({ jokers, state, enemyTakes }: JokerPanelProps) {
           {jokers.length}/{MAX_JOKERS}
         </span>
       </header>
-      <ul className={wide ? 'jokers__list jokers__list--wide' : 'jokers__list'}>
-        {jokers.map((id, slot) => {
-          const badge = jokerBadge(id, state, enemyTakes);
-          return wide ? (
-            <li key={id} className="ticket-slot" aria-label={JOKERS[id].name} data-score-joker={`player-${slot}`}>
-              <TicketFace id={id} wide badge={badge} />
-            </li>
-          ) : (
-            <CompactTicket key={id} id={id} slot={slot} badge={badge} />
-          );
-        })}
-        {!wide &&
-          Array.from({ length: Math.max(0, MAX_JOKERS - jokers.length) }, (_, i) => (
-            <li key={`empty-${i}`} className="ticket-slot" aria-hidden="true">
-              <span className="ticket ticket--placeholder" />
-            </li>
-          ))}
+      <ul className="jokers__list">
+        {jokers.map((id, slot) => (
+          <JokerSlot key={id} id={id} slot={slot} badge={jokerBadge(id, state, enemyTakes)} />
+        ))}
+        {Array.from({ length: Math.max(0, MAX_JOKERS - jokers.length) }, (_, i) => (
+          <li key={`empty-${i}`} className="jslot" aria-hidden="true">
+            <span className="jface jface--empty" />
+          </li>
+        ))}
       </ul>
     </section>
   );

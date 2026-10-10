@@ -2,17 +2,17 @@ import { JOKERS, MAX_JOKERS, sellPrice, type JokerId, type RunAction } from '@ga
 import type { MouseEvent } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import { PixelButton } from '../../../ui/PixelButton';
-import { TicketFace } from '../JokerTicket';
+import { JokerFace } from '../JokerFace';
 import { cardTipLines } from './shopCopy';
 
-type OwnedTicketProps = { readonly id: JokerId; readonly selected: boolean; readonly onSelect: () => void };
+type OwnedJokerProps = { readonly id: JokerId; readonly selected: boolean; readonly onSelect: () => void };
 
-function OwnedTicket({ id, selected, onSelect }: OwnedTicketProps) {
+function OwnedJoker({ id, selected, onSelect }: OwnedJokerProps) {
   const { anchor, handlers } = useCardTip(true, false);
   return (
     <li className={selected ? 'owned__slot owned__slot--selected' : 'owned__slot'}>
-      <button type="button" className="owned__ticket" aria-label={JOKERS[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
-        <TicketFace id={id} wide={false} />
+      <button type="button" className="owned__card" aria-label={JOKERS[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
+        <JokerFace id={id} />
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'joker', jokerId: id }, {})} />}
     </li>
@@ -34,7 +34,7 @@ export function OwnedJokers({ jokers, selected, onSelect, onAct }: OwnedJokersPr
     <section className="owned panel" data-testid="owned-jokers" aria-label="Твои джокеры" onClick={stop}>
       <ul className="owned__list">
         {jokers.map((id) => (
-          <OwnedTicket key={id} id={id} selected={id === selected} onSelect={() => onSelect(id === selected ? null : id)} />
+          <OwnedJoker key={id} id={id} selected={id === selected} onSelect={() => onSelect(id === selected ? null : id)} />
         ))}
         {Array.from({ length: Math.max(0, MAX_JOKERS - jokers.length) }, (_, i) => (
           <li key={`empty-${i}`} className="owned__slot" aria-hidden="true">

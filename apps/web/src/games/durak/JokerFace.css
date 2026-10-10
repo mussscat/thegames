@@ -1,0 +1,20 @@
+/* ---------- joker as a card: sprite (or emblem + name on paper), rarity halo, counter tag ---------- */
+.jface {
+  position: relative;
+  display: block;
+  width: var(--jface-w, 3.2em);
+  aspect-ratio: 5 / 7;
+  border-radius: 7%;
+  color: var(--ink);
+  text-shadow: none;
+  filter: drop-shadow(0 3px 0 rgb(0 0 0 / 55%));
+}
+.jface--common { box-shadow: 0 0 0 2px #9a93a8; }
+.jface--rare { box-shadow: 0 0 0 2px #3a7bd5, 0 0 8px rgb(58 123 213 / 80%); }
+.jface--legendary { box-shadow: 0 0 0 2px #f5c542, 0 0 10px rgb(245 197 66 / 90%); }
+.jface--empty { border: 2px dashed rgb(255 255 255 / 25%); box-shadow: none; filter: none; }
+.jface__art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.jface__paper { position: absolute; inset: 0; border: 2px solid var(--ink); border-radius: inherit; background: #fbf6ea; }
+.jface__emblem { position: absolute; top: 50%; left: 50%; width: 72%; height: auto; aspect-ratio: 1; translate: -50% -50%; }
+.jface__badge { position: absolute; bottom: -0.45em; left: 50%; translate: -50% 0; padding: 0 0.3em; border-radius: 4px; background: var(--ink); color: var(--gold); font-size: 0.6em; white-space: nowrap; }
+.shop-card--joker .jface { box-shadow: none; filter: none; }
