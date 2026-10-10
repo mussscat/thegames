@@ -2,6 +2,7 @@ import {
   conflictFor,
   ENHANCEMENTS,
   JOKERS,
+  MAX_FOCUSES,
   stageEnemy,
   stageLabel,
   type FightReward,
@@ -16,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
+import { OwnedFocuses } from './shop/OwnedFocuses';
 import { OwnedJokers } from './shop/OwnedJokers';
 import { PackArt } from './shop/PackArt';
 import { PackCardFace } from './shop/PackCardFace';
@@ -52,6 +54,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
   const { settings, play } = useSettings();
   const [selected, setSelected] = useState<Selection | null>(null);
   const [selectedJoker, setSelectedJoker] = useState<JokerId | null>(null);
+  const [selectedFocus, setSelectedFocus] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   /**
    * Set when Колесо Фортуны is used — from a pack or straight off the shelf: the jokers count and the shop state it changes
@@ -92,6 +95,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
   const clearSelection = (): void => {
     setSelected(null);
     setSelectedJoker(null);
+    setSelectedFocus(null);
   };
   const previousCoins = usePrevious(run.coins);
   useEffect(() => {
@@ -132,6 +136,16 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
         }}
         onAct={onAct}
       />
+      <OwnedFocuses
+        focuses={run.focuses}
+        selected={selectedFocus}
+        onSelect={(slot) => {
+          setSelected(null);
+          setSelectedJoker(null);
+          setSelectedFocus(slot);
+        }}
+        onAct={onAct}
+      />
 
       <section className="shop__panel panel" aria-label="Магазин">
         <h2 className="shop__head">Магазин</h2>
@@ -155,6 +169,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               selected={selected?.kind === 'item' && selected.index === index}
               verb="Купить"
               warning={replacementWarning(item, run.profile)}
+              blocked={item?.card.kind === 'focus' && run.focuses.length >= MAX_FOCUSES ? 'Мало места' : null}
               onSelect={() => select({ kind: 'item', index })}
               onBuy={() => buy({ type: 'buyItem', index })}
             >
@@ -202,11 +217,13 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
           opened={shop.opened}
           profile={run.profile}
           jokers={run.jokers}
+          focuses={run.focuses}
           speed={settings.animSpeed}
           error={error}
           onPick={pick}
           onSkip={() => onAct({ type: 'skipPack' })}
           onSell={(jokerId) => onAct({ type: 'sellJoker', jokerId })}
+          onSellFocus={(slot) => onAct({ type: 'sellFocus', slot })}
         />
       )}
     </main>

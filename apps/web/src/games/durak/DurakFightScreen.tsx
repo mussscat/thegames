@@ -1,6 +1,7 @@
 import type { Card } from '@game/core';
 import {
   currentActor,
+  FOCUSES,
   revealsTopCard,
   type EnhancementSource,
   type FightAction,
@@ -9,7 +10,7 @@ import {
   type ScoredHit,
 } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
@@ -19,6 +20,8 @@ import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
+import { FocusBar, type FocusPick } from './FocusBar';
+import { chargeBadges, toggleTarget } from './focusView';
 import { JokerPanel } from './JokerPanel';
 import { RunHeader } from './RunHeader';
 import { ScoreBoard } from './ScoreBoard';
@@ -41,9 +44,10 @@ type DurakFightScreenProps = {
   readonly onFightAction: (action: FightAction) => void;
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
+  readonly onUseFocus: (slot: number, targets: readonly string[]) => void;
 };
 
-export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -59,6 +63,14 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
   const playback = useScorePlayback(scoring, settings.animSpeed, onScoringDone);
   const myTurn = !playback.active && !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
+  const focuses = run.focuses;
+  const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
+  useEffect(() => setFocusPick(null), [fight.roundNumber]);
+  const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
+  const targeting =
+    focusPick && pickedId && FOCUSES[pickedId].maxTargets > 0
+      ? { picked: focusPick.targets, onPick: (card: Card) => setFocusPick({ ...focusPick, targets: toggleTarget(focusPick.targets, card.id, FOCUSES[pickedId].maxTargets) }) }
+      : null;
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
     onFightAction(use ? { ...base, use } : base);
@@ -86,23 +98,43 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             shakeKey={fight.hits.some((h) => h.target === 'player') ? fight.hitSeq : 0}
             scoreTarget="player"
           />
+          {chargeBadges(fight.focusCharges).length > 0 && (
+            <p className="charges" data-testid="focus-charges">
+              {chargeBadges(fight.focusCharges).map((badge) => (
+                <span key={badge} className="chip">
+                  {badge}
+                </span>
+              ))}
+            </p>
+          )}
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
           <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} />
+          <FocusBar
+            focuses={focuses}
+            fight={fight}
+            myTurn={myTurn}
+            pick={focusPick}
+            onPick={setFocusPick}
+            onPlay={(pick) => {
+              onUseFocus(pick.slot, pick.targets);
+              setFocusPick(null);
+            }}
+          />
           <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
             Меню
           </PixelButton>
           <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
         </aside>
         <section className="fight__board">
-          <EnemyHand cards={round.hands.enemy} />
+          <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
           <TableView table={round.table} attacker={round.attacker}>
             {playback.board && <ScoreBoard board={playback.board} />}
           </TableView>
           <p className="fight__status panel" role="status">
             {error ?? statusText(fight)}
           </p>
-          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} sort={settings.sort} onPlay={play} />
-          <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} />
+          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
         </section>
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />

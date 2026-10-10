@@ -1,4 +1,4 @@
-import { CARD_JOKERS, type PlayerId, type ScoredHit, type ScoreStep } from '@game/durak';
+import { CARD_JOKERS, FOCUSES, type PlayerId, type ScoredHit, type ScoreStep } from '@game/durak';
 import type { AnimSpeed } from '../../ui/settings';
 import { formatMult } from './hits';
 
@@ -52,6 +52,8 @@ function beatOf(step: ScoreStep, taker: PlayerId, lastCard: string | null): Beat
   switch (source.kind) {
     case 'tier':
       return { pop: { kind: 'tier' }, bounce: [] };
+    case 'focus':
+      return { pop: { kind: 'hp', side: 'player' }, bounce: [] };
     case 'card':
     case 'enhancement': {
       const card: ScoreTarget = { kind: 'card', cardId: source.card.id };
@@ -79,7 +81,7 @@ export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
         at: fade + i * step,
         duration: step,
         ...beatOf(s, score.target, acc.lastCard),
-        label: labelOf(s.effect),
+        label: s.source.kind === 'focus' ? `${FOCUSES[s.source.focus].name} ${labelOf(s.effect)}` : labelOf(s.effect),
         tone: s.effect.kind,
         chips: s.chips,
         mult: s.mult,

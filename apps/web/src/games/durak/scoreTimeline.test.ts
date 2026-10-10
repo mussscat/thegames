@@ -77,6 +77,12 @@ describe('scoreTimeline', () => {
     expect(t.events[1]).toMatchObject({ pop: { kind: 'card', cardId: 'clubs-6' }, bounce: [{ kind: 'card', cardId: 'clubs-6' }] });
   });
 
+  it('labels a focus step with the focus name and pops it over the player bar', () => {
+    const steps: ScoreStep[] = [cardStep(six, 1, 1), { source: { kind: 'focus', focus: 'boost' }, effect: { kind: 'mult', value: 3 }, chips: 1, mult: 4 }];
+    const t = scoreTimeline(hit(steps, 'enemy'), 1);
+    expect(t.events[1]).toMatchObject({ label: 'Разгон +3 множ.', tone: 'mult', pop: { kind: 'hp', side: 'player' }, bounce: [] });
+  });
+
   it('plays only the final for a hit with no steps', () => {
     const t = scoreTimeline(hit([]), 1);
     expect(t.events).toHaveLength(1);

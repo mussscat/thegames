@@ -2,14 +2,21 @@ import { isRedSuit, SUIT_SYMBOLS } from '@game/core';
 import type { RoundState } from '@game/durak';
 import { CardBack, CardView } from '../../components/CardView';
 
-type DeckViewProps = { readonly round: RoundState; readonly revealTop: boolean };
+type DeckViewProps = { readonly round: RoundState; readonly revealTop: boolean; /** Top cards shown face up (Прорицание). */ readonly peek?: number };
 
-export function DeckView({ round, revealTop }: DeckViewProps) {
+export function DeckView({ round, revealTop, peek = 0 }: DeckViewProps) {
   const top = round.deck[0];
   const showTopFaceUp = revealTop && round.deck.length > 1 && top !== undefined;
   const stack = Math.min(3, Math.max(0, round.deck.length - 1));
   return (
     <div className="deck" data-testid="deck">
+      {peek > 0 && (
+        <div className="deck__peek" data-testid="deck-peek">
+          {round.deck.slice(0, Math.min(peek, Math.max(0, round.deck.length - 1))).map((card) => (
+            <CardView key={card.id} card={card} />
+          ))}
+        </div>
+      )}
       <div className="deck__pile">
         {round.deck.length > 0 && (
           <div className="deck__trump-card">

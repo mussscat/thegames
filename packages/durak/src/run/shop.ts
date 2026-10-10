@@ -1,5 +1,6 @@
 import { err, ok, type Result, type RngState } from '@game/core';
 import { ENHANCEMENTS, withEnhancement, type DeckProfile } from '../enhancements';
+import { FOCUS_IDS, FOCUSES, focusWeight, MAX_FOCUSES, type FocusId } from '../focus/catalog';
 import { JOKER_IDS, JOKERS, MAX_JOKERS, type JokerId } from '../jokers/catalog';
 import {
   jokerWeight,
@@ -21,8 +22,8 @@ export const SHOP_ITEM_COUNT = 2;
 export const SHOP_PACK_COUNT = 2;
 export const BASE_REROLL_COST = 2;
 
-const ITEM_KINDS = ['joker', 'tarot', 'card'] as const;
-export const ITEM_KIND_WEIGHT: Readonly<Record<PackCard['kind'], number>> = { joker: 60, tarot: 25, card: 15 };
+const ITEM_KINDS = ['joker', 'tarot', 'focus', 'card'] as const;
+export const ITEM_KIND_WEIGHT: Readonly<Record<PackCard['kind'], number>> = { joker: 60, tarot: 15, focus: 15, card: 10 };
 
 export type ShopItem = { readonly card: PackCard; readonly price: number };
 
@@ -47,7 +48,7 @@ export type ShopState = {
 };
 
 /** What the shop spends and changes: coins, jokers, the deck profile and the run rng. */
-export type Purse = TarotSubject;
+export type Purse = TarotSubject & { readonly focuses: readonly FocusId[] };
 export type Wallet = { readonly coins: number; readonly jokers: readonly JokerId[] };
 export type ShopStep = { readonly shop: ShopState; readonly purse: Purse };
 
@@ -61,6 +62,8 @@ export type ShopError =
   | 'packOpen'
   | 'noPackOpen'
   | 'tarotPending'
+  | 'focusSlotsFull'
+  | 'focusNotOwned'
   | 'noTarotPending'
   | 'badTargets';
 
@@ -77,6 +80,8 @@ export function priceOf(card: PackCard): number {
       return JOKERS[card.jokerId].price;
     case 'tarot':
       return TAROT_PRICE;
+    case 'focus':
+      return FOCUSES[card.focusId].price;
     case 'card':
       return ENHANCEMENTS[card.enhancement].price + 1;
   }
@@ -95,6 +100,10 @@ function rollItemCard(rng: RngState, taken: Taken, profile: DeckProfile): readon
   if (kind === 'joker') {
     const [jokerId, next] = pickWeighted(JOKER_IDS.filter((id) => !taken.jokers.includes(id)), jokerWeight, afterKind);
     return jokerId ? [{ kind: 'joker', jokerId }, next] : rollTarot(next, profile);
+  }
+  if (kind === 'focus') {
+    const [focusId, next] = pickWeighted(FOCUS_IDS, focusWeight, afterKind);
+    return [focusId ? { kind: 'focus', focusId } : null, next];
   }
   return rollTarot(afterKind, profile);
 }
@@ -144,6 +153,10 @@ function take(purse: Purse, card: PackCard): Result<Purse, ShopError> {
     if (purse.jokers.includes(card.jokerId)) return err('jokerOwned');
     if (purse.jokers.length >= MAX_JOKERS) return err('jokerSlotsFull');
     return ok({ ...purse, jokers: [...purse.jokers, card.jokerId] });
+  }
+  if (card.kind === 'focus') {
+    if (purse.focuses.length >= MAX_FOCUSES) return err('focusSlotsFull');
+    return ok({ ...purse, focuses: [...purse.focuses, card.focusId] });
   }
   if (card.kind === 'card') return ok({ ...purse, profile: withEnhancement(purse.profile, card.cardId, card.enhancement) });
   return err('badTargets');
@@ -202,7 +215,7 @@ function castTarot(purse: Purse, id: TarotId, targets: readonly string[], hand: 
   const cast = applyTarot(purse, id, targets);
   if (!cast.ok) return cast;
   const { coins, jokers, profile, rng } = cast.value;
-  return ok({ coins, jokers, profile, rng });
+  return ok({ ...purse, coins, jokers, profile, rng });
 }
 
 export function pickFromPack(shop: ShopState, purse: Purse, index: number, targets: readonly string[]): Result<ShopStep, ShopError> {
@@ -260,4 +273,14 @@ export function moveJoker(jokers: readonly JokerId[], from: number, to: number):
   if (moving === undefined || to < 0 || to >= jokers.length) return err('jokerNotOwned');
   const without = jokers.filter((_, i) => i !== from);
   return ok([...without.slice(0, to), moving, ...without.slice(to)]);
+}
+
+export function focusSellPrice(id: FocusId): number {
+  return Math.floor(FOCUSES[id].price / 2);
+}
+
+export function sellFocus(purse: Purse, slot: number): Result<Purse, ShopError> {
+  const id = purse.focuses[slot];
+  if (id === undefined) return err('focusNotOwned');
+  return ok({ ...purse, coins: purse.coins + focusSellPrice(id), focuses: purse.focuses.filter((_, i) => i !== slot) });
 }

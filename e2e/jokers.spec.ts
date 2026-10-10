@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const SHOP_RUN = {
-  seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 24, jokers: ['looter'], collected: 0, profile: {},
+  seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 24, jokers: ['looter'], collected: 0, profile: {}, focuses: [],
   bosses: ['general', 'witch'],
   phase: {
     kind: 'shop',
@@ -12,7 +12,7 @@ const SHOP_RUN = {
 
 async function fightWithLooter(page: Page): Promise<void> {
   await page.goto('/');
-  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 8, run })), SHOP_RUN);
+  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), SHOP_RUN);
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
   await page.getByRole('button', { name: /Следующий бой/ }).click();
@@ -51,7 +51,7 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
     const run = {
-      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {},
+      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {}, focuses: [],
       bosses: ['general', 'witch'],
       phase: {
         kind: 'shop',
@@ -59,7 +59,7 @@ test('jokers can be bought and reordered in the shop', async ({ page }) => {
         reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 },
       },
     };
-    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 8, run }));
+    window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run }));
   });
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();

@@ -1,4 +1,5 @@
 import { chooseAction } from '../ai';
+import { MAX_FOCUSES, type FocusId } from '../focus/catalog';
 import { MAX_JOKERS } from '../jokers/catalog';
 import { currentActor } from '../rules';
 import { applyRunAction, createRun, enemyAt, type RunAction, type RunState } from '../run/run';
@@ -20,6 +21,10 @@ export function botAction(run: RunState): RunAction {
     if (fight.winner) return { type: 'leaveFight' };
     const actor = currentActor(fight.round);
     if (!actor) return { type: 'fight', actor: 'player', action: { type: 'nextRound' } };
+    if (actor === 'player') {
+      const focus = botFocus(run);
+      if (focus) return focus;
+    }
     const style = actor === 'player' ? 'aggressive' : enemyAt(run.stage).style;
     const action = chooseAction(fight.round, actor, style);
     if (!action) throw new Error('AI returned no action');
@@ -27,6 +32,21 @@ export function botAction(run: RunState): RunAction {
   }
   if (phase.kind === 'shop') return shopAction(run, phase.shop);
   throw new Error('run is over');
+}
+
+const ATTACK_FOCUSES: ReadonlySet<FocusId> = new Set(['boost', 'pad', 'doubler']);
+
+/** Plain focus policy: Копилочка at once, Щит when defending, hit boosters at the start of an attack. */
+export function botFocus(run: RunState): RunAction | null {
+  if (run.phase.kind !== 'fight') return null;
+  const { fight } = run.phase;
+  const { round } = fight;
+  if (fight.winner || round.outcome || currentActor(round) !== 'player') return null;
+  const attacking = round.attacker === 'player';
+  const slot = run.focuses.findIndex(
+    (id) => id === 'piggy' || (id === 'shield' && !attacking) || (attacking && round.table.length === 0 && ATTACK_FOCUSES.has(id)),
+  );
+  return slot >= 0 ? { type: 'useFocus', slot, targets: [] } : null;
 }
 
 /** Packs the plain bot buys, most wanted first. */
@@ -49,6 +69,7 @@ function packAction(run: RunState, opened: OpenedPack): RunAction {
     if (!card) return [];
     if (card.kind === 'joker') return room ? [{ type: 'pickFromPack', index, targets: [] }] : [];
     if (card.kind === 'card') return [{ type: 'pickFromPack', index, targets: [] }];
+    if (card.kind === 'focus') return run.focuses.length < MAX_FOCUSES ? [{ type: 'pickFromPack', index, targets: [] }] : [];
     const targets = botTargets(card.tarotId, opened.hand, run.profile);
     return targets ? [{ type: 'pickFromPack', index, targets }] : [];
   });
@@ -65,6 +86,8 @@ function shopAction(run: RunState, shop: ShopState): RunAction {
   const room = run.jokers.length < MAX_JOKERS;
   const item = shop.items.findIndex((entry) => entry !== null && entry.card.kind === 'joker' && room && entry.price <= run.coins);
   if (item >= 0) return { type: 'buyItem', index: item };
+  const focusItem = shop.items.findIndex((entry) => entry !== null && entry.card.kind === 'focus' && run.focuses.length < MAX_FOCUSES && entry.price <= run.coins);
+  if (focusItem >= 0) return { type: 'buyItem', index: focusItem };
   const pack = BOT_PACKS.flatMap((kind) =>
     shop.packs.flatMap((entry, index) => (entry && entry.kind === kind && entry.price <= run.coins && (kind !== 'jokers' || room) ? [index] : [])),
   )[0];

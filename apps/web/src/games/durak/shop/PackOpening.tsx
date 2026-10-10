@@ -2,11 +2,15 @@ import {
   conflictFor,
   ENHANCEMENTS,
   JOKERS,
+  focusSellPrice,
+  FOCUSES,
+  MAX_FOCUSES,
   MAX_JOKERS,
   packCardRarity,
   sellPrice,
   TAROTS,
   type DeckProfile,
+  type FocusId,
   type JokerId,
   type OpenedPack,
   type Rarity,
@@ -30,15 +34,17 @@ type PackOpeningProps = {
   readonly opened: OpenedPack;
   readonly profile: DeckProfile;
   readonly jokers: readonly JokerId[];
+  readonly focuses: readonly FocusId[];
   readonly speed: number;
   readonly error?: string | null;
   readonly onPick: (index: number, targets: readonly string[]) => void;
   readonly onSkip: () => void;
   readonly onSell: (jokerId: JokerId) => void;
+  readonly onSellFocus: (slot: number) => void;
 };
 
 /** Full-screen pack opening: the pack shakes and tears, cards flip by rarity, then the player takes or skips. */
-export function PackOpening({ opened, profile, jokers, speed, error = null, onPick, onSkip, onSell }: PackOpeningProps) {
+export function PackOpening({ opened, profile, jokers, focuses, speed, error = null, onPick, onSkip, onSell, onSellFocus }: PackOpeningProps) {
   const { play } = useSettings();
   const reduced = useReducedMotion() ?? false;
   const count = opened.cards.length;
@@ -73,7 +79,7 @@ export function PackOpening({ opened, profile, jokers, speed, error = null, onPi
   };
   const card = selected === null ? null : (opened.cards[selected] ?? null);
   const tarot = card?.kind === 'tarot' ? TAROTS[card.tarotId] : null;
-  const ready = card !== null && canTake(card, targets, profile, jokers);
+  const ready = card !== null && canTake(card, targets, profile, jokers, focuses);
   const choose = (index: number): void => {
     setSelected(index);
     setTargets([]);
@@ -144,6 +150,16 @@ export function PackOpening({ opened, profile, jokers, speed, error = null, onPi
       {card && <p className="opening__text">{packCardText(card)}</p>}
       {card?.kind === 'tarot' && tarot && tarot.maxTargets > 0 && (
         <TarotTargets tarotId={card.tarotId} hand={opened.hand} profile={profile} picked={targets} onChange={setTargets} />
+      )}
+      {card?.kind === 'focus' && focuses.length >= MAX_FOCUSES && (
+        <div className="opening__full">
+          <p>Оба слота заняты — продай фокус:</p>
+          {focuses.map((id, slot) => (
+            <PixelButton key={`${id}-${slot}`} tone="blue" small onClick={() => onSellFocus(slot)}>
+              {FOCUSES[id].name} +{focusSellPrice(id)}
+            </PixelButton>
+          ))}
+        </div>
       )}
       {card?.kind === 'joker' && jokers.length >= MAX_JOKERS && (
         <div className="opening__full">

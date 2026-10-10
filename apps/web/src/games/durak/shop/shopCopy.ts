@@ -2,6 +2,7 @@ import { createDeck, rankLabel, SUIT_SYMBOLS, type Card } from '@game/core';
 import {
   conflictFor,
   ENHANCEMENTS,
+  FOCUSES,
   JOKERS,
   PACK_SIZE_DEFS,
   packCardRarity,
@@ -15,11 +16,12 @@ import {
 } from '@game/durak';
 import type { TipLine } from '../../../components/tipLines';
 
-export const PACK_NAMES: Readonly<Record<PackKind, string>> = { jokers: 'Джокеры', arcana: 'Таро', deck: 'Колода' };
+export const PACK_NAMES: Readonly<Record<PackKind, string>> = { jokers: 'Джокеры', arcana: 'Таро', focuses: 'Фокусы', deck: 'Колода' };
 export const PACK_SIZE_NAMES: Readonly<Record<PackSize, string>> = { normal: 'Обычный', big: 'Большой', mega: 'Мега' };
 export const PACK_TEXT: Readonly<Record<PackKind, string>> = {
   jokers: 'Джокеры, которых у тебя ещё нет',
   arcana: 'Таро меняют карты колоды или монеты',
+  focuses: 'Разыгрываются в бою в свой ход',
   deck: 'Готовые усиленные карты общей колоды',
 };
 export const RARITY_NAMES: Readonly<Record<Rarity, string>> = { common: 'обычная', rare: 'редкая', legendary: 'легендарная' };
@@ -41,6 +43,8 @@ export function packCardTitle(card: PackCard): string {
       return JOKERS[card.jokerId].name;
     case 'tarot':
       return TAROTS[card.tarotId].name;
+    case 'focus':
+      return FOCUSES[card.focusId].name;
     case 'card':
       return `${cardLabel(card.cardId)} ${ENHANCEMENTS[card.enhancement].name}`;
   }
@@ -52,6 +56,8 @@ export function packCardText(card: PackCard): string {
       return JOKERS[card.jokerId].description;
     case 'tarot':
       return TAROTS[card.tarotId].description;
+    case 'focus':
+      return FOCUSES[card.focusId].description;
     case 'card':
       return ENHANCEMENTS[card.enhancement].description;
   }

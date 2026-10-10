@@ -41,6 +41,13 @@ export type Hit = {
 
 export type PerPlayer = Readonly<Record<PlayerId, number>>;
 
+/** Focus charges waiting for the next hit: chips / mult / × on the player's next hit, shield on the next hit on the player. */
+export type FocusCharges = { readonly chips: number; readonly mult: number; readonly times: number; readonly shield: number };
+export const NO_CHARGES: FocusCharges = { chips: 0, mult: 0, times: 1, shield: 1 };
+/** What the player sees until the deal ends (Подглядывание, Прорицание). */
+export type Reveal = { readonly enemyHand: boolean; readonly topCards: number };
+export const NO_REVEAL: Reveal = { enemyHand: false, topCards: 0 };
+
 export type FightState = {
   readonly round: RoundState;
   readonly hp: PerPlayer;
@@ -66,6 +73,8 @@ export type FightState = {
   readonly boss: BossRule | null;
   /** Coins earned by Монетная defenses. */
   readonly cardCoins: PerPlayer;
+  readonly focusCharges: FocusCharges;
+  readonly reveal: Reveal;
 };
 
 export type FightAction = RoundAction | { readonly type: 'nextRound' };
@@ -96,6 +105,8 @@ export function createFight(config: FightConfig): FightState {
     fightTakes: NO_TAKES,
     boss,
     cardCoins: NO_TAKES,
+    focusCharges: NO_CHARGES,
+    reveal: NO_REVEAL,
   };
 }
 
@@ -136,7 +147,7 @@ function nextRound(state: FightState): Result<FightState, FightError> {
     player: afterRound(state.jokerState.player, state.jokers.player, state.roundTakes.player > 0),
     enemy: afterRound(state.jokerState.enemy, state.jokers.enemy, state.roundTakes.enemy > 0),
   };
-  return ok({ ...state, round, rng, jokerState, roundNumber: state.roundNumber + 1, hits: [], roundTakes: NO_TAKES });
+  return ok({ ...state, round, rng, jokerState, roundNumber: state.roundNumber + 1, hits: [], roundTakes: NO_TAKES, reveal: NO_REVEAL });
 }
 
 function newBout(previous: RoundState, next: RoundState): BoutResult | null {
@@ -167,12 +178,15 @@ function chargeTake(state: FightState, bout: BoutResult, before: RoundState): Fi
     baseMult: state.baseMult[attacker],
     attacker: { jokers: state.jokers[attacker], state: state.jokerState[attacker] },
     defender: { jokers: state.jokers[taker], state: state.jokerState[taker] },
+    boost: attacker === 'player' ? state.focusCharges : undefined,
+    shield: taker === 'player' ? state.focusCharges.shield : 1,
   });
   const afterAttacker = withSide(state.jokerState, attacker, afterHitDealt(state.jokerState[attacker], state.jokers[attacker], taken));
   const counted: FightState = {
     ...state,
     jokerState: withSide(afterAttacker, taker, afterOwnTake(afterAttacker[taker])),
     lastScore: { ...score, target: taker },
+    focusCharges: attacker === 'player' ? { ...state.focusCharges, chips: 0, mult: 0, times: 1 } : { ...state.focusCharges, shield: 1 },
     roundTakes: increment(state.roundTakes, taker),
     fightTakes: increment(state.fightTakes, taker),
   };

@@ -4,7 +4,7 @@ const HAND = ['clubs-6', 'clubs-7', 'clubs-8', 'clubs-9', 'clubs-10'];
 
 function shopRun(shop: object, patch: object = {}) {
   return {
-    seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {},
+    seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {}, focuses: [],
     bosses: ['general', 'witch'],
     phase: { kind: 'shop', shop, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
     ...patch,
@@ -21,7 +21,7 @@ const BASE_SHOP = {
 
 async function openShop(page: Page, run: object): Promise<void> {
   await page.goto('/');
-  await page.evaluate((saved) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 8, run: saved })), run);
+  await page.evaluate((saved) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run: saved })), run);
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
   await expect(page.getByTestId('shop')).toBeVisible();

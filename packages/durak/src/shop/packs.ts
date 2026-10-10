@@ -1,10 +1,11 @@
 import { createDeck, nextInt, shuffle, type RngState } from '@game/core';
 import { ENHANCEMENT_IDS, type DeckProfile, type EnhancementId } from '../enhancements';
+import { FOCUS_IDS, FOCUSES, focusWeight, type FocusId } from '../focus/catalog';
 import { JOKER_IDS, JOKERS, RARITY_WEIGHT, type JokerId, type Rarity } from '../jokers/catalog';
 import { TAROT_IDS, TAROTS, type TarotId } from './tarot';
 import { drawUnique, pickWeighted } from './weighted';
 
-export const PACK_KINDS = ['jokers', 'arcana', 'deck'] as const;
+export const PACK_KINDS = ['jokers', 'arcana', 'focuses', 'deck'] as const;
 export type PackKind = (typeof PACK_KINDS)[number];
 export const PACK_SIZES = ['normal', 'big', 'mega'] as const;
 export type PackSize = (typeof PACK_SIZES)[number];
@@ -17,7 +18,7 @@ export const PACK_SIZE_DEFS: Readonly<Record<PackSize, PackSizeDef>> = {
   mega: { cards: 5, picks: 2, weight: 8, price: 8 },
 };
 
-export const PACK_KIND_WEIGHT: Readonly<Record<PackKind, number>> = { jokers: 40, arcana: 35, deck: 25 };
+export const PACK_KIND_WEIGHT: Readonly<Record<PackKind, number>> = { jokers: 35, arcana: 30, focuses: 20, deck: 15 };
 
 /** Cards dealt to pick tarot targets from. */
 export const TAROT_HAND_SIZE = 5;
@@ -33,6 +34,7 @@ export type Pack = { readonly kind: PackKind; readonly size: PackSize; readonly 
 export type PackCard =
   | { readonly kind: 'joker'; readonly jokerId: JokerId }
   | { readonly kind: 'tarot'; readonly tarotId: TarotId }
+  | { readonly kind: 'focus'; readonly focusId: FocusId }
   | { readonly kind: 'card'; readonly cardId: string; readonly enhancement: EnhancementId };
 
 export function packCardRarity(card: PackCard): Rarity {
@@ -41,6 +43,8 @@ export function packCardRarity(card: PackCard): Rarity {
       return JOKERS[card.jokerId].rarity;
     case 'tarot':
       return TAROTS[card.tarotId].rarity;
+    case 'focus':
+      return FOCUSES[card.focusId].rarity;
     case 'card':
       return ENHANCEMENT_RARITY[card.enhancement];
   }
@@ -93,6 +97,10 @@ export function rollPackCards(rng: RngState, pack: Pack, owned: readonly JokerId
     case 'arcana': {
       const [ids, next] = drawUnique(tarotPool(profile), count, tarotWeight, rng);
       return [ids.map((tarotId) => ({ kind: 'tarot' as const, tarotId })), next];
+    }
+    case 'focuses': {
+      const [ids, next] = drawUnique(FOCUS_IDS, count, focusWeight, rng);
+      return [ids.map((focusId) => ({ kind: 'focus' as const, focusId })), next];
     }
     case 'deck':
       return rollDeckCards(rng, profile, count);

@@ -75,6 +75,24 @@ describe('run storage', () => {
     expect(loadRun(store)).toEqual({ status: 'invalid' });
   });
 
+  it('round-trips focuses, charges and reveals', () => {
+    const run = createRun(7);
+    if (run.phase.kind !== 'fight') throw new Error('not in a fight');
+    const rich: RunState = {
+      ...run,
+      focuses: ['boost', 'suitShift'],
+      phase: { kind: 'fight', fight: { ...run.phase.fight, focusCharges: { chips: 8, mult: 3, times: 2, shield: 0.5 }, reveal: { enemyHand: true, topCards: 3 } } },
+    };
+    const store = memoryStore();
+    saveRun(store, rich);
+    expect(loadRun(store)).toEqual({ status: 'ok', run: rich });
+  });
+
+  it('rejects saves from version 8', () => {
+    const store = memoryStore({ [RUN_STORAGE_KEY]: JSON.stringify({ version: 8, run: createRun(1) }) });
+    expect(loadRun(store)).toEqual({ status: 'invalid' });
+  });
+
   it('round-trips a fight run and a shop run', () => {
     for (const run of [createRun(42), shopRun()]) {
       const store = memoryStore();

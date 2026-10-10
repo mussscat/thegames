@@ -14,6 +14,8 @@ type ShopSlotProps = {
   /** «Купить» for single items, «Открыть» for packs. */
   readonly verb: string;
   readonly warning?: string | null;
+  /** Disables the buy button with this text (e.g. «Мало места»). */
+  readonly blocked?: string | null;
   readonly onSelect: () => void;
   readonly onBuy: () => void;
   readonly children: ReactNode;
@@ -23,7 +25,7 @@ type ShopSlotProps = {
  * A Balatro shop slot: a coin tag on the card's top edge (red when unaffordable), the description on hover or long press,
  * a tap selects it and shows the buy button under it — disabled when the coins are short.
  */
-export function ShopSlot({ price, coins, title, testId, tip, selected, verb, warning = null, onSelect, onBuy, children }: ShopSlotProps) {
+export function ShopSlot({ price, coins, title, testId, tip, selected, verb, warning = null, blocked = null, onSelect, onBuy, children }: ShopSlotProps) {
   const { anchor, handlers } = useCardTip(price !== null, false);
   if (price === null) {
     return (
@@ -53,8 +55,8 @@ export function ShopSlot({ price, coins, title, testId, tip, selected, verb, war
       {selected && (
         <div className="shop-slot__buy">
           {warning && <p className="shop-slot__warning">{warning}</p>}
-          <PixelButton tone="orange" small disabled={!affordable} aria-label={`${verb} ${title} за ${price}`} onClick={onBuy}>
-            {affordable ? verb : 'Мало монет'}
+          <PixelButton tone="orange" small disabled={!affordable || blocked !== null} aria-label={`${verb} ${title} за ${price}`} onClick={onBuy}>
+            {blocked ?? (affordable ? verb : 'Мало монет')}
           </PixelButton>
         </div>
       )}
