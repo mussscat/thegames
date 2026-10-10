@@ -1,4 +1,4 @@
-import { isRedSuit, type Card } from '@game/core';
+import { isRedSuit, type Card, type Suit } from '@game/core';
 import { ENHANCEMENT_IDS, FOCUSES, JOKERS, RARITIES, TAROTS, type EnhancementId, type FocusId, type JokerId, type Rarity, type TarotId } from '@game/durak';
 import backSheetUrl from '../../assets/back.png';
 import enhancementSheetUrl from '../../assets/enhancements.png';
@@ -8,6 +8,8 @@ import jokerBgRareUrl from '../../assets/joker_bg_rare.png';
 import jokerPers1Url from '../../assets/jokers_pers_1.png';
 import jokerPers2Url from '../../assets/jokers_pers_2.png';
 import jokerPers3Url from '../../assets/jokers_pers_3.png';
+import suitsBigUrl from '../../assets/suits_big.png';
+import suitsSmallUrl from '../../assets/suits_small.png';
 import trickBgCommonUrl from '../../assets/tricks_bg_common.png';
 import trickBgLegendaryUrl from '../../assets/tricks_bg_legendary.png';
 import trickBgRareUrl from '../../assets/tricks_bg_rare.png';
@@ -21,7 +23,7 @@ import taroSheet2Url from '../../assets/taro_2.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -117,6 +119,31 @@ export function suitLayer(card: Card): Grid {
   return grid;
 }
 
+type SuitSet = Readonly<Record<Suit, Pixels>>;
+/** The suit pictures cut from `suits_small.png` (corner pips) and `suits_big.png` (centre of a plain card). */
+export type SuitSprites = { readonly pip: SuitSet; readonly big: SuitSet };
+
+/** Where the pip starts: below the rank text of the corner. */
+const PIP_TOP = 22;
+/** The big suit of a plain card is shrunk to this box so it stays clear of the corner pips. */
+const BIG_BOX = { w: 38, h: 44 };
+
+/**
+ * Transparent layer with the suit pip under each rank corner (the bottom one turned by 180°, as on a playing card)
+ * and, on a plain card, the big suit in the middle. The rank itself is text drawn by the UI.
+ */
+export function composeSuitLayer(suit: Suit, sprites: SuitSprites, plain: boolean): Pixels {
+  const pip = sprites.pip[suit];
+  const x = CORNER_X + Math.floor((CORNER_W - pip.w) / 2);
+  const empty: Pixels = { w: ART_W, h: ART_H, data: new Uint8ClampedArray(ART_W * ART_H * 4) };
+  const corners = overlay(overlay(empty, pip, x, PIP_TOP), rotate180(pip), ART_W - x - pip.w, ART_H - PIP_TOP - pip.h);
+  if (!plain) return corners;
+  const big = fitInside(sprites.big[suit], BIG_BOX.w, BIG_BOX.h);
+  return overlay(corners, big, Math.floor((ART_W - big.w) / 2), Math.floor((ART_H - big.h) / 2));
+}
+
+let suitSprites: SuitSprites | undefined;
+let suitMarkUrls: Readonly<Partial<Record<Suit, string>>> = {};
 let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
 let plainUrl: string | undefined;
 let backUrl: string | undefined;
@@ -126,6 +153,7 @@ let backdropUrls: Readonly<Partial<Record<'jokers' | 'arcana' | 'focuses' | 'dec
 let trickUrls: Readonly<Partial<Record<FocusId, string>>> = {};
 let tarotUrls: Readonly<Partial<Record<TarotId, string>>> = {};
 const suitUrls = new Map<string, string>();
+const SUITS: readonly Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 
 /**
  * Slices the sheets once at startup; each loads on its own. Until a sheet resolves — or if it fails to
@@ -144,9 +172,22 @@ export async function preloadCardArt(): Promise<void> {
       backdropUrls = { ...backdropUrls, deck: backUrl };
     }),
     loadJokerArt(),
+    loadSuitArt(),
     loadTarotArt(),
     loadTrickArt(),
   ]);
+}
+
+/** Both suit sheets are needed together (a pip without its big suit would leave the plain card half done). */
+async function loadSuitArt(): Promise<void> {
+  const [small, big] = await Promise.all([
+    loadPixels(suitsSmallUrl).then((pixels) => keyOutFringe(pixels, SUIT_SMALL_KEY)),
+    loadPixels(suitsBigUrl).then((pixels) => keyOutFringe(pixels, SUIT_BIG_KEY)),
+  ]);
+  const cut = (sheet: Pixels, group: 'pip' | 'big'): SuitSet =>
+    Object.fromEntries(SUITS.map((suit) => [suit, crop(sheet, SUIT_FRAMES[group][suit])])) as unknown as SuitSet;
+  suitSprites = { pip: cut(small, 'pip'), big: cut(big, 'big') };
+  suitMarkUrls = Object.fromEntries(SUITS.map((suit) => [suit, pixelsToUrl(crop(small, SUIT_FRAMES.mark[suit]))]));
 }
 
 /** Backgrounds first, then each character sheet on its own: a missing sheet only costs its six jokers their sprites. */
@@ -235,10 +276,17 @@ export function jokerArtUrl(id: JokerId): string | undefined {
   return jokerUrls[id];
 }
 
-export function suitLayerUrl(card: Card): string {
-  const hit = suitUrls.get(card.suit);
+/** The suit layer of a card face; `plain` adds the big suit. Without the sprites the drawn pips stand in. */
+export function suitLayerUrl(card: Card, plain: boolean): string {
+  const key = `${card.suit}:${plain}`;
+  const hit = suitUrls.get(key);
   if (hit) return hit;
-  const url = toDataUrl(suitLayer(card));
-  suitUrls.set(card.suit, url);
+  const url = suitSprites ? pixelsToUrl(composeSuitLayer(card.suit, suitSprites, plain)) : toDataUrl(suitLayer(card));
+  suitUrls.set(key, url);
   return url;
+}
+
+/** The 20 px suit sign for next to text (the trump of the deck); undefined until the sheet is loaded. */
+export function suitMarkUrl(suit: Suit): string | undefined {
+  return suitMarkUrls[suit];
 }

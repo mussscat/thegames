@@ -1,3 +1,4 @@
+import type { Suit } from '@game/core';
 import type { EnhancementId, FocusId, JokerId, TarotId } from '@game/durak';
 
 /** Raw RGBA pixels, row by row — the same layout as canvas ImageData. */
@@ -140,6 +141,34 @@ export const COIN_FRAMES = {
 } as const satisfies { readonly spin: readonly Rect[]; readonly face: Rect; readonly red: Rect; readonly grey: Rect; readonly plate: Rect };
 export const COIN_KEY: readonly [number, number, number] = [253, 6, 230];
 
+/**
+ * Tight boxes of the suits on `assets/suits_small.png` (4 across: ♥ ♦ ♣ ♠; the top row is the 20 px «mark» used next
+ * to text, the bottom row the 13–15 px «pip» for the corner of a card) and on `assets/suits_big.png` (2×2 in the same
+ * order, the big suit in the middle of a plain card).
+ */
+export const SUIT_FRAMES = {
+  mark: {
+    hearts: { x: 67, y: 65, w: 20, h: 22 },
+    diamonds: { x: 130, y: 65, w: 20, h: 22 },
+    clubs: { x: 193, y: 65, w: 21, h: 22 },
+    spades: { x: 256, y: 65, w: 21, h: 22 },
+  },
+  pip: {
+    hearts: { x: 71, y: 112, w: 13, h: 16 },
+    diamonds: { x: 134, y: 112, w: 13, h: 16 },
+    clubs: { x: 196, y: 112, w: 15, h: 16 },
+    spades: { x: 259, y: 112, w: 15, h: 16 },
+  },
+  big: {
+    hearts: { x: 54, y: 16, w: 67, h: 67 },
+    diamonds: { x: 223, y: 16, w: 67, h: 67 },
+    clubs: { x: 54, y: 108, w: 67, h: 72 },
+    spades: { x: 223, y: 108, w: 67, h: 72 },
+  },
+} as const satisfies Record<'mark' | 'pip' | 'big', Record<Suit, Rect>>;
+export const SUIT_SMALL_KEY: readonly [number, number, number] = [235, 25, 209];
+export const SUIT_BIG_KEY: readonly [number, number, number] = [249, 8, 239];
+
 /** Interface icons in sheet order (icons_1..3, 4×2 cells each). */
 export const ICON_IDS = [
   'chip', 'mult', 'heart', 'heartEmpty', 'shield', 'suitHearts', 'suitDiamonds', 'suitClubs',
@@ -232,6 +261,11 @@ export function fitInside(src: Pixels, maxW: number, maxH: number): Pixels {
   if (src.w <= maxW && src.h <= maxH) return src;
   const scale = Math.min(maxW / src.w, maxH / src.h);
   return downscale(src, Math.max(1, Math.round(src.w * scale)), Math.max(1, Math.round(src.h * scale)));
+}
+
+/** Turns the image by 180° (the bottom corner of a playing card). */
+export function rotate180(src: Pixels): Pixels {
+  return remap(src, src.w, src.h, (x, y) => [src.w - 1 - x, src.h - 1 - y]);
 }
 
 /** Centres the image on a transparent square as wide as its longer side, so differently shaped icons share one box. */

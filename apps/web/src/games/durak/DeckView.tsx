@@ -1,10 +1,8 @@
-import { isRedSuit, SUIT_SYMBOLS, type Suit } from '@game/core';
+import { isRedSuit } from '@game/core';
 import type { RoundState } from '@game/durak';
 import { CardBack, CardView } from '../../components/CardView';
 import { Icon } from '../../ui/Icon';
-import type { IconId } from '../../ui/pixel/sheet';
-
-const SUIT_ICONS: Readonly<Record<Suit, IconId>> = { hearts: 'suitHearts', diamonds: 'suitDiamonds', clubs: 'suitClubs', spades: 'suitSpades' };
+import { SuitMark } from '../../ui/SuitMark';
 
 type DeckViewProps = { readonly round: RoundState; readonly revealTop: boolean; /** Top cards shown face up (Прорицание). */ readonly peek?: number };
 
@@ -35,7 +33,7 @@ export function DeckView({ round, revealTop, peek = 0 }: DeckViewProps) {
       </div>
       <span className="chip deck__count"><Icon id="deck" /> {round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
       <span className="chip deck__trump">
-        Козырь <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}><Icon id={SUIT_ICONS[round.trumpSuit]} fallback={SUIT_SYMBOLS[round.trumpSuit]} />
+        Козырь <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}><SuitMark suit={round.trumpSuit} />
         </span>
         {round.boss === 'witch' && ' + дамы'}
         {round.boss === 'shuffler' && ' (меняется)'}

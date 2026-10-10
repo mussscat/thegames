@@ -38,7 +38,7 @@ export function CardFace({ card, enhancement, split }: CardFaceProps) {
       <div className="face face--art">
         <img className={art.foreign ? 'sprite face__sprite face__sprite--own' : 'sprite face__sprite'} src={art.own} alt="" draggable={false} />
         {art.foreign && <img className="sprite face__sprite face__sprite--foreign" src={art.foreign} alt="" draggable={false} />}
-        <img className="sprite face__sprite" src={suitLayerUrl(card)} alt="" draggable={false} />
+        <img className="sprite face__sprite" src={suitLayerUrl(card, !enhancement && !split)} alt="" draggable={false} />
         {ranks}
       </div>
     );

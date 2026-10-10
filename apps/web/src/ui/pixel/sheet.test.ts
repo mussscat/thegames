@@ -1,7 +1,7 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
 import { FOCUS_IDS, JOKER_IDS, TAROT_IDS } from '@game/durak';
-import { COIN_FRAMES, crop, keyOutFringe, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, ICON_CELLS, ICON_IDS, ICON_SHEETS, overlay, padSquare, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels } from './sheet';
+import { COIN_FRAMES, crop, keyOutFringe, rotate180, SUIT_FRAMES, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, ICON_CELLS, ICON_IDS, ICON_SHEETS, overlay, padSquare, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -156,6 +156,32 @@ describe('keyOutFringe', () => {
   it('keeps every colour that is not a shade of the key', () => {
     const kept = [[40, 60, 200], [200, 200, 200], [60, 20, 70], [10, 10, 10], [240, 200, 40]];
     expect(run(kept)).toEqual(kept.flatMap((p) => [...p, 255]));
+  });
+});
+
+describe('rotate180', () => {
+  it('turns the image upside down and back to front', () => {
+    const out = rotate180(coords(3, 2));
+    expect([out.w, out.h]).toEqual([3, 2]);
+    expect(Array.from(out.data.subarray(0, 2))).toEqual([2, 1]);
+    expect(Array.from(out.data.subarray((1 * 3 + 2) * 4, (1 * 3 + 2) * 4 + 2))).toEqual([0, 0]);
+  });
+});
+
+describe('SUIT_FRAMES', () => {
+  const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
+  it('has a corner pip, a mark and a big suit for every suit, all inside their 344×192 sheets', () => {
+    for (const group of [SUIT_FRAMES.pip, SUIT_FRAMES.mark, SUIT_FRAMES.big]) {
+      for (const suit of suits) {
+        const frame = group[suit];
+        expect(frame.x + frame.w).toBeLessThanOrEqual(344);
+        expect(frame.y + frame.h).toBeLessThanOrEqual(192);
+      }
+    }
+  });
+
+  it('keeps the pips small enough for the 18 px corner column of the card', () => {
+    for (const suit of suits) expect(SUIT_FRAMES.pip[suit].w).toBeLessThanOrEqual(18);
   });
 });
 

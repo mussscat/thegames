@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, composeJoker, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
+import { ART_H, ART_W, composeJoker, composeSuitLayer, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -94,6 +94,48 @@ describe('composeTrick', () => {
     const out = composeTrick(bg(), flat(122, 80, [200, 0, 0, 255]));
     expect(at(out, 0, TRICK_H / 2)).toEqual([1, 2, 3, 255]);
     expect(at(out, TRICK_W - 1, TRICK_H / 2)).toEqual([1, 2, 3, 255]);
+  });
+});
+
+describe('composeSuitLayer', () => {
+  const block = (w: number, h: number, rgba: readonly number[]): Pixels => ({ w, h, data: new Uint8ClampedArray(Array.from({ length: w * h }, () => rgba).flat()) });
+  /** A pip with one blue marker pixel at its top-left, so a 180° turn is visible. */
+  const pip = (): Pixels => {
+    const p = block(13, 16, [200, 0, 0, 255]);
+    p.data.set([0, 0, 200, 255], 0);
+    return p;
+  };
+  const sprites = { pip: { hearts: pip(), diamonds: pip(), clubs: pip(), spades: pip() }, big: { hearts: block(67, 67, [0, 200, 0, 255]), diamonds: block(67, 67, [0, 200, 0, 255]), clubs: block(67, 67, [0, 200, 0, 255]), spades: block(67, 67, [0, 200, 0, 255]) } };
+  const at = (p: Pixels, x: number, y: number) => Array.from(p.data.subarray((y * p.w + x) * 4, (y * p.w + x) * 4 + 4));
+  const painted = (p: Pixels) => Array.from({ length: p.w * p.h }, (_, i) => [i % p.w, Math.floor(i / p.w)] as const).filter(([x, y]) => (p.data[(y * p.w + x) * 4 + 3] ?? 0) > 0);
+
+  it('draws the pip under each rank corner and nothing in the middle of an enhanced card', () => {
+    const out = composeSuitLayer('hearts', sprites, false);
+    expect([out.w, out.h]).toEqual([ART_W, ART_H]);
+    const cells = painted(out);
+    expect(cells.length).toBeGreaterThan(0);
+    for (const [x, y] of cells) expect((x < 20 && y < 40) || (x >= ART_W - 20 && y >= ART_H - 40)).toBe(true);
+  });
+
+  it('turns the bottom pip by 180°, as on a playing card', () => {
+    const out = composeSuitLayer('hearts', sprites, false);
+    const top = painted(out).filter(([x, y]) => x < 20 && y < 40);
+    const bottom = painted(out).filter(([x, y]) => x >= ART_W - 20 && y >= ART_H - 40);
+    const [tx, ty] = [Math.min(...top.map(([x]) => x)), Math.min(...top.map(([, y]) => y))];
+    expect(at(out, tx, ty)).toEqual([0, 0, 200, 255]);
+    const [bx, by] = [Math.max(...bottom.map(([x]) => x)), Math.max(...bottom.map(([, y]) => y))];
+    expect(at(out, bx, by)).toEqual([0, 0, 200, 255]);
+  });
+
+  it('adds the big suit in the middle of a plain card, shrunk to fit between the corners', () => {
+    const out = composeSuitLayer('spades', sprites, true);
+    expect(at(out, ART_W / 2, ART_H / 2)).toEqual([0, 200, 0, 255]);
+    const big = painted(out).filter(([x, y]) => x >= 20 && x < ART_W - 20 && y >= 40 && y < ART_H - 40);
+    expect(big.length).toBeGreaterThan(0);
+    for (const [x] of painted(out).filter(([, y]) => y >= 40 && y < ART_H - 40)) {
+      expect(x).toBeGreaterThanOrEqual(10);
+      expect(x).toBeLessThan(ART_W - 10);
+    }
   });
 });
 
