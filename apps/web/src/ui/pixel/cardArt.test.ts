@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, fitEnhancementFrame, suitLayer } from './enhancementArt';
+import { ART_H, ART_W, fitEnhancementFrame, fitWholeCard, suitLayer } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -17,6 +17,15 @@ describe('fitEnhancementFrame', () => {
 
   it('rejects a frame of another size instead of drawing a skewed card', () => {
     expect(() => fitEnhancementFrame(solid(60, 104))).toThrow();
+  });
+});
+
+describe('fitWholeCard', () => {
+  it('shrinks the back (120×170) and the plain card (112×148) to the same art size as the enhancements', () => {
+    for (const [w, h] of [[120, 170], [112, 148]] as const) {
+      const out = fitWholeCard(solid(w, h));
+      expect([out.w, out.h]).toEqual([ART_W, ART_H]);
+    }
   });
 });
 

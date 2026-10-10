@@ -1,6 +1,6 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { crop, dropColumns, dropRows, ENHANCEMENT_FRAMES, repeatColumns, type Pixels } from './sheet';
+import { crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, repeatColumns, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -50,6 +50,36 @@ describe('repeatColumns', () => {
     const out = repeatColumns(coords(4, 1), [1, 2]);
     expect(out.w).toBe(6);
     expect([0, 1, 2, 3, 4, 5].map((x) => at(out, x, 0)[0])).toEqual([0, 1, 1, 2, 2, 3]);
+  });
+});
+
+describe('downscale', () => {
+  /** 4×4: a 1-px dark ring around a light 2×2 centre. */
+  function ring(): Pixels {
+    const data = new Uint8ClampedArray(4 * 4 * 4);
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        const edge = x === 0 || y === 0 || x === 3 || y === 3;
+        data.set(edge ? [10, 10, 10, 255] : [200, 200, 200, 255], (y * 4 + x) * 4);
+      }
+    }
+    return { w: 4, h: 4, data };
+  }
+
+  it('picks the most common colour of each cell, so no new colours appear', () => {
+    const out = downscale(ring(), 2, 2);
+    expect([out.w, out.h]).toEqual([2, 2]);
+    const colours = new Set(Array.from({ length: 4 }, (_, i) => Array.from(out.data.subarray(i * 4, i * 4 + 4)).join(',')));
+    expect(colours).toEqual(new Set(['10,10,10,255']));
+  });
+
+  it('keeps the size when asked for the same size', () => {
+    const src = coords(5, 3);
+    expect(downscale(src, 5, 3).data).toEqual(src.data);
+  });
+
+  it('rejects growing the image', () => {
+    expect(() => downscale(coords(2, 2), 3, 2)).toThrow();
   });
 });
 

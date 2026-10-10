@@ -6,6 +6,7 @@ import { tipLines } from './tipLines';
 import { CardTip, useCardTip } from './CardTip';
 import { FeelBox } from '../ui/FeelBox';
 import { backUrl } from '../ui/pixel/cardSprite';
+import { backArtUrl } from '../ui/pixel/cardArt';
 
 const CARD_SPRING = { type: 'spring', stiffness: 500, damping: 35 } as const;
 
@@ -94,7 +95,7 @@ type CardBackProps = { readonly layoutId?: string };
 export function CardBack({ layoutId }: CardBackProps) {
   return (
     <motion.div layoutId={layoutId} transition={CARD_SPRING} className="card card--back" aria-hidden="true">
-      <img className="sprite" src={backUrl()} alt="" draggable={false} />
+      <img className="sprite" src={backArtUrl() ?? backUrl()} alt="" draggable={false} />
     </motion.div>
   );
 }

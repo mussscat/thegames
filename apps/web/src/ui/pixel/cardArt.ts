@@ -1,11 +1,13 @@
 import { isRedSuit, type Card } from '@game/core';
 import { ENHANCEMENT_IDS, type EnhancementId } from '@game/durak';
-import sheetUrl from '../../assets/enhancements.png';
+import backSheetUrl from '../../assets/back.png';
+import enhancementSheetUrl from '../../assets/enhancements.png';
+import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { crop, dropColumns, ENHANCEMENT_FRAMES, loadPixels, pixelsToUrl, repeatColumns, type Pixels } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, loadPixels, PLAIN_FRAME, pixelsToUrl, repeatColumns, type Pixels } from './sheet';
 
-/** Enhanced card art: the 3:5 sheet frame widened to 5:7 (variant C from the lab). */
+/** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
 export const ART_H = 104;
 
@@ -20,6 +22,11 @@ export function fitEnhancementFrame(raw: Pixels): Pixels {
   }
   const even = raw.w > FRAME_W ? dropColumns(raw, [4]) : raw;
   return repeatColumns(even, WIDEN_COLUMNS);
+}
+
+/** The back and the plain card are drawn at a finer pixel; shrinking them keeps one pixel size across the hand. */
+export function fitWholeCard(raw: Pixels): Pixels {
+  return downscale(raw, ART_W, ART_H);
 }
 
 const INK = '#1b1426';
@@ -53,19 +60,38 @@ export function suitLayer(card: Card): Grid {
 }
 
 let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
+let plainUrl: string | undefined;
+let backUrl: string | undefined;
 const suitUrls = new Map<string, string>();
 
 /**
- * Slices the sheet once at startup. Until it resolves — or if the sheet fails to load —
- * `enhancementArtUrl` returns undefined and cards fall back to the procedural art.
+ * Slices the sheets once at startup; each loads on its own. Until a sheet resolves — or if it fails to
+ * load — its getter returns undefined and those cards fall back to the procedural canvas art.
  */
-export async function preloadEnhancementArt(): Promise<void> {
-  const sheet = await loadPixels(sheetUrl);
-  artUrls = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, pixelsToUrl(fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id])))]));
+export async function preloadCardArt(): Promise<void> {
+  await Promise.allSettled([
+    loadPixels(enhancementSheetUrl).then((sheet) => {
+      artUrls = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, pixelsToUrl(fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id])))]));
+    }),
+    loadPixels(plainSheetUrl).then((sheet) => {
+      plainUrl = pixelsToUrl(fitWholeCard(crop(sheet, PLAIN_FRAME)));
+    }),
+    loadPixels(backSheetUrl).then((sheet) => {
+      backUrl = pixelsToUrl(fitWholeCard(crop(sheet, BACK_FRAME)));
+    }),
+  ]);
 }
 
 export function enhancementArtUrl(id: EnhancementId): string | undefined {
   return artUrls[id];
+}
+
+export function plainArtUrl(): string | undefined {
+  return plainUrl;
+}
+
+export function backArtUrl(): string | undefined {
+  return backUrl;
 }
 
 export function suitLayerUrl(card: Card): string {

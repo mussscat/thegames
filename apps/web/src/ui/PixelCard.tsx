@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { CardFace } from './CardFace';
 import { FEEL, FeelBox, type Feel } from './FeelBox';
 import { backUrl } from './pixel/cardSprite';
+import { backArtUrl } from './pixel/cardArt';
 
 type PixelCardProps = {
   readonly card: Card;
@@ -49,7 +50,7 @@ export function PixelCard({
             <CardFace card={card} enhancement={enhancement} />
           </div>
           <div className="pcard__side pcard__side--back">
-            <img className="sprite" src={backUrl()} alt="" draggable={false} />
+            <img className="sprite" src={backArtUrl() ?? backUrl()} alt="" draggable={false} />
           </div>
         </motion.div>
       </FeelBox>

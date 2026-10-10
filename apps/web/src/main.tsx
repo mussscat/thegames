@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 /* Base theme first: screen styles imported by the components below must win over it. */
 import './ui/theme.css';
 import { App } from './App';
-import { preloadEnhancementArt } from './ui/pixel/enhancementArt';
+import { preloadCardArt } from './ui/pixel/cardArt';
 
 /** `?lab` opens the card lab — a tuning tool kept out of the main bundle. */
 const CardLab = lazy(() => import('./lab/CardLab').then((module) => ({ default: module.CardLab })));
@@ -29,10 +29,7 @@ function render(root: HTMLElement): void {
   );
 }
 
-/* The enhancement sprites are sliced before the first frame, so cards never swap art mid-game.
-   A sheet that fails to load is not fatal: enhanced cards keep the procedural art. */
+/* The card sprites are sliced before the first frame, so cards never swap art mid-game.
+   A sheet that fails to load is not fatal: its cards keep the procedural art. */
 const root = rootElement;
-preloadEnhancementArt().then(
-  () => render(root),
-  () => render(root),
-);
+void preloadCardArt().then(() => render(root));

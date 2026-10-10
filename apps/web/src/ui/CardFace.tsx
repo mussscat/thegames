@@ -1,7 +1,7 @@
 import { isRedSuit, rankLabel, type Card } from '@game/core';
 import type { EnhancementId } from '@game/durak';
 import { frontUrl } from './pixel/cardSprite';
-import { enhancementArtUrl, suitLayerUrl } from './pixel/enhancementArt';
+import { enhancementArtUrl, plainArtUrl, suitLayerUrl } from './pixel/cardArt';
 
 type CardFaceProps = {
   readonly card: Card;
@@ -12,14 +12,14 @@ type CardFaceProps = {
 
 type ArtLayers = { readonly own: string; readonly foreign?: string };
 
-/** Sprite-sheet art for enhanced cards; undefined for plain cards or when the sheet did not load. */
+/** Sprite-sheet art for the card; undefined when its sheet did not load (the canvas art is drawn instead). */
 function artLayers(enhancement: EnhancementId | undefined, split: CardFaceProps['split']): ArtLayers | undefined {
   if (split) {
     const own = enhancementArtUrl(split.own);
     const foreign = enhancementArtUrl(split.foreign);
     return own && foreign ? { own, foreign } : undefined;
   }
-  const own = enhancement && enhancementArtUrl(enhancement);
+  const own = enhancement ? enhancementArtUrl(enhancement) : plainArtUrl();
   return own ? { own } : undefined;
 }
 

@@ -60,6 +60,49 @@ export function repeatColumns(src: Pixels, columns: readonly number[]): Pixels {
   return remap(src, xs.length, src.h, (x, y) => [xs[x] ?? 0, y]);
 }
 
+/** The card on `assets/back.png` and on `assets/plain.png` (344×192 sheets with one card each). */
+export const BACK_FRAME: Rect = { x: 112, y: 11, w: 120, h: 170 };
+export const PLAIN_FRAME: Rect = { x: 116, y: 22, w: 112, h: 148 };
+
+/** Index of the most common colour among the given pixel offsets (the first one wins a tie). */
+function commonest(data: Uint8ClampedArray, offsets: readonly number[]): number {
+  const counts = new Map<string, number>();
+  let best = offsets[0] ?? 0;
+  let bestCount = 0;
+  for (const i of offsets) {
+    const key = data.subarray(i, i + 4).join(',');
+    const count = (counts.get(key) ?? 0) + 1;
+    counts.set(key, count);
+    if (count > bestCount) {
+      best = i;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+/**
+ * Shrinks to w×h by taking the most common colour of each source cell: unlike smoothing it adds
+ * no new colours, and unlike nearest-neighbour a thin outline does not vanish on some sides.
+ */
+export function downscale(src: Pixels, w: number, h: number): Pixels {
+  if (w > src.w || h > src.h) throw new Error(`downscale ${src.w}×${src.h} → ${w}×${h} would grow the image`);
+  const span = (i: number, size: number, from: number): readonly number[] => {
+    const start = Math.floor((i * from) / size);
+    const end = Math.max(start + 1, Math.floor(((i + 1) * from) / size));
+    return indices(end - start).map((k) => start + k);
+  };
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const offsets = span(y, h, src.h).flatMap((sy) => span(x, w, src.w).map((sx) => (sy * src.w + sx) * 4));
+      const i = commonest(src.data, offsets);
+      data.set(src.data.subarray(i, i + 4), (y * w + x) * 4);
+    }
+  }
+  return { w, h, data };
+}
+
 /** Browser only: decodes an image URL into pixels. */
 export async function loadPixels(url: string): Promise<Pixels> {
   const image = new Image();
