@@ -11,6 +11,7 @@ import { SwirlBackground } from '../ui/SwirlBackground';
 import { FontTab } from './FontTab';
 import { GalleryTab } from './GalleryTab';
 import { HighlightTab } from './HighlightTab';
+import { JokersTab } from './JokersTab';
 import { PacksTab } from './PacksTab';
 import { SpritesTab } from './SpritesTab';
 import './labFonts';
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'highlight', name: 'Подсветка' },
   { id: 'trump', name: 'Козырь' },
   { id: 'gallery', name: 'Галерея' },
+  { id: 'jokers', name: 'Джокеры' },
   { id: 'packs', name: 'Паки' },
   { id: 'sprites', name: 'Спрайты' },
 ] as const;
@@ -93,6 +95,7 @@ export function CardLab() {
         {tab === 'highlight' && <HighlightTab />}
         {tab === 'trump' && <TrumpTab />}
         {tab === 'gallery' && <GalleryTab />}
+        {tab === 'jokers' && <JokersTab />}
         {tab === 'packs' && <PacksTab />}
         {tab === 'sprites' && <SpritesTab />}
         {tab === 'card' && (
