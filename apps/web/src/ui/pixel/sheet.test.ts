@@ -1,7 +1,7 @@
 import { ENHANCEMENT_IDS } from '@game/durak';
 import { describe, expect, it } from 'vitest';
 import { FOCUS_IDS, JOKER_IDS, TAROT_IDS } from '@game/durak';
-import { COIN_FRAMES, crop, keyOutFringe, rotate180, SUIT_FRAMES, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, ICON_CELLS, ICON_IDS, ICON_SHEETS, overlay, padSquare, PERS_CELLS, repeatColumns, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels } from './sheet';
+import { COIN_FRAMES, crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, ICON_CELLS, ICON_IDS, ICON_SHEETS, JOKER_PERS_SHEETS, keyOut, keyOutFringe, overlay, padSquare, padToBox, PERS_CELLS, repeatColumns, rotate180, shrinkBy, shrinkToFit, SUIT_FRAMES, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, TRICK_CELLS, TRICK_SHEETS, trimToContent, type Pixels } from './sheet';
 
 /** A w×h image whose red channel holds x and green channel holds y, so every pixel says where it came from. */
 function coords(w: number, h: number): Pixels {
@@ -294,5 +294,45 @@ describe('ENHANCEMENT_FRAMES', () => {
       expect(f.y + f.h).toBeLessThanOrEqual(192);
       expect(f.h).toBe(104);
     }
+  });
+});
+
+describe('shrinkBy', () => {
+  it('shrinks by a whole factor and returns the same image for factor 1', () => {
+    const src = coords(8, 4);
+    const out = shrinkBy(src, 2);
+    expect([out.w, out.h]).toEqual([4, 2]);
+    expect(shrinkBy(src, 1)).toBe(src);
+  });
+});
+
+describe('padToBox', () => {
+  it('centres the image on a transparent square of exactly the given side', () => {
+    const src: Pixels = { w: 4, h: 2, data: new Uint8ClampedArray(4 * 2 * 4).fill(255) };
+    const out = padToBox(src, 6);
+    expect([out.w, out.h]).toEqual([6, 6]);
+    expect(Array.from(out.data.subarray(0, 4))).toEqual([0, 0, 0, 0]);
+    expect(Array.from(out.data.subarray((2 * 6 + 1) * 4, (2 * 6 + 1) * 4 + 4))).toEqual([255, 255, 255, 255]);
+  });
+
+  it('refuses an image that does not fit', () => {
+    expect(() => padToBox(coords(7, 2), 6)).toThrow();
+  });
+});
+
+describe('shrinkToFit', () => {
+  it('shrinks by the smallest whole factor that fits and centres the result on the square', () => {
+    const big = shrinkToFit(coords(70, 40), 18);
+    expect([big.w, big.h]).toEqual([18, 18]);
+    const small = shrinkToFit(coords(30, 30), 18);
+    expect([small.w, small.h]).toEqual([18, 18]);
+    // 30 px → factor 2 → 15 px: the pixels of the icon are 2×2 source pixels, centred with a 1-px margin
+    expect(Array.from(small.data.subarray(0, 4))).toEqual([0, 0, 0, 0]);
+    expect(small.data[(1 * 18 + 1) * 4 + 3]).toBe(255);
+  });
+
+  it('leaves an image that already fits alone, only centred', () => {
+    const out = shrinkToFit(coords(10, 12), 18);
+    expect([out.w, out.h]).toEqual([18, 18]);
   });
 });

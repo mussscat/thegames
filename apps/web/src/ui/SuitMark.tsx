@@ -5,5 +5,5 @@ import { suitMarkUrl } from './pixel/cardArt';
 export function SuitMark({ suit }: { readonly suit: Suit }) {
   const url = suitMarkUrl(suit);
   if (!url) return <span aria-hidden="true">{SUIT_SYMBOLS[suit]}</span>;
-  return <img className="icon" src={url} alt="" draggable={false} />;
+  return <img className="icon icon--mark" src={url} alt="" draggable={false} />;
 }

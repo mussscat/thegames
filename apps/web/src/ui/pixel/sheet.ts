@@ -268,6 +268,25 @@ export function rotate180(src: Pixels): Pixels {
   return remap(src, src.w, src.h, (x, y) => [src.w - 1 - x, src.h - 1 - y]);
 }
 
+/** Shrinks by a whole factor (most common colour per cell), so a sprite can be shown ×1 with hard pixels. */
+export function shrinkBy(src: Pixels, factor: number): Pixels {
+  if (factor <= 1) return src;
+  return downscale(src, Math.max(1, Math.floor(src.w / factor)), Math.max(1, Math.floor(src.h / factor)));
+}
+
+/** Centres the image on a transparent square of exactly `side` px; the image must fit. */
+export function padToBox(src: Pixels, side: number): Pixels {
+  if (src.w > side || src.h > side) throw new Error(`padToBox: ${src.w}×${src.h} does not fit ${side}×${side}`);
+  const empty: Pixels = { w: side, h: side, data: new Uint8ClampedArray(side * side * 4) };
+  return overlay(empty, src, Math.floor((side - src.w) / 2), Math.floor((side - src.h) / 2));
+}
+
+/** Shrinks by the smallest whole factor that makes the image fit `side` px, then centres it on a `side`×`side` square. */
+export function shrinkToFit(src: Pixels, side: number): Pixels {
+  const factor = Math.max(1, Math.ceil(Math.max(src.w, src.h) / side));
+  return padToBox(shrinkBy(src, factor), side);
+}
+
 /** Centres the image on a transparent square as wide as its longer side, so differently shaped icons share one box. */
 export function padSquare(src: Pixels): Pixels {
   if (src.w === src.h) return src;

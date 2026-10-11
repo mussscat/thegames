@@ -151,6 +151,8 @@ body {
 .face--art .face__rank { font-size: 1.05em; top: 4.8%; left: 16.2%; transform: translateX(-50%); }
 .face--art .face__rank--bottom { top: auto; left: auto; right: 16.2%; bottom: 4.8%; transform: translateX(50%) rotate(180deg); }
 
-/* ---------- coin and icons: sprites far larger than the text, so they are scaled down smoothly ---------- */
-.coin, .icon { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; object-fit: contain; image-rendering: auto; }
-.icon { width: 1.05em; height: 1.05em; }
+/* ---------- coin and icons: pre-shrunk by a whole factor (coin 19 px, icon 18 px, suit sign 22 px), shown ×1 ---------- */
+.coin, .icon { display: inline-block; vertical-align: -4px; image-rendering: pixelated; }
+.coin { width: 19px; height: 19px; }
+.icon { width: 18px; height: 18px; }
+.icon--mark { width: 22px; height: 22px; vertical-align: -5px; }

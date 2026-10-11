@@ -23,7 +23,7 @@ import taroSheet2Url from '../../assets/taro_2.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, padToBox, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -187,7 +187,7 @@ async function loadSuitArt(): Promise<void> {
   const cut = (sheet: Pixels, group: 'pip' | 'big'): SuitSet =>
     Object.fromEntries(SUITS.map((suit) => [suit, crop(sheet, SUIT_FRAMES[group][suit])])) as unknown as SuitSet;
   suitSprites = { pip: cut(small, 'pip'), big: cut(big, 'big') };
-  suitMarkUrls = Object.fromEntries(SUITS.map((suit) => [suit, pixelsToUrl(crop(small, SUIT_FRAMES.mark[suit]))]));
+  suitMarkUrls = Object.fromEntries(SUITS.map((suit) => [suit, pixelsToUrl(padToBox(crop(small, SUIT_FRAMES.mark[suit]), 22))]));
 }
 
 /** Backgrounds first, then each character sheet on its own: a missing sheet only costs its six jokers their sprites. */
