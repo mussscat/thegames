@@ -4,7 +4,7 @@ const PORT = 4173;
 
 export default defineConfig({
   testDir: 'e2e',
-  use: { baseURL: `http://localhost:${PORT}` },
+  use: { baseURL: `http://localhost:${PORT}`, storageState: 'e2e/storage-state.json' },
   projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
   webServer: {
     command: `npm run build && npm run preview -w @game/web -- --port ${PORT} --strictPort`,

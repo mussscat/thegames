@@ -36,3 +36,8 @@ export function useSettings(): SettingsApi {
   if (!api) throw new Error('useSettings must be used inside <SettingsProvider>');
   return api;
 }
+
+/** The settings, or null where no provider is mounted (the lab). */
+export function useOptionalSettings(): SettingsApi | null {
+  return useContext(SettingsContext);
+}

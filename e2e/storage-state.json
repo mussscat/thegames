@@ -1,0 +1,6 @@
+{
+  "cookies": [],
+  "origins": [
+    { "origin": "http://localhost:4173", "localStorage": [{ "name": "thegame.settings", "value": "{\"effects\":false}" }] }
+  ]
+}

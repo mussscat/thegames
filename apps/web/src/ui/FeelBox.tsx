@@ -1,5 +1,6 @@
 import { motion, useAnimate, useSpring } from 'motion/react';
 import { useRef, type PointerEvent, type ReactNode } from 'react';
+import { useMotionEnabled } from './useMotion';
 
 export type Feel = {
   readonly tilt: number;
@@ -12,7 +13,7 @@ export type Feel = {
 /** Tuned by the owner in the card lab, 2026-10-08. */
 export const FEEL: Feel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4 };
 
-const SWAY_SECONDS = 3.4;
+export const SWAY_SECONDS = 3.4;
 const SQUASH = { scaleX: [1, 1.14, 0.94, 1.03, 1], scaleY: [1, 0.86, 1.07, 0.98, 1] };
 
 type FeelBoxProps = {
@@ -30,8 +31,11 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squashScope, animate] = useAnimate<HTMLDivElement>();
+  const motionOn = useMotionEnabled();
+  const idleOn = idle && motionOn;
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
+    if (!motionOn) return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     rotateX.set(-((event.clientY - rect.top) / rect.height - 0.5) * feel.tilt);
@@ -46,8 +50,8 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
     <motion.div
       className="feel"
       style={{ ['--px' as string]: `${feel.pixel}px` }}
-      animate={idle ? { rotate: [-feel.sway, feel.sway, -feel.sway], y: [0, -feel.sway, 0] } : { rotate: 0, y: 0 }}
-      transition={idle ? { duration: SWAY_SECONDS, repeat: Infinity, ease: 'easeInOut', delay: swayDelay } : { duration: 0.2 }}
+      animate={idleOn ? { rotate: [-feel.sway, feel.sway, -feel.sway], y: [0, -feel.sway, 0] } : { rotate: 0, y: 0 }}
+      transition={idleOn ? { duration: SWAY_SECONDS, repeat: Infinity, ease: 'easeInOut', delay: swayDelay } : { duration: 0.2 }}
     >
       <motion.div
         ref={ref}
@@ -56,7 +60,9 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
         onPointerMove={onMove}
         onPointerLeave={onLeave}
         onPointerEnter={onHover}
-        onPointerDown={() => void animate(squashScope.current, SQUASH, { duration: 0.38, ease: 'easeOut' })}
+        onPointerDown={() => {
+          if (motionOn) void animate(squashScope.current, SQUASH, { duration: 0.38, ease: 'easeOut' });
+        }}
       >
         {/* Animated in place: re-mounting the node under the finger would swallow the click. */}
         <div ref={squashScope} className="feel__squash">

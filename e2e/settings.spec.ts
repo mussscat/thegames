@@ -24,6 +24,7 @@ test('sound can be switched off and the volume slider follows it', async ({ page
 test('card sway can be switched off and stays off after a reload', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Настройки' }).click();
+  await page.getByLabel('Эффекты').check();
   await page.getByLabel('Покачивание карт').uncheck();
   await page.reload();
   await page.getByRole('button', { name: 'Настройки' }).click();
