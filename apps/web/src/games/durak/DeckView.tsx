@@ -31,13 +31,18 @@ export function DeckView({ round, revealTop, peek = 0 }: DeckViewProps) {
           </div>
         ))}
       </div>
-      <span className="chip deck__count"><Icon id="deck" /> {round.deck.length > 0 ? `Колода: ${round.deck.length}` : 'Колода пуста'}</span>
+      <div className="deck__info">
+      <span className="chip deck__count">
+        <Icon id="deck" /> <span className="deck__label">{round.deck.length > 0 ? 'Колода: ' : 'Колода пуста'}</span>
+        {round.deck.length > 0 ? round.deck.length : ''}
+      </span>
       <span className="chip deck__trump">
-        Козырь <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}><SuitMark suit={round.trumpSuit} />
+        <span className="deck__label">Козырь </span> <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}><SuitMark suit={round.trumpSuit} />
         </span>
         {round.boss === 'witch' && ' + дамы'}
         {round.boss === 'shuffler' && ' (меняется)'}
       </span>
+      </div>
     </div>
   );
 }

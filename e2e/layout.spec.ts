@@ -19,3 +19,72 @@ test('the coin and the icons show at their pre-shrunk size, so every pixel is a 
   expect(sizes.coin).toEqual({ natural: 19, shown: 19 });
   expect(sizes.icon).toEqual({ natural: 18, shown: 18 });
 });
+
+const BIG = { storageState: { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'thegame.settings', value: '{"effects":false}' }] }] } };
+
+async function fightWith(page: Page, patch: object): Promise<void> {
+  const run = {
+    seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter', 'small'], collected: 0, profile: {}, focuses: ['boost', 'peek'],
+    bosses: ['general', 'witch'],
+    phase: { kind: 'shop', shop: { items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
+    ...patch,
+  };
+  await page.goto('/');
+  await page.evaluate((saved) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run: saved })), run);
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  await expect(page.getByTestId('player-hand')).toBeVisible();
+}
+
+const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+/** Rows of the fight grid shrink instead of scrolling, so also check nothing pokes out of its panel and nothing is wider than the screen. */
+const squeeze = (page: Page) =>
+  page.evaluate(() => {
+    const bottom = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().bottom ?? 0;
+    const top = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().top ?? 0;
+    return {
+      jokersOut: Math.round(bottom('.jokers__list') - bottom('.jokers')),
+      focusOver: Math.round(bottom('.jokers') - top('.focus-bar')),
+      wide: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+
+const cardWidth = (page: Page) => page.locator('[data-testid="player-hand"] .card').first().evaluate((el) => (el as HTMLElement).offsetWidth);
+
+test.describe('Pixel 7 portrait (412×915)', () => {
+  test.use({ ...BIG, viewport: { width: 412, height: 915 } });
+
+  test('cards are exactly 74 px (×1) and the whole fight fits without scrolling', async ({ page }) => {
+    await fightWith(page, {});
+    expect(Math.round(await cardWidth(page))).toBe(74);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+    const squeezed = await squeeze(page);
+    expect(squeezed.jokersOut).toBeLessThanOrEqual(0);
+    expect(squeezed.focusOver).toBeLessThanOrEqual(0);
+    expect(squeezed.wide).toBeLessThanOrEqual(0);
+  });
+});
+
+test.describe('short portrait (375×667)', () => {
+  test.use({ ...BIG, viewport: { width: 375, height: 667 } });
+
+  test('keeps the reduced card size and still fits without scrolling', async ({ page }) => {
+    await fightWith(page, {});
+    expect(await cardWidth(page)).toBeLessThan(74);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+    const squeezed = await squeeze(page);
+    expect(squeezed.jokersOut).toBeLessThanOrEqual(0);
+    expect(squeezed.focusOver).toBeLessThanOrEqual(0);
+    expect(squeezed.wide).toBeLessThanOrEqual(0);
+  });
+});
+
+test.describe('desktop (1280×800)', () => {
+  test.use({ ...BIG, viewport: { width: 1280, height: 800 } });
+
+  test('cards are a whole multiple of 74 px', async ({ page }) => {
+    await fightWith(page, {});
+    expect(Math.round(await cardWidth(page)) % 74).toBe(0);
+  });
+});

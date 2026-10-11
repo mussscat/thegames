@@ -45,8 +45,6 @@
 .hand[data-motion='off'] .hand__slot { transition: none; }
 .hand--player .hand__slot:hover { z-index: 100; translate: 0 -12px; }
 .hand[data-motion='off'] .hand__slot:hover { translate: none; }
-.hand--enemy { --slot-w: calc(var(--card-w) * 0.6); height: calc(var(--card-w) * 0.9); }
-.hand--enemy .card { width: calc(var(--card-w) * 0.6); }
 .hand--waiting .card .face { filter: brightness(0.7); }
 
 /* ---------- table & deck ---------- */
@@ -56,7 +54,7 @@
   align-self: stretch;
   display: grid;
   grid-template-columns: repeat(3, var(--card-w));
-  gap: 22px 14px;
+  gap: 22px 6px;
   justify-content: center;
   align-content: center;
   background: rgb(0 0 0 / 30%);
@@ -64,11 +62,12 @@
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
 .deck { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; text-align: center; }
-.deck__pile { position: relative; width: calc(var(--card-w) * 1.8); height: calc(var(--card-w) * 1.4); }
+.deck__pile { position: relative; width: calc(var(--card-w) * 1.4); height: calc(var(--card-w) * 1.4); }
 .deck__layer { position: absolute; left: 0; top: 0; width: var(--card-w); z-index: 1; }
 /* Variant Б from the lab: the trump lies across under the deck and peeks out with its rank and suit corner. */
-.deck__trump-card { position: absolute; left: calc(var(--card-w) * 0.62); top: calc(var(--card-w) * 0.2); rotate: 90deg; }
+.deck__trump-card { position: absolute; left: calc(var(--card-w) * 0.2); top: calc(var(--card-w) * 0.2); rotate: 90deg; }
 .deck__trump { display: inline-flex; align-items: center; gap: 4px; }
+.deck__info { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
 .deck__suit--red { color: #ff5a4a; }
 
@@ -167,7 +166,8 @@
 
 @media (min-aspect-ratio: 5/4) {
   .fight {
-    --card-w: clamp(44px, min(13vh, 8.5vw), 150px);
+    --card-fit: clamp(44px, min(13vh, 8.5vw), 150px);
+    --card-w: max(round(down, var(--card-fit), 74px), min(var(--card-fit), 73px));
     font-size: clamp(13px, 2.3vh, 28px);
     max-width: none;
     padding: 0 max(1.2em, env(safe-area-inset-right)) 0 0;
@@ -294,4 +294,24 @@
   .focus-bar__actions { flex: 1; justify-content: flex-end; }
   .fight .run-header { padding: 4px 10px; gap: 2px; }
   .fight .stats__tile { padding-block: 2px; }
+  .fight .table { min-height: 0; }
+  /* The deck chips share one row and drop their words: the deck row no longer dictates the height of the screen. */
+  .fight { gap: 2px 8px; }
+  .deck { gap: 2px; }
+  .deck__info { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
+  .deck__info .chip { padding: 0 5px; font-size: 0.75rem; }
+  .deck__label { display: none; }
+  .jokers__list { --jface-w: 2em; }
+  .focus-chip__face .fface { --fface-w: 1.4em; }
 }
+
+/* Portrait phones tall enough: the 74×104 card art at exactly ×1 (a whole-number scale). */
+@media (max-aspect-ratio: 5/4) and (min-height: 780px) and (min-width: 396px) {
+  .fight { --card-w: 74px; gap: 6px 8px; }
+  .jokers__head { display: none; }
+}
+
+/* The enemy hand shows the top of the backs only (their corners are what matters), so ×1 costs little height. */
+.hand--enemy { --slot-w: var(--card-w); height: calc(var(--card-w) * 0.55); overflow: hidden; }
+.hand--enemy .hand__slot { top: 0; bottom: auto; transform-origin: 50% 0; }
+.hand--enemy .card { width: var(--card-w); }

@@ -29,7 +29,7 @@ export function handOverlap(count: number, fit = 6.5): number {
 export type FanSlot = { readonly x: number; readonly y: number; readonly angle: number };
 
 /** Room kept at each end for the rotation of the outer cards, as a fraction of a card width. */
-const ROTATION_ROOM = 0.15;
+const ROTATION_ROOM = 0.2;
 
 /**
  * Where each card of a hand sits relative to the middle of the hand: `x` px from the centre, `y` px down, `angle` degrees.
