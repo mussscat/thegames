@@ -188,3 +188,10 @@
 .uilab__big { display: inline-flex; }
 .uilab__big .coin { width: 57px; height: 57px; }
 .uilab__big .icon { width: 54px; height: 54px; }
+
+/* ---------- feel tab ---------- */
+.feellab__section { display: flex; flex-direction: column; gap: 10px; }
+.feellab__buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.feellab__hand { --card-w: 64px; width: 100%; }
+.feellab__jokers { display: flex; flex-wrap: wrap; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.feellab__fps { margin: 0; font-family: var(--font-head); font-size: 1.1rem; }

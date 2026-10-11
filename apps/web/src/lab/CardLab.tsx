@@ -10,6 +10,7 @@ import { playSound, setVolume } from '../ui/sound';
 import { SwirlBackground } from '../ui/SwirlBackground';
 import { FontTab } from './FontTab';
 import { GalleryTab } from './GalleryTab';
+import { FeelTab } from './FeelTab';
 import { FocusesTab } from './FocusesTab';
 import { HighlightTab } from './HighlightTab';
 import { JokersTab } from './JokersTab';
@@ -32,6 +33,7 @@ const TABS = [
   { id: 'tarots', name: 'Таро' },
   { id: 'focuses', name: 'Фокусы' },
   { id: 'ui', name: 'Интерфейс' },
+  { id: 'feel', name: 'Ощущение' },
   { id: 'packs', name: 'Паки' },
   { id: 'sprites', name: 'Спрайты' },
 ] as const;
@@ -105,6 +107,7 @@ export function CardLab() {
         {tab === 'tarots' && <TarotsTab />}
         {tab === 'focuses' && <FocusesTab />}
         {tab === 'ui' && <UiTab />}
+        {tab === 'feel' && <FeelTab />}
         {tab === 'packs' && <PacksTab />}
         {tab === 'sprites' && <SpritesTab />}
         {tab === 'card' && (
