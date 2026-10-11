@@ -43,8 +43,10 @@
   transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.15), translate 0.12s ease-out;
 }
 .hand[data-motion='off'] .hand__slot { transition: none; }
-.hand--player .hand__slot:hover { z-index: 100; translate: 0 -12px; }
-.hand[data-motion='off'] .hand__slot:hover { translate: none; }
+@media (hover: hover) {
+  .hand--player .hand__slot:hover { z-index: 100; translate: 0 -12px; }
+  .hand[data-motion='off'] .hand__slot:hover { translate: none; }
+}
 .hand--waiting .card .face { filter: brightness(0.7); }
 
 /* ---------- table & deck ---------- */
@@ -167,7 +169,7 @@
 @media (min-aspect-ratio: 5/4) {
   .fight {
     --card-fit: clamp(44px, min(13vh, 8.5vw), 150px);
-    --card-w: max(round(down, var(--card-fit), 74px), min(var(--card-fit), 73px));
+    --card-w: var(--card-fit);
     font-size: clamp(13px, 2.3vh, 28px);
     max-width: none;
     padding: 0 max(1.2em, env(safe-area-inset-right)) 0 0;
@@ -221,7 +223,7 @@
   .jokers { overflow-y: auto; }
   .jokers__list { --jface-w: 4.2em; grid-template-columns: repeat(auto-fill, minmax(4.4em, 1fr)); }
   .jokers__title { font-size: 1em; }
-  .hand--enemy { grid-area: top; justify-self: center; min-height: 0; }
+  .hand--enemy { grid-area: top; justify-self: stretch; min-height: 0; }
   .fight .table { min-height: 0; grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
   .fight__status { align-self: end; justify-self: center; min-width: 60%; font-size: 1em; }
   .hand--player { min-height: calc(var(--card-w) * 1.45); padding: 4px 0 10px; }
@@ -295,23 +297,39 @@
   .fight .run-header { padding: 4px 10px; gap: 2px; }
   .fight .stats__tile { padding-block: 2px; }
   .fight .table { min-height: 0; }
-  /* The deck chips share one row and drop their words: the deck row no longer dictates the height of the screen. */
   .fight { gap: 2px 8px; }
-  .deck { gap: 2px; }
-  .deck__info { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
-  .deck__info .chip { padding: 0 5px; font-size: 0.75rem; }
-  .deck__label { display: none; }
   .jokers__list { --jface-w: 2em; }
   .focus-chip__face .fface { --fface-w: 1.4em; }
 }
 
 /* Portrait phones tall enough: the 74×104 card art at exactly ×1 (a whole-number scale). */
 @media (max-aspect-ratio: 5/4) and (min-height: 780px) and (min-width: 396px) {
-  .fight { --card-w: 74px; gap: 6px 8px; }
+  .fight { --card-w: 74px; }
+}
+
+/* Portrait phones from 701 px up: tighter gaps and no «Джокеры» header, so the rows keep their height instead of squeezing. */
+@media (max-aspect-ratio: 5/4) and (min-height: 701px) {
+  .fight { gap: 6px 8px; }
   .jokers__head { display: none; }
 }
 
 /* The enemy hand shows the top of the backs only (their corners are what matters), so ×1 costs little height. */
-.hand--enemy { --slot-w: var(--card-w); height: calc(var(--card-w) * 0.55); overflow: hidden; }
+.hand--enemy { --slot-w: var(--card-w); height: calc(var(--card-w) * 0.55); }
 .hand--enemy .hand__slot { top: 0; bottom: auto; transform-origin: 50% 0; }
-.hand--enemy .card { width: var(--card-w); }
+.hand--enemy .card { width: var(--card-w); clip-path: inset(0 0 45% 0); }
+
+/* A whole multiple of the 74 px card where the browser can compute it; engines without round() keep the plain fit above. */
+@supports (width: round(down, 1px, 1px)) {
+  @media (min-aspect-ratio: 5/4) {
+    .fight { --card-w: max(round(down, var(--card-fit), 74px), min(var(--card-fit), 73px)); }
+  }
+}
+
+/* Portrait: the deck chips share one row and their words become visually hidden (still read aloud), so the narrow deck
+   column does not wrap them into a tall block that dictates the height of the screen. */
+@media (max-aspect-ratio: 5/4) {
+  .deck { gap: 2px; }
+  .deck__info { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
+  .deck__info .chip { position: relative; padding: 0 5px; font-size: 0.75rem; }
+  .deck__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}

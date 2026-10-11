@@ -35,8 +35,22 @@ test('after a card is played the rest of the hand is re-laid out and still on sc
   }
 });
 
-test.describe('effects on', () => {
+test.describe('effects on: touch', () => {
   test.use({ storageState: EFFECTS_ON });
+
+  test('a tap does not leave a card lifted by a sticky hover', async ({ page }) => {
+    await startFight(page);
+    await expect(page.getByRole('status')).not.toHaveText(/соперник/i, { timeout: 5_000 });
+    await page.getByTestId('player-hand').locator('.hand__slot').nth(2).tap();
+    await page.waitForTimeout(500);
+    const lifted = await page.getByTestId('player-hand').locator('.hand__slot').evaluateAll((els) => els.map((e) => getComputedStyle(e).translate).filter((t) => t !== 'none'));
+    expect(lifted).toEqual([]);
+  });
+});
+
+test.describe('effects on, with a mouse', () => {
+  // The Pixel 7 profile reports `hover: none`, where the lift is deliberately off; a mouse needs a desktop profile.
+  test.use({ storageState: EFFECTS_ON, hasTouch: false, isMobile: false });
 
   test('a card under the pointer lifts above its neighbours', async ({ page }) => {
     await startFight(page);
