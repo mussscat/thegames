@@ -29,9 +29,23 @@
 .card__half--illegal { background: rgb(15 10 25 / 55%); }
 
 /* ---------- hands ---------- */
-.hand { --slot-w: var(--card-w); display: flex; justify-content: center; align-items: flex-end; min-height: calc(var(--card-w) * 1.5); padding-top: 8px; }
-.hand__slot { transform-origin: 50% 120%; }
-.hand--enemy { --slot-w: calc(var(--card-w) * 0.6); min-height: calc(var(--card-w) * 0.9); }
+/* The hand: slots are positioned with transform only (see useFan), so a re-layout springs instead of jumping. */
+.hand { --slot-w: var(--card-w); position: relative; height: calc(var(--card-w) * 1.5); }
+.hand__probe { position: absolute; left: 0; top: 0; width: var(--card-w); height: 0; visibility: hidden; pointer-events: none; }
+.hand__slot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--slot-w);
+  margin-left: calc(var(--slot-w) / -2);
+  z-index: var(--z, 0);
+  transform-origin: 50% 120%;
+  transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.15), translate 0.12s ease-out;
+}
+.hand[data-motion='off'] .hand__slot { transition: none; }
+.hand--player .hand__slot:hover { z-index: 100; translate: 0 -12px; }
+.hand[data-motion='off'] .hand__slot:hover { translate: none; }
+.hand--enemy { --slot-w: calc(var(--card-w) * 0.6); height: calc(var(--card-w) * 0.9); }
 .hand--enemy .card { width: calc(var(--card-w) * 0.6); }
 .hand--waiting .card .face { filter: brightness(0.7); }
 
@@ -112,7 +126,7 @@
 .jokers__list { --jface-w: 2.6em; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-items: center; gap: 0.4em; margin: 0; padding: 0; list-style: none; }
 .jslot { display: flex; }
 .jslot__button { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; -webkit-touch-callout: none; }
-.hand__count { align-self: center; margin-left: 8px; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
+.hand__count { position: absolute; right: 0; top: 50%; translate: 0 -50%; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
 
 /* ---------- screen layout ----------
    Portrait: side and board are `display: contents`, so one grid places every piece in reading order.

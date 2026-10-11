@@ -2,28 +2,17 @@ import type { Card } from '@game/core';
 import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
 import type { CSSProperties } from 'react';
 import { CardBack, CardView } from '../../components/CardView';
-import { fanAngle, fanDrop, handOverlap } from '../../ui/fan';
+import { useFan } from '../../ui/useFan';
 import { sortHand, type HandSort } from '../../ui/handSort';
-
-/** Card widths a hand may take: leaves room for the fan's rotation at the screen edges. */
-const HAND_FIT = 6;
-
-/** Later cards sit on top; a big hand overlaps so it never leaves the screen. */
-function slotStyle(index: number, count: number, fan: boolean): CSSProperties {
-  const overlap = handOverlap(count, HAND_FIT);
-  return {
-    marginLeft: index === 0 ? 0 : `calc(var(--slot-w) * ${-overlap})`,
-    transform: fan ? `translateY(${fanDrop(index, count)}px) rotate(${fanAngle(index, count)}deg)` : undefined,
-    zIndex: index,
-  };
-}
 
 /** The enemy's hand: card backs, or the faces while Подглядывание is on. */
 export function EnemyHand({ cards, revealed = false }: { readonly cards: readonly Card[]; readonly revealed?: boolean }) {
+  const fan = useFan(cards.length, false);
   return (
-    <div className="hand hand--enemy" data-testid="enemy-hand" data-revealed={revealed ? 'true' : undefined}>
-      {cards.map((card, index, all) => (
-        <div key={card.id} className="hand__slot" style={slotStyle(index, all.length, false)}>
+    <div ref={fan.containerRef} className="hand hand--enemy" data-testid="enemy-hand" data-motion={fan.motion ? 'on' : 'off'} data-revealed={revealed ? 'true' : undefined}>
+      <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
+      {cards.map((card, index) => (
+        <div key={card.id} className="hand__slot" style={fan.slotStyle(index)}>
           {revealed ? <CardView card={card} /> : <CardBack layoutId={card.id} />}
         </div>
       ))}
@@ -54,13 +43,17 @@ export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
     legal.flatMap((action) => ('cardId' in action && action.cardId === cardId && action.use ? [action.use] : []));
 
+  const cards = sortHand(round.hands.player, sort, (card) => isRoundTrump(round, card));
+  const fan = useFan(cards.length, true);
+
   return (
-    <div className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand">
-      {sortHand(round.hands.player, sort, (card) => isRoundTrump(round, card)).map((card, index, all) => {
+    <div ref={fan.containerRef} className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand" data-motion={fan.motion ? 'on' : 'off'}>
+      <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
+      {cards.map((card, index) => {
         const enhancements = cardEnhancements(round, 'player', card);
         const split = Boolean(enhancements.own && enhancements.foreign);
         return (
-          <div key={card.id} className={targeting?.picked.includes(card.id) ? 'hand__slot hand__slot--picked' : 'hand__slot'} style={slotStyle(index, all.length, true)}>
+          <div key={card.id} className={targeting?.picked.includes(card.id) ? 'hand__slot hand__slot--picked' : 'hand__slot'} style={fan.slotStyle(index)}>
             <CardView
               card={card}
               enhancements={enhancements}
