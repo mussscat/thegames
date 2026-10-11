@@ -1,5 +1,6 @@
 import { motion, useAnimate, useSpring } from 'motion/react';
 import { useRef, type PointerEvent, type ReactNode } from 'react';
+import { tiltAngles } from './tilt';
 import { useMotionEnabled } from './useMotion';
 
 export type Feel = {
@@ -38,8 +39,9 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
     if (!motionOn) return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
-    rotateX.set(-((event.clientY - rect.top) / rect.height - 0.5) * feel.tilt);
-    rotateY.set(((event.clientX - rect.left) / rect.width - 0.5) * feel.tilt);
+    const angles = tiltAngles(event.clientX, event.clientY, rect, feel.tilt);
+    rotateX.set(angles.rotateX);
+    rotateY.set(angles.rotateY);
   };
   const onLeave = (): void => {
     rotateX.set(0);
@@ -59,6 +61,8 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
         style={{ rotateX, rotateY }}
         onPointerMove={onMove}
         onPointerLeave={onLeave}
+        onPointerUp={onLeave}
+        onPointerCancel={onLeave}
         onPointerEnter={onHover}
         onPointerDown={() => {
           if (motionOn) void animate(squashScope.current, SQUASH, { duration: 0.38, ease: 'easeOut' });

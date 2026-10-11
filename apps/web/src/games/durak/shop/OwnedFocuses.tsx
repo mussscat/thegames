@@ -2,6 +2,7 @@ import { FOCUSES, focusSellPrice, MAX_FOCUSES, type FocusId, type RunAction } fr
 import type { MouseEvent } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import { PixelButton } from '../../../ui/PixelButton';
+import { FeelBox } from '../../../ui/FeelBox';
 import { PackCardFace } from './PackCardFace';
 import { cardTipLines } from './shopCopy';
 
@@ -10,7 +11,9 @@ function FocusSlot({ id, selected, onSelect }: { readonly id: FocusId; readonly 
   return (
     <li className={selected ? 'owned-focus owned-focus--selected' : 'owned-focus'}>
       <button type="button" className="owned__card" aria-label={FOCUSES[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
-        <PackCardFace card={{ kind: 'focus', focusId: id }} />
+        <FeelBox>
+          <PackCardFace card={{ kind: 'focus', focusId: id }} />
+        </FeelBox>
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'focus', focusId: id }, {})} />}
     </li>

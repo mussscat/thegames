@@ -1,6 +1,7 @@
 import { JOKERS, MAX_JOKERS, type JokerId, type JokerState } from '@game/durak';
 import { CardTip, useCardTip } from '../../components/CardTip';
 import { jokerBadge } from './jokerBadge';
+import { FeelBox } from '../../ui/FeelBox';
 import { JokerFace } from './JokerFace';
 import { cardTipLines } from './shop/shopCopy';
 
@@ -12,7 +13,9 @@ function JokerSlot({ id, slot, badge }: JokerSlotProps) {
   return (
     <li className="jslot" data-score-joker={`player-${slot}`}>
       <button type="button" className="jslot__button" aria-label={JOKERS[id].name} aria-expanded={anchor !== null} {...handlers}>
-        <JokerFace id={id} badge={badge} />
+        <FeelBox>
+          <JokerFace id={id} badge={badge} />
+        </FeelBox>
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'joker', jokerId: id }, {})} />}
     </li>

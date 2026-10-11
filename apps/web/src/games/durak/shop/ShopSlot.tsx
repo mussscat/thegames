@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import type { TipLine } from '../../../components/tipLines';
 import { Coin } from '../../../ui/Coin';
+import { FeelBox } from '../../../ui/FeelBox';
 import { PixelButton } from '../../../ui/PixelButton';
 
 type ShopSlotProps = {
@@ -51,7 +52,7 @@ export function ShopSlot({ price, coins, title, testId, tip, selected, verb, war
         onClick={onSelect}
         {...handlers}
       >
-        {children}
+        <FeelBox>{children}</FeelBox>
       </button>
       {selected && (
         <div className="shop-slot__buy">

@@ -2,6 +2,7 @@ import { JOKERS, MAX_JOKERS, sellPrice, type JokerId, type RunAction } from '@ga
 import type { MouseEvent } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import { PixelButton } from '../../../ui/PixelButton';
+import { FeelBox } from '../../../ui/FeelBox';
 import { JokerFace } from '../JokerFace';
 import { cardTipLines } from './shopCopy';
 
@@ -12,7 +13,9 @@ function OwnedJoker({ id, selected, onSelect }: OwnedJokerProps) {
   return (
     <li className={selected ? 'owned__slot owned__slot--selected' : 'owned__slot'}>
       <button type="button" className="owned__card" aria-label={JOKERS[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
-        <JokerFace id={id} />
+        <FeelBox>
+          <JokerFace id={id} />
+        </FeelBox>
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'joker', jokerId: id }, {})} />}
     </li>
