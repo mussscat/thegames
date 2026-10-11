@@ -21,9 +21,13 @@ export type Settings = {
   readonly sort: HandSort;
   /** Scoring animation speed (x1…x3). */
   readonly animSpeed: AnimSpeed;
+  /** Master switch for motion effects: sway, tilt and everything the juice stages add. */
+  readonly effects: boolean;
+  /** Haptic feedback, only where the device has it. */
+  readonly vibration: boolean;
 };
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT, animSpeed: 1 };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT, animSpeed: 1, effects: true, vibration: true };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -41,6 +45,8 @@ const schema = z.object({
     })
     .catch(DEFAULT_HAND_SORT),
   animSpeed: z.custom<AnimSpeed>(isAnimSpeed).catch(DEFAULT_SETTINGS.animSpeed),
+  effects: z.boolean().catch(DEFAULT_SETTINGS.effects),
+  vibration: z.boolean().catch(DEFAULT_SETTINGS.vibration),
 });
 
 export function parseSettings(raw: unknown): Settings {

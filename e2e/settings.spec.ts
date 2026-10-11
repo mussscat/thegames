@@ -69,3 +69,18 @@ test('the animation speed is x1 by default and x3 survives a reload', async ({ p
   await page.getByRole('button', { name: 'Настройки' }).click();
   await expect(page.getByRole('radio', { name: 'x3' })).toBeChecked();
 });
+
+test('effects and vibration can be switched and stay after a reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await page.getByLabel('Эффекты').check();
+  await page.getByLabel('Вибрация').uncheck();
+  await page.reload();
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByLabel('Эффекты')).toBeChecked();
+  await expect(page.getByLabel('Вибрация')).not.toBeChecked();
+  await page.getByLabel('Эффекты').uncheck();
+  await page.reload();
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByLabel('Эффекты')).not.toBeChecked();
+});

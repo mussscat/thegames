@@ -25,12 +25,14 @@ const brokenStore: KeyValueStore = {
 
 describe('parseSettings', () => {
   it('defaults to the Неон palette, sound on, volume 0.35, sway on, sorted by suit', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ palette: 'neon', sound: true, volume: 0.35, sway: true, sort: { bySuit: true, rank: 'asc', trumps: 'last' }, animSpeed: 1 });
+    expect(DEFAULT_SETTINGS).toEqual({
+      palette: 'neon', sound: true, volume: 0.35, sway: true, sort: { bySuit: true, rank: 'asc', trumps: 'last' }, animSpeed: 1, effects: true, vibration: true,
+    });
     expect(parseSettings(undefined)).toEqual(DEFAULT_SETTINGS);
   });
 
   it('keeps valid values', () => {
-    const settings = { palette: 'felt', sound: false, volume: 0.5, sway: false, sort: { bySuit: false, rank: 'desc', trumps: 'mixed' }, animSpeed: 2 };
+    const settings = { palette: 'felt', sound: false, volume: 0.5, sway: false, sort: { bySuit: false, rank: 'desc', trumps: 'mixed' }, animSpeed: 2, effects: false, vibration: false };
     expect(parseSettings(settings)).toEqual(settings);
   });
 
@@ -56,6 +58,19 @@ describe('parseSettings', () => {
     }
   });
 
+  it('turns effects and vibration on when an older save does not have them', () => {
+    const old = parseSettings({ palette: 'neon', sound: false, volume: 0.2, sway: false });
+    expect(old.effects).toBe(true);
+    expect(old.vibration).toBe(true);
+    expect(old.sound).toBe(false);
+  });
+
+  it('keeps an explicit off, and a wrong type falls back to on without resetting the other fields', () => {
+    expect(parseSettings({ effects: false, vibration: false })).toMatchObject({ effects: false, vibration: false });
+    const mixed = parseSettings({ effects: 'yes', vibration: 3, sound: false });
+    expect(mixed).toMatchObject({ effects: true, vibration: true, sound: false });
+  });
+
   it('ignores non-object input', () => {
     expect(parseSettings('neon')).toEqual(DEFAULT_SETTINGS);
     expect(parseSettings(null)).toEqual(DEFAULT_SETTINGS);
@@ -65,7 +80,7 @@ describe('parseSettings', () => {
 describe('loadSettings / saveSettings', () => {
   it('round-trips through the store', () => {
     const store = memoryStore();
-    const settings = { palette: 'balatro', sound: false, volume: 0.8, sway: false, sort: { bySuit: true, rank: 'desc', trumps: 'first' }, animSpeed: 3 } as const;
+    const settings = { palette: 'balatro', sound: false, volume: 0.8, sway: false, sort: { bySuit: true, rank: 'desc', trumps: 'first' }, animSpeed: 3, effects: false, vibration: true } as const;
     expect(saveSettings(store, settings)).toBe(true);
     expect(loadSettings(store)).toEqual(settings);
   });

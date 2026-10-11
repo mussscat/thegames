@@ -6,6 +6,7 @@ import { useSettings } from '../ui/SettingsContext';
 import { ANIM_SPEEDS } from '../ui/settings';
 import { SortPreview } from './SortPreview';
 import './menu.css';
+import { canVibrate } from '../ui/capabilities';
 
 const RANK_NAMES: Readonly<Record<HandSort['rank'], string>> = { asc: 'Сначала младшие', desc: 'Сначала старшие' };
 const TRUMP_NAMES: Readonly<Record<HandSort['trumps'], string>> = {
@@ -62,7 +63,17 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
           />
         </label>
         <label className="settings__row">
-          <input type="checkbox" checked={settings.sway} onChange={(event) => update({ sway: event.target.checked })} />
+          <input type="checkbox" checked={settings.effects} onChange={(event) => update({ effects: event.target.checked })} />
+          Эффекты
+        </label>
+        {canVibrate() && (
+          <label className="settings__row">
+            <input type="checkbox" checked={settings.vibration} onChange={(event) => update({ vibration: event.target.checked })} />
+            Вибрация
+          </label>
+        )}
+        <label className="settings__row">
+          <input type="checkbox" checked={settings.sway} disabled={!settings.effects} onChange={(event) => update({ sway: event.target.checked })} />
           Покачивание карт
         </label>
         <fieldset className="settings__group">
