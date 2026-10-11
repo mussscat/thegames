@@ -88,3 +88,15 @@ test.describe('desktop (1280×800)', () => {
     expect(Math.round(await cardWidth(page)) % 74).toBe(0);
   });
 });
+
+test('the thick-panel tokens exist and panels use the 2 px outline', async ({ page }) => {
+  await page.goto('/');
+  const tokens = await page.evaluate(() => {
+    const css = getComputedStyle(document.documentElement);
+    return ['--bevel-light', '--bevel-dark', '--inner-shadow', '--sp-1', '--sp-2', '--sp-3', '--sp-4'].map((name) => css.getPropertyValue(name).trim());
+  });
+  expect(tokens.every((value) => value !== '')).toBe(true);
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  const border = await page.locator('.panel').first().evaluate((el) => getComputedStyle(el).borderTopWidth);
+  expect(border).toBe('2px');
+});

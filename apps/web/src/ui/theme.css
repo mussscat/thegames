@@ -8,6 +8,14 @@
   --font-head: 'Press Start 2P', ui-monospace, monospace;
   --glow-playable: #b09b9b;
   --glow-trump: #f2c94c;
+  /* Thick pixel look: a light bevel top-left, a dark one bottom-right, an inner shadow, one spacing scale. */
+  --bevel-light: rgb(255 255 255 / 16%);
+  --bevel-dark: rgb(0 0 0 / 35%);
+  --inner-shadow: rgb(0 0 0 / 28%);
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
   font-family: var(--font-text);
   font-weight: 600;
   font-size: 110%;
@@ -58,17 +66,19 @@ body {
 
 /* ---------- panels ---------- */
 .panel {
-  padding: 10px 12px;
-  border: 3px solid #000000;
+  padding: var(--sp-3) var(--sp-4);
+  border: 2px solid #000000;
   border-radius: 10px;
   background: rgb(27 20 38 / 88%);
-  box-shadow: 0 5px 0 rgb(0 0 0 / 55%);
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), 0 5px 0 rgb(0 0 0 / 55%);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 70%);
 }
 .chip {
   display: inline-block;
-  padding: 2px 8px;
+  padding: var(--sp-1) var(--sp-3);
   border-radius: 6px;
   background: rgb(0 0 0 / 45%);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   font-size: 0.85rem;
 }
 
@@ -83,14 +93,14 @@ body {
   border: none;
   border-radius: 8px;
   background: var(--c);
-  box-shadow: 0 4px 0 var(--d);
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -3px 0 var(--bevel-dark), 0 4px 0 var(--d);
   font-weight: 800;
   text-shadow: 2px 2px 0 rgb(0 0 0 / 35%);
   cursor: pointer;
   transition: transform 0.06s, box-shadow 0.06s;
 }
-.pbtn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--d); }
-.pbtn:disabled { opacity: 0.45; cursor: default; }
+.pbtn:active:not(:disabled) { transform: translateY(4px); box-shadow: inset 0 3px 0 var(--inner-shadow), 0 0 0 var(--d); }
+.pbtn:disabled { opacity: 0.45; cursor: default; box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -3px 0 var(--bevel-dark); transform: none; }
 .pbtn--blue { --c: #3a7bd5; --d: #22509c; }
 .pbtn--red { --c: #e24a3b; --d: #a12a1f; }
 .pbtn--orange { --c: #f39c32; --d: #b46a10; }
