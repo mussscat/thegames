@@ -109,7 +109,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             </p>
           )}
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
-          <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} />
+          <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} idle={settings.sway && !playback.active} />
           <FocusBar
             focuses={focuses}
             fight={fight}
@@ -134,7 +134,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
           <p className="fight__status panel" role="status">
             {error ?? statusText(fight)}
           </p>
-          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway && !playback.active} sort={settings.sort} onPlay={play} targeting={targeting} />
           <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
         </section>
       </main>
