@@ -13,8 +13,6 @@ type PixelCardProps = {
   readonly enhancement?: EnhancementId;
   readonly faceDown?: boolean;
   readonly selected?: boolean;
-  readonly swayDelay?: number;
-  readonly idle?: boolean;
   readonly showLabel?: boolean;
   readonly feel?: Feel;
   readonly onTap?: () => void;
@@ -28,8 +26,6 @@ export function PixelCard({
   enhancement,
   faceDown = false,
   selected = false,
-  swayDelay = 0,
-  idle = true,
   showLabel = false,
   feel = FEEL,
   onTap,
@@ -44,7 +40,7 @@ export function PixelCard({
       transition={spring}
       onClick={onTap}
     >
-      <FeelBox idle={idle} swayDelay={swayDelay} feel={feel} onHover={onHover}>
+      <FeelBox feel={feel} onHover={onHover}>
         <motion.div className="pcard__flip" animate={{ rotateY: faceDown ? 180 : 0 }} transition={{ type: 'spring', stiffness: 220, damping: 18 }}>
           <div className="pcard__side">
             <CardFace card={card} enhancement={enhancement} />

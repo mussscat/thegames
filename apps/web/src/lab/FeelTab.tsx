@@ -3,12 +3,11 @@ import { JOKER_IDS } from '@game/durak';
 import { useState } from 'react';
 import { CardView } from '../components/CardView';
 import { JokerFace } from '../games/durak/JokerFace';
-import { FeelBox, SWAY_SECONDS } from '../ui/FeelBox';
+import { FeelBox } from '../ui/FeelBox';
 import { PixelButton } from '../ui/PixelButton';
 import { SettingsProvider, useSettings } from '../ui/SettingsContext';
 import { useFan } from '../ui/useFan';
 import { useFps } from '../ui/useFps';
-import { swayPhases } from '../ui/visualRng';
 import '../games/durak/fight.css';
 
 const POOL: readonly Card[] = [
@@ -36,7 +35,7 @@ function FanStand() {
         <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
         {POOL.slice(0, count).map((card, index) => (
           <div key={card.id} className="hand__slot" style={fan.slotStyle(index)}>
-            <CardView card={card} playable idle />
+            <CardView card={card} playable />
           </div>
         ))}
       </div>
@@ -45,14 +44,13 @@ function FanStand() {
 }
 
 function JokerStand() {
-  const [phases] = useState(() => swayPhases(SHOWN_JOKERS.length, SWAY_SECONDS));
   return (
     <section className="panel feellab__section">
-      <h2 className="gallery__title">Джокеры: наклон и покачивание</h2>
+      <h2 className="gallery__title">Джокеры: наклон</h2>
       <ul className="feellab__jokers">
         {SHOWN_JOKERS.map((id, i) => (
           <li key={id} style={{ ['--jface-w' as string]: '64px' }}>
-            <FeelBox idle swayDelay={phases[i] ?? 0}>
+            <FeelBox>
               <JokerFace id={id} />
             </FeelBox>
           </li>
@@ -71,10 +69,6 @@ function Controls() {
       <label className="settings__row">
         <input type="checkbox" checked={settings.effects} onChange={(event) => update({ effects: event.target.checked })} />
         Эффекты
-      </label>
-      <label className="settings__row">
-        <input type="checkbox" checked={settings.sway} disabled={!settings.effects} onChange={(event) => update({ sway: event.target.checked })} />
-        Покачивание карт
       </label>
       <p className="feellab__fps">{fps} fps</p>
     </section>
@@ -102,7 +96,7 @@ function ButtonStand() {
   );
 }
 
-/** The stage-1 stand: the fan, the tilt and sway, the thick panels and buttons, the switches and an fps badge. */
+/** The stage-1 stand: the fan, the tilt, the thick panels and buttons, the switches and an fps badge. */
 export function FeelTab() {
   return (
     <SettingsProvider>

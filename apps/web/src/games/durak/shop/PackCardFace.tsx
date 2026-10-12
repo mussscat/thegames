@@ -18,7 +18,7 @@ export function PackCardFace({ card, size = 'slot', faceDown = false }: PackCard
   if (faceDown) return <span className={classes} aria-hidden="true" />;
   if (card.kind === 'card') {
     const playing = deckCard(card.cardId);
-    return <span className={`${classes} shop-card--playing`}>{playing && <PixelCard card={playing} width={CARD_WIDTH[size]} enhancement={card.enhancement} idle={false} />}</span>;
+    return <span className={`${classes} shop-card--playing`}>{playing && <PixelCard card={playing} width={CARD_WIDTH[size]} enhancement={card.enhancement} />}</span>;
   }
   if (card.kind === 'joker') {
     return (

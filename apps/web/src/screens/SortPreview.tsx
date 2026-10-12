@@ -34,7 +34,7 @@ export function SortPreview({ sort }: { readonly sort: HandSort }) {
               role="img"
               aria-label={`${rankLabel(card.rank)} ${SUIT_NAMES[card.suit]}${isTrump(card) ? ', козырь' : ''}`}
             >
-              <PixelCard card={card} width={CARD_WIDTH} idle={false} />
+              <PixelCard card={card} width={CARD_WIDTH} />
             </motion.div>
           ))}
         </div>

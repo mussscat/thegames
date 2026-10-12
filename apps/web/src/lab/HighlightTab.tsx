@@ -66,7 +66,7 @@ export function HighlightTab() {
           ].join(' ');
           return (
             <div key={card.id} className={classes} style={{ rotate: `${(i - 2.5) * 5}deg` }}>
-              <PixelCard card={card} width={52} swayDelay={i * 0.4} />
+              <PixelCard card={card} width={52} />
               {trump && trumpMark === 'badge' && <span className="hl__badge">{SUIT_SYMBOLS[card.suit]}</span>}
             </div>
           );

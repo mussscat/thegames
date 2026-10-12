@@ -15,19 +15,17 @@ export type Settings = {
   readonly palette: PaletteId;
   readonly sound: boolean;
   readonly volume: number;
-  /** Idle sway of the cards in hand. */
-  readonly sway: boolean;
   /** How the player's hand is ordered. */
   readonly sort: HandSort;
   /** Scoring animation speed (x1…x3). */
   readonly animSpeed: AnimSpeed;
-  /** Master switch for motion effects: sway, tilt and everything the juice stages add. */
+  /** Master switch for motion effects: tilt and everything the juice stages add. */
   readonly effects: boolean;
   /** Haptic feedback, only where the device has it. */
   readonly vibration: boolean;
 };
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sway: true, sort: DEFAULT_HAND_SORT, animSpeed: 1, effects: true, vibration: true };
+export const DEFAULT_SETTINGS: Settings = { palette: 'neon', sound: true, volume: 0.35, sort: DEFAULT_HAND_SORT, animSpeed: 1, effects: true, vibration: true };
 
 export const SETTINGS_STORAGE_KEY = 'thegame.settings';
 
@@ -36,7 +34,6 @@ const schema = z.object({
   palette: z.enum(PALETTE_IDS).catch(DEFAULT_SETTINGS.palette),
   sound: z.boolean().catch(DEFAULT_SETTINGS.sound),
   volume: z.number().min(0).max(1).catch(DEFAULT_SETTINGS.volume),
-  sway: z.boolean().catch(DEFAULT_SETTINGS.sway),
   sort: z
     .object({
       bySuit: z.boolean().catch(DEFAULT_HAND_SORT.bySuit),

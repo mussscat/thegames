@@ -72,10 +72,6 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
             Вибрация
           </label>
         )}
-        <label className="settings__row">
-          <input type="checkbox" checked={settings.sway} disabled={!settings.effects} onChange={(event) => update({ sway: event.target.checked })} />
-          Покачивание карт
-        </label>
         <fieldset className="settings__group">
           <legend className="settings__label">Скорость анимации</legend>
           <div className="settings__speeds">

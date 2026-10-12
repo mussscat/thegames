@@ -30,14 +30,13 @@ function isRoundTrump(round: RoundState, card: Card): boolean {
 type PlayerHandProps = {
   readonly round: RoundState;
   readonly myTurn: boolean;
-  readonly sway: boolean;
   readonly sort: HandSort;
   readonly onPlay: (card: Card, use?: EnhancementSource) => void;
   /** A focus choosing its target cards: every card is tappable and a tap picks it instead of playing it. */
   readonly targeting?: { readonly picked: readonly string[]; readonly onPick: (card: Card) => void } | null;
 };
 
-export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null }: PlayerHandProps) {
+export function PlayerHand({ round, myTurn, sort, onPlay, targeting = null }: PlayerHandProps) {
   const legal = legalActions(round, 'player');
   const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
@@ -62,8 +61,6 @@ export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null
               onTap={targeting ? () => targeting.onPick(card) : myTurn && !split ? () => onPlay(card) : undefined}
               onTapOption={!targeting && myTurn && split ? (use) => onPlay(card, use) : undefined}
               legalUses={!targeting && myTurn && split ? legalUses(card.id) : undefined}
-              idle={sway}
-              swayDelay={index * 0.4}
             />
           </div>
         );

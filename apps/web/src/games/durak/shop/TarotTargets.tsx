@@ -41,7 +41,7 @@ export function TarotTargets({ tarotId, hand, profile, picked, onChange }: Tarot
               aria-label={`${cardLabel(cardId)}${current ? `, ${ENHANCEMENTS[current].name}` : ''}`}
               onClick={() => toggle(cardId)}
             >
-              <PixelCard card={card} width={52} enhancement={current} idle={false} />
+              <PixelCard card={card} width={52} enhancement={current} />
               {order >= 0 && <span className="targets__order">{order + 1}</span>}
               {current && <span className="targets__current">{ENHANCEMENTS[current].name}</span>}
             </button>
