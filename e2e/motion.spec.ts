@@ -43,8 +43,9 @@ test.describe('effects on but the system asks for reduced motion', () => {
   });
 });
 
-async function jokerTilt(page: Page): Promise<string> {
-  return page.evaluate(() => getComputedStyle(document.querySelector('.jslot .feel__tilt')!).transform);
+async function cardTilt(page: Page): Promise<string> {
+  // The last card lies on top of its neighbours, so the pointer over it reaches it.
+  return page.evaluate(() => getComputedStyle([...document.querySelectorAll('[data-testid="player-hand"] .feel__tilt')].at(-1)!).transform);
 }
 
 /** How far a computed transform is from standing still: 0 for `none` or the identity matrix, the largest off-identity entry otherwise. */
@@ -55,7 +56,7 @@ function deviationFromRest(transform: string): number {
   return Math.max(...values.map((v, i) => Math.abs(v - (identity[i] ?? 0))));
 }
 
-async function fightWithJoker(page: Page): Promise<void> {
+async function fightWithCards(page: Page): Promise<void> {
   const run = {
     seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {}, focuses: [], bosses: ['general', 'witch'],
     phase: { kind: 'shop', shop: { items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
@@ -65,26 +66,26 @@ async function fightWithJoker(page: Page): Promise<void> {
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
   await page.getByRole('button', { name: /Следующий бой/ }).click();
-  await expect(page.locator('.jslot .feel__tilt')).toBeVisible();
+  await expect(page.locator('[data-testid="player-hand"] .feel__tilt').first()).toBeVisible();
 }
 
-test('with effects off a joker does not tilt under the pointer', async ({ page }) => {
-  await fightWithJoker(page);
-  const box = (await page.locator('.jslot').first().boundingBox())!;
+test('with effects off a card does not tilt under the pointer', async ({ page }) => {
+  await fightWithCards(page);
+  const box = (await page.locator('[data-testid="player-hand"] .hand__slot').last().boundingBox())!;
   await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.1);
   await page.waitForTimeout(300);
-  expect(await jokerTilt(page)).toBe('none');
+  expect(await cardTilt(page)).toBe('none');
 });
 
 test.describe('effects on: tilt', () => {
   test.use({ storageState: EFFECTS_ON });
 
-  test('a joker tilts towards the pointer and comes back when it leaves', async ({ page }) => {
-    await fightWithJoker(page);
-    const box = (await page.locator('.jslot').first().boundingBox())!;
+  test('a card tilts towards the pointer and comes back when it leaves', async ({ page }) => {
+    await fightWithCards(page);
+    const box = (await page.locator('[data-testid="player-hand"] .hand__slot').last().boundingBox())!;
     await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.1);
-    await expect.poll(() => jokerTilt(page), { timeout: 2000 }).not.toBe('none');
+    await expect.poll(() => cardTilt(page), { timeout: 2000 }).not.toBe('none');
     await page.mouse.move(5, 5);
-    await expect.poll(async () => deviationFromRest(await jokerTilt(page)), { timeout: 3000 }).toBeLessThan(0.01);
+    await expect.poll(async () => deviationFromRest(await cardTilt(page)), { timeout: 3000 }).toBeLessThan(0.01);
   });
 });

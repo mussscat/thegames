@@ -121,15 +121,7 @@
 .stats__value { font-family: var(--font-head); font-size: 0.8rem; white-space: nowrap; }
 .stats__value--gold { color: var(--gold); }
 
-.jokers { grid-area: jokers; display: flex; flex-direction: column; gap: 0.5em; min-height: 0; }
-.jokers--empty { display: none; }
-.jokers__head { position: relative; display: flex; justify-content: center; align-items: baseline; }
-.jokers__title { margin: 0; font-size: 0.8rem; }
-.jokers__count { position: absolute; right: 0; bottom: 0; font-size: 0.85em; opacity: 0.85; }
-/* Five equal slots, empty ones drawn as dashed card outlines — symmetric at any count. */
-.jokers__list { --jface-w: 2.6em; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-items: center; gap: 0.4em; margin: 0; padding: 0; list-style: none; }
-.jslot { display: flex; }
-.jslot__button { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; -webkit-touch-callout: none; }
+.jstack { grid-area: jokers; justify-self: center; }
 
 /* ---------- screen layout ----------
    Portrait: side and board are `display: contents`, so one grid places every piece in reading order.
@@ -216,11 +208,6 @@
   .fight__menu, .fight .actions .pbtn { width: 100%; padding: 0.7em 0.4em; font-size: 1em; }
   .fight__menu { justify-self: stretch; align-self: end; }
   .fight .actions { min-height: 0; align-items: flex-end; }
-  /* Sidebar joker slot list (owner sketch): always framed, empty when there are no jokers. */
-  .jokers, .jokers--empty { display: flex; }
-  .jokers { overflow-y: auto; }
-  .jokers__list { --jface-w: 4.2em; grid-template-columns: repeat(auto-fill, minmax(4.4em, 1fr)); }
-  .jokers__title { font-size: 1em; }
   .hand--enemy { grid-area: top; justify-self: stretch; min-height: 0; }
   .fight .table { min-height: 0; grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
   .fight__status { align-self: end; justify-self: center; min-width: 60%; font-size: 1em; }
@@ -279,9 +266,6 @@
 /* ---------- short portrait screens (iPhone SE class): everything must fit without scrolling ---------- */
 @media (max-aspect-ratio: 5/4) and (max-height: 700px) {
   .fight { --card-w: min(11.8vw, 52px); gap: 4px 8px; }
-  .jokers { gap: 0; }
-  .jokers__head { display: none; }
-  .jokers__list { --jface-w: 2.3em; }
   .focus-bar { padding: 4px 6px; gap: 4px; }
   .focus-chip__name { display: none; }
   .focus-chip__face { padding: 3px 6px; }
@@ -294,7 +278,6 @@
   .fight   .fight .stats__tile { padding-block: 2px; }
   .fight .table { min-height: 0; }
   .fight { gap: 2px 8px; }
-  .jokers__list { --jface-w: 2em; }
   .focus-chip__face .fface { --fface-w: 1.4em; }
 }
 
@@ -306,7 +289,6 @@
 /* Portrait phones from 701 px up: tighter gaps and no «Джокеры» header, so the rows keep their height instead of squeezing. */
 @media (max-aspect-ratio: 5/4) and (min-height: 701px) {
   .fight { gap: 6px 8px; }
-  .jokers__head { display: none; }
 }
 
 /* The enemy hand: whole backs, as big as the player's cards (owner, 2026-10-12). */

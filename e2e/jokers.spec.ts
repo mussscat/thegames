@@ -18,33 +18,13 @@ async function fightWithLooter(page: Page): Promise<void> {
   await page.getByRole('button', { name: /Следующий бой/ }).click();
 }
 
-test('a joker card in the fight shows its rule on tap and hides it on a second tap', async ({ page }) => {
+test('the fight shows the jokers as one stack with a «n/5» tag and one score anchor per joker', async ({ page }) => {
   await fightWithLooter(page);
-  const joker = page.getByRole('button', { name: 'Мародёр' });
-  await expect(joker).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
-  await joker.click();
-  await expect(joker).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
-  await joker.click();
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
-});
-
-test('the fight shows five joker slots: the owned joker as a card and four empty outlines', async ({ page }) => {
-  await fightWithLooter(page);
-  const panel = page.getByRole('region', { name: 'Джокеры' });
-  await expect(panel.locator('.jface')).toHaveCount(5);
-  await expect(panel.locator('.jface--empty')).toHaveCount(4);
-});
-
-test.describe('wide screen', () => {
-  test.use({ viewport: { width: 1280, height: 800 } });
-
-  test('hovering a joker card in the sidebar shows its rule', async ({ page }) => {
-    await fightWithLooter(page);
-    await page.getByRole('button', { name: 'Мародёр' }).hover();
-    await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
-  });
+  const stack = page.getByTestId('joker-stack');
+  await expect(stack).toHaveAccessibleName('Джокеры: 1 из 5');
+  await expect(stack).toContainText('1/5');
+  await expect(stack.locator('[data-score-joker="player-0"]')).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'Джокеры' })).toHaveCount(0);
 });
 
 test('jokers can be bought and reordered in the shop', async ({ page }) => {

@@ -1,0 +1,7 @@
+/* ---------- the joker stack in the fight ---------- */
+.jstack { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.jstack:disabled { cursor: default; }
+.jstack__pile { --jface-w: var(--card-w); position: relative; display: block; width: var(--card-w); aspect-ratio: 5 / 7; }
+.jstack__card { position: absolute; inset: 0; display: block; }
+.jstack__hole { position: absolute; inset: 0; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
+.jstack__count { padding: 0 6px; border-radius: 4px; background: rgb(0 0 0 / 45%); font-size: 0.75rem; }

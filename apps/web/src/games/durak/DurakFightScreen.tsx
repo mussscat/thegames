@@ -23,7 +23,8 @@ import { FightStats } from './FightStats';
 import { FocusBar, type FocusPick } from './FocusBar';
 import { chargeChips, toggleTarget } from './focusView';
 import { Icon } from '../../ui/Icon';
-import { JokerPanel } from './JokerPanel';
+import { firingJoker } from './firingJoker';
+import { JokerStack } from './JokerStack';
 import { EnemyBadge } from './EnemyBadge';
 import { ScoreBoard } from './ScoreBoard';
 import { ScorePops } from './ScorePops';
@@ -66,6 +67,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
   const defending = myTurn && round.attacker === 'enemy';
   const focuses = run.focuses;
   const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   useEffect(() => setFocusPick(null), [fight.roundNumber]);
   const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
   const targeting =
@@ -109,7 +111,14 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             </p>
           )}
           <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
-          <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} />
+          <JokerStack
+            jokers={fight.jokers.player}
+            state={fight.jokerState.player}
+            enemyTakes={fight.fightTakes.enemy}
+            firing={firingJoker(playback.current)}
+            disabled={playback.active}
+            onOpen={() => setSheetOpen(true)}
+          />
           <FocusBar
             focuses={focuses}
             fight={fight}
