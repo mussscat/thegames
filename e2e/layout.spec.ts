@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { screenOverflow } from './helpers/fit';
 
 async function startFight(page: Page): Promise<void> {
   await page.goto('/?seed=42');
@@ -37,7 +38,7 @@ async function fightWith(page: Page, patch: object): Promise<void> {
   await expect(page.getByTestId('player-hand')).toBeVisible();
 }
 
-const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+const overflow = screenOverflow;
 /** Rows of the fight grid shrink instead of scrolling, so also check nothing pokes out of its panel and nothing is wider than the screen. */
 const squeeze = (page: Page) =>
   page.evaluate(() => {

@@ -1,0 +1,44 @@
+/* The document is a fixed stage, not a page: nothing scrolls, pulls, selects, zooms or opens a menu. */
+html, body, #root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+html, body {
+  background: #1d2b53;
+  touch-action: manipulation;
+}
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+/* Sprites are decoration: they never take the pointer, so there is no «save image» and no drag ghost. */
+img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* A hand cursor only where something happens. */
+button, [role='button'], label, select, input[type='range'], input[type='checkbox'], input[type='radio'] { cursor: pointer; }
+button:disabled, input:disabled { cursor: default; }
+
+/* The focus ring is for the keyboard; a mouse click or a tap leaves none. */
+:focus:not(:focus-visible) { outline: none; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* The only places that may scroll: a screen that is longer than the viewport scrolls inside itself. */
+.scroll-area {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
