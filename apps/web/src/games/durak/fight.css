@@ -186,6 +186,9 @@
    Wide screens: layout A (touch: a narrow Balatro-like sidebar) or B (mouse: no sidebar), see fightLayout.ts. */
 .fight {
   --card-w: clamp(44px, min(13.5vw, 11.5vh), 74px);
+  /* The deck column and the joker column are equally wide (84 px: the deck's chips), so the table sits in the middle
+   between them — except on a phone on its side, where the focus chips stand beside the stack and make its column wider. */
+  --side-w: max(calc(var(--card-w) * 1.4), 84px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto auto;
@@ -198,7 +201,9 @@
 .fight__menu { padding: 4px 8px; font-size: 0.9rem; }
 .hp--enemy { grid-area: ehp; }
 .hand--enemy { grid-area: ehand; }
-.fight__mid { grid-area: mid; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 0; }
+.fight__mid { grid-area: mid; display: grid; grid-template-columns: minmax(var(--side-w), auto) minmax(0, 1fr) minmax(var(--side-w), auto); align-items: start; gap: 8px; min-height: 0; }
+.fight__mid .deck { justify-self: start; }
+.fight__side-stack { justify-self: end; }
 .fight__mid .table { align-self: stretch; min-height: 0; }
 .fight__side-stack { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 /* The hand keeps the room its raised playable cards (10% of a card) and the fan's corners need above them, so
@@ -230,8 +235,8 @@
   }
   .fight .table { grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
   /* The middle row is short on wide screens: focus chips stand beside the joker stack, not under it. */
-  .fight__side-stack { flex-direction: row; align-items: flex-start; }
-  .fight__side-stack .focus-bar__list { flex-direction: row; }
+  .fight[data-layout='a'] .fight__side-stack { flex-direction: row; align-items: flex-start; }
+  .fight[data-layout='a'] .fight__side-stack .focus-bar__list { flex-direction: row; }
 
   /* A (touch): a narrow sidebar holds the menu, coins, deal and both HP bars, one under the other; the board is the rest. */
   .fight[data-layout='a'] {

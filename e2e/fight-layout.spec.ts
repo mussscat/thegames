@@ -196,3 +196,26 @@ for (const layout of ['a', 'b'] as const) {
     });
   }
 }
+
+for (const [layout, width, height] of [['a', 390, 844], ['a', 915, 412], ['b', 700, 900], ['b', 1440, 900]] as const) {
+  test(`layout ${layout} ${width}×${height}: the deck and the joker stack are level, flush to the edges, and the table is centred between them`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page, layout);
+    const g = await page.evaluate(() => {
+      const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const mid = r('.fight__mid');
+      const table = r('[data-testid="table"]');
+      return {
+        pileTops: Math.abs(r('.deck__pile').top - r('.jstack__pile').top),
+        deckLeft: Math.abs(r('.deck').left - mid.left),
+        stackRight: Math.abs(r('.fight__side-stack').right - mid.right),
+        centred: Math.abs(table.left - mid.left - (mid.right - table.right)),
+      };
+    });
+    expect(g.pileTops).toBeLessThanOrEqual(1);
+    expect(g.deckLeft).toBeLessThanOrEqual(1);
+    expect(g.stackRight).toBeLessThanOrEqual(1);
+    // On a phone on its side the focus chips stand beside the stack (layout A), so that column is wider on purpose.
+    if (!(layout === 'a' && width > height)) expect(g.centred).toBeLessThanOrEqual(2);
+  });
+}
