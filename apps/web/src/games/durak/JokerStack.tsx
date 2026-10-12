@@ -41,13 +41,15 @@ export function JokerStack({ jokers, state, enemyTakes, firing, disabled, onOpen
               key={id}
               layoutId={`joker-${id}`}
               className="jstack__card"
-              data-score-joker={`player-${slot}`}
               style={{ zIndex: lifted ? MAX_JOKERS + 1 : MAX_JOKERS - slot }}
               initial={false}
               animate={{ x: -depth * STEP_PX, y: lifted ? -LIFT_PX : -depth * STEP_PX, scale: lifted ? 1.08 : 1 }}
               transition={motionOn ? { type: 'spring', stiffness: 420, damping: 24 } : { duration: 0 }}
             >
-              <JokerFace id={id} badge={slot === 0 || lifted ? jokerBadge(id, state, enemyTakes) : null} />
+              {/* The scoring bounce animates this inner element: motion owns the outer one (stack offset and lift). */}
+              <span className="jstack__anchor" data-score-joker={`player-${slot}`}>
+                <JokerFace id={id} badge={slot === 0 || lifted ? jokerBadge(id, state, enemyTakes) : null} />
+              </span>
             </motion.span>
           );
         })}

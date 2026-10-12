@@ -35,6 +35,14 @@ test('the enemy badge tells who the enemy is on tap and keeps the score anchors'
   await expect(page.locator('[data-score-tier]')).toHaveCount(1);
 });
 
+test('the enemy badge is a button of its own, not a child of the HP meter (screen readers flatten meter children)', async ({ page }) => {
+  await page.goto('/?seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  await expect(page.getByTestId('enemy-badge')).toBeVisible();
+  await expect(page.getByRole('meter', { name: 'Соперник' })).toHaveAttribute('aria-valuenow', /\d+/);
+  await expect(page.getByRole('meter', { name: 'Соперник' }).getByTestId('enemy-badge')).toHaveCount(0);
+});
+
 test('a reload offers to continue the same run', async ({ page }) => {
   await page.goto('/?seed=42');
   await page.getByRole('button', { name: 'Новый забег' }).click();

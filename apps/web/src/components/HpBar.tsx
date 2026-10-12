@@ -21,20 +21,23 @@ type HpBarProps = {
 
 export function HpBar({ label, hp, maxHp, shakeKey = 0, scoreTarget, className = '', lead }: HpBarProps) {
   return (
-    <div
-      className={`hp panel ${className}`}
-      role="meter"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={maxHp}
-      aria-valuenow={hp}
-      data-score-hp={scoreTarget}
-    >
+    <div className={`hp panel ${className}`} data-score-hp={scoreTarget}>
       {lead}
       <span className="hp__label">
         <Icon id="heart" /> {label}
       </span>
-      <motion.div key={shakeKey} className="hp__track" animate={shakeKey ? SHAKE : {}} transition={{ duration: 0.35 }}>
+      {/* The meter is the bar itself: the badge in `lead` is a button, and a meter's children are presentational. */}
+      <motion.div
+        key={shakeKey}
+        className="hp__track"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={maxHp}
+        aria-valuenow={hp}
+        animate={shakeKey ? SHAKE : {}}
+        transition={{ duration: 0.35 }}
+      >
         {hpSegments(hp, maxHp).map((fill, i) => (
           <span key={i} className="hp__seg">
             {fill > 0 && <span className="hp__seg-fill" style={{ width: `${fill * 100}%` }} />}

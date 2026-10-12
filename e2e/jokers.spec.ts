@@ -60,6 +60,34 @@ test('the stack opens into a sheet where jokers are read and reordered, and the 
   await expect(page.getByTestId('joker-stack').locator('[data-score-joker="player-0"] img').first()).toBeAttached();
 });
 
+test('the score anchor of a stacked joker is not the element motion lifts, so a bounce cannot cancel the lift', async ({ page }) => {
+  await fightWithLooter(page);
+  const anchorIsLiftedCard = await page.evaluate(() => document.querySelector('[data-score-joker="player-0"]')!.classList.contains('jstack__card'));
+  expect(anchorIsLiftedCard).toBe(false);
+});
+
+test('the sheet is keyboard-friendly: focus goes in, Alt+arrows reorder, Escape closes and focus returns to the stack', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), { ...SHOP_RUN, jokers: ['looter', 'small'] });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  const stack = page.getByTestId('joker-stack');
+  await stack.focus();
+  await page.keyboard.press('Enter');
+  const sheet = page.getByRole('dialog', { name: 'Джокеры' });
+  const cards = sheet.getByRole('option');
+  await expect(cards.first()).toBeFocused();
+  await page.keyboard.press('Alt+ArrowRight');
+  await expect(cards.nth(0)).toHaveAccessibleName('Мелочь');
+  await expect(cards.nth(1)).toHaveAccessibleName('Мародёр');
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(stack).toBeFocused();
+  const saved = await page.evaluate(() => JSON.parse(window.localStorage.getItem('thegame.durak.run')!).run.jokers);
+  expect(saved).toEqual(['small', 'looter']);
+});
+
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
@@ -67,6 +95,9 @@ test.describe('reduced motion', () => {
     await fightWithLooter(page);
     await page.getByTestId('joker-stack').click();
     await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeVisible();
+    // No fly-out from the stack: right after opening, the card stands where it belongs.
+    const transform = await page.getByRole('dialog').getByRole('option').first().evaluate((el) => getComputedStyle(el).transform);
+    expect(transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
     await page.getByRole('button', { name: 'Закрыть' }).click();
     await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeHidden();
   });

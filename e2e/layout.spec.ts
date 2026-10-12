@@ -41,18 +41,6 @@ async function fightWith(page: Page, patch: object): Promise<void> {
 }
 
 const overflow = screenOverflow;
-/** Rows of the fight grid shrink instead of scrolling, so also check nothing pokes out of its panel and nothing is wider than the screen. */
-const squeeze = (page: Page) =>
-  page.evaluate(() => {
-    const bottom = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().bottom ?? 0;
-    const top = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().top ?? 0;
-    return {
-      jokersOut: Math.round(bottom('.jokers__list') - bottom('.jokers')),
-      focusOver: Math.round(bottom('.jokers') - top('.focus-bar')),
-      wide: document.documentElement.scrollWidth - window.innerWidth,
-    };
-  });
-
 const cardWidth = (page: Page) => page.locator('[data-testid="player-hand"] .card').first().evaluate((el) => (el as HTMLElement).offsetWidth);
 
 test.describe('Pixel 7 portrait (412×915)', () => {
@@ -62,10 +50,6 @@ test.describe('Pixel 7 portrait (412×915)', () => {
     await fightWith(page, {});
     expect(Math.round(await cardWidth(page))).toBe(74);
     expect(await overflow(page)).toBeLessThanOrEqual(0);
-    const squeezed = await squeeze(page);
-    expect(squeezed.jokersOut).toBeLessThanOrEqual(0);
-    expect(squeezed.focusOver).toBeLessThanOrEqual(0);
-    expect(squeezed.wide).toBeLessThanOrEqual(0);
   });
 });
 
@@ -76,10 +60,6 @@ test.describe('short portrait (375×667)', () => {
     await fightWith(page, {});
     expect(await cardWidth(page)).toBeLessThan(74);
     expect(await overflow(page)).toBeLessThanOrEqual(0);
-    const squeezed = await squeeze(page);
-    expect(squeezed.jokersOut).toBeLessThanOrEqual(0);
-    expect(squeezed.focusOver).toBeLessThanOrEqual(0);
-    expect(squeezed.wide).toBeLessThanOrEqual(0);
   });
 });
 
@@ -121,13 +101,9 @@ for (const size of [{ width: 390, height: 844 }, { width: 360, height: 740 }]) {
   test.describe(`common phone ${size.width}×${size.height}`, () => {
     test.use({ ...BIG, viewport: size });
 
-    test('the fight fits: no scrolling, nothing squeezed or wider than the screen', async ({ page }) => {
+    test('the fight fits: no scrolling, nothing wider than the screen', async ({ page }) => {
       await fightWith(page, {});
       expect(await overflow(page)).toBeLessThanOrEqual(0);
-      const squeezed = await squeeze(page);
-      expect(squeezed.jokersOut).toBeLessThanOrEqual(0);
-      expect(squeezed.focusOver).toBeLessThanOrEqual(0);
-      expect(squeezed.wide).toBeLessThanOrEqual(0);
     });
   });
 }

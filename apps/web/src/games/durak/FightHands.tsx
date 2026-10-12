@@ -2,6 +2,8 @@ import type { Card } from '@game/core';
 import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
 import { useAnimate } from 'motion/react';
 import { useEffect } from 'react';
+import { usePrevious } from '../../ui/usePrevious';
+import { isNewError } from './sounds';
 import { CardBack, CardView } from '../../components/CardView';
 import { useFan } from '../../ui/useFan';
 import { sortHand, type HandSort } from '../../ui/handSort';
@@ -47,10 +49,12 @@ export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targetin
   const cards = sortHand(round.hands.player, sort, (card) => isRoundTrump(round, card));
   const fan = useFan(cards.length, true);
   const [shakeScope, animate] = useAnimate<HTMLDivElement>();
+  // `shakeKey` is run-wide: an error made in the shop must not shake the hand of the next fight, nor a settings change.
+  const previousShakeKey = usePrevious(shakeKey);
   useEffect(() => {
-    if (shakeKey === 0 || !fan.motion || !shakeScope.current) return;
+    if (!isNewError(previousShakeKey, shakeKey) || !fan.motion || !shakeScope.current) return;
     void animate(shakeScope.current, { x: [0, -6, 6, -3, 3, 0] }, { duration: 0.3 });
-  }, [shakeKey, fan.motion, animate, shakeScope]);
+  }, [shakeKey, previousShakeKey, fan.motion, animate, shakeScope]);
 
   return (
     <div ref={fan.containerRef} className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand" data-motion={fan.motion ? 'on' : 'off'}>
