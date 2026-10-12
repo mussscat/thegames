@@ -31,6 +31,7 @@
 /* ---------- hands ---------- */
 /* The hand: slots are positioned with transform only (see useFan), so a re-layout springs instead of jumping. */
 .hand { --slot-w: var(--card-w); position: relative; height: calc(var(--card-w) * 1.5); }
+.hand__shake { position: absolute; inset: 0; }
 .hand__probe { position: absolute; left: 0; top: 0; width: var(--card-w); height: 0; visibility: hidden; pointer-events: none; }
 .hand__slot {
   position: absolute;
@@ -75,14 +76,13 @@
 
 /* ---------- fight layout ---------- */
 .fight__header { display: flex; justify-content: space-between; align-items: center; }
-.fight__status { margin: 0; min-height: 1.4em; padding: 6px 10px; text-align: center; }
 .actions { display: flex; justify-content: center; gap: 12px; min-height: 52px; }
 
 
 /* ---------- enemy badge: its sprite starts the enemy HP bar; the tip tells who it is ---------- */
 .enemy-badge-wrap { display: contents; }
-.enemy-badge { position: relative; display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0; border: 2px solid #000000; border-radius: 8px; background: #2a4a8c; cursor: pointer; box-shadow: 0 3px 0 rgb(0 0 0 / 55%); }
-.enemy-badge .icon { width: 32px; height: 32px; image-rendering: pixelated; }
+.enemy-badge { position: relative; display: grid; place-items: center; min-width: 48px; min-height: 48px; padding: 0; border: 2px solid #000000; border-radius: 8px; background: #2a4a8c; cursor: pointer; box-shadow: 0 3px 0 rgb(0 0 0 / 55%); }
+.enemy-badge .icon { width: 36px; height: auto; image-rendering: pixelated; }
 .enemy-badge--strong { background: #a8611a; }
 .enemy-badge--boss { background: #9c2a2a; }
 .enemy-badge__anchor { position: absolute; inset: 0; pointer-events: none; }
@@ -130,7 +130,6 @@
 .jokers__list { --jface-w: 2.6em; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-items: center; gap: 0.4em; margin: 0; padding: 0; list-style: none; }
 .jslot { display: flex; }
 .jslot__button { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; -webkit-touch-callout: none; }
-.hand__count { position: absolute; right: 0; top: 50%; translate: 0 -50%; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
 
 /* ---------- screen layout ----------
    Portrait: side and board are `display: contents`, so one grid places every piece in reading order.
@@ -310,10 +309,8 @@
   .jokers__head { display: none; }
 }
 
-/* The enemy hand shows the top of the backs only (their corners are what matters), so ×1 costs little height. */
-.hand--enemy { --slot-w: var(--card-w); height: calc(var(--card-w) * 0.55); }
-.hand--enemy .hand__slot { top: 0; bottom: auto; transform-origin: 50% 0; }
-.hand--enemy .card { width: var(--card-w); clip-path: inset(0 0 45% 0); }
+/* The enemy hand: whole backs, as big as the player's cards (owner, 2026-10-12). */
+.hand--enemy { height: calc(var(--card-w) * 1.4); }
 
 /* A whole multiple of the 74 px card where the browser can compute it; engines without round() keep the plain fit above. */
 @supports (width: round(down, 1px, 1px)) {

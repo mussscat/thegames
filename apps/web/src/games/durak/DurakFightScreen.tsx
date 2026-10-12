@@ -131,10 +131,10 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
           <TableView table={round.table} attacker={round.attacker}>
             {playback.board && <ScoreBoard board={playback.board} />}
           </TableView>
-          <p className="fight__status panel" role="status">
+          <p className="sr-only" role="status">
             {error ?? statusText(fight)}
           </p>
-          <PlayerHand round={round} myTurn={myTurn} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
           <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
         </section>
       </main>

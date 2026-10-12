@@ -15,10 +15,12 @@ test('the coin and the icons show at their pre-shrunk size, so every pixel is a 
       const img = document.querySelector<HTMLImageElement>(selector);
       return img ? { natural: img.naturalWidth, shown: Math.round(img.getBoundingClientRect().width) } : null;
     };
-    return { coin: read('.stats .coin'), icon: read('.hp .icon') };
+    return { coin: read('.stats .coin'), icon: read('.hp--player .icon'), badge: read('.enemy-badge .icon') };
   });
   expect(sizes.coin).toEqual({ natural: 19, shown: 19 });
   expect(sizes.icon).toEqual({ natural: 18, shown: 18 });
+  // The enemy badge shows its sprite at exactly ×2.
+  expect(sizes.badge!.shown).toBe(sizes.badge!.natural * 2);
 });
 
 const BIG = { storageState: { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'thegame.settings', value: '{"effects":false}' }] }] } };
@@ -138,7 +140,8 @@ test.describe('enemy hand and deck on a short screen', () => {
     const hand = await page.getByTestId('enemy-hand').evaluate((el) => getComputedStyle(el).overflow);
     expect(hand).toBe('visible');
     const clip = await page.getByTestId('enemy-hand').locator('.card').first().evaluate((el) => getComputedStyle(el).clipPath);
-    expect(clip).toContain('inset');
+    // Whole backs since 2026-10-12 (owner): no clipping.
+    expect(clip).toBe('none');
     const label = await page.locator('.deck__label').first().evaluate((el) => getComputedStyle(el).display);
     expect(label).not.toBe('none');
   });
