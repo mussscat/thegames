@@ -30,8 +30,6 @@ body {
   background: #1d2b53;
   color: #ffffff;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
-  user-select: none;
 }
 
 /* ---------- background ---------- */
