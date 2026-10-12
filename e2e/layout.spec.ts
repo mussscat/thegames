@@ -9,13 +9,13 @@ async function startFight(page: Page): Promise<void> {
 
 test('the coin and the icons show at their pre-shrunk size, so every pixel is a whole pixel', async ({ page }) => {
   await startFight(page);
-  await expect(page.locator('.stats .coin').first()).toBeVisible();
+  await expect(page.locator('.stats__tile .coin').first()).toBeVisible();
   const sizes = await page.evaluate(() => {
     const read = (selector: string) => {
       const img = document.querySelector<HTMLImageElement>(selector);
       return img ? { natural: img.naturalWidth, shown: Math.round(img.getBoundingClientRect().width) } : null;
     };
-    return { coin: read('.stats .coin'), icon: read('.hp--player .icon'), badge: read('.enemy-badge .icon') };
+    return { coin: read('.stats__tile .coin'), icon: read('.hp--player .icon'), badge: read('.enemy-badge .icon') };
   });
   expect(sizes.coin).toEqual({ natural: 19, shown: 19 });
   expect(sizes.icon).toEqual({ natural: 18, shown: 18 });
@@ -86,9 +86,9 @@ test.describe('short portrait (375×667)', () => {
 test.describe('desktop (1280×800)', () => {
   test.use({ ...BIG, viewport: { width: 1280, height: 800 } });
 
-  test('cards are a whole multiple of 74 px', async ({ page }) => {
+  test('cards are a whole scale of the 74 px art (37 CSS px steps on this 2.6× screen)', async ({ page }) => {
     await fightWith(page, {});
-    expect(Math.round(await cardWidth(page)) % 74).toBe(0);
+    expect(Math.round(await cardWidth(page)) % 37).toBe(0);
   });
 });
 

@@ -113,18 +113,21 @@ test.describe('two focuses on a small portrait screen', () => {
 test.describe('two focuses in landscape', () => {
   test.use({ viewport: { width: 915, height: 412 } });
 
-  test('the focus bar sits inside the sidebar and on screen, with both chips tappable', async ({ page }) => {
+  test('the focus chips sit beside the joker stack, on screen and tappable', async ({ page }) => {
     await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'], jokers: ['looter', 'small'] }));
     await page.getByRole('button', { name: /Следующий бой/ }).click();
     const bar = await page.getByTestId('focus-bar').boundingBox();
-    const side = await page.locator('.fight__side').boundingBox();
     const view = page.viewportSize();
     expect(bar).not.toBeNull();
-    expect(bar!.x + bar!.width).toBeLessThanOrEqual((side?.x ?? 0) + (side?.width ?? 0) + 1);
+    expect(bar!.x + bar!.width).toBeLessThanOrEqual((view?.width ?? 0) + 1);
     expect(bar!.y + bar!.height).toBeLessThanOrEqual((view?.height ?? 0) + 1);
     for (const name of ['Разгон', 'Подглядывание']) {
-      const chip = await page.getByTestId('focus-bar').getByRole('button', { name }).boundingBox();
-      expect(chip?.width ?? 0).toBeGreaterThan(60);
+      const chip = page.getByTestId('focus-bar').getByRole('button', { name });
+      const box = await chip.boundingBox();
+      expect(Math.min(box?.width ?? 0, box?.height ?? 0)).toBeGreaterThanOrEqual(44);
+      await chip.click();
+      await expect(chip).toHaveAttribute('aria-pressed', 'true');
+      await chip.click();
     }
   });
 });
