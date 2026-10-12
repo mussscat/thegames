@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { screenOverflow } from './helpers/fit';
 
 /** A saved run in the shop phase: Continue opens the shop, «Следующий бой» opens a fight. */
 const SHOP_RUN = {
@@ -164,16 +165,6 @@ test.describe('focus and cursor (A5)', () => {
   });
 });
 
-/** The screen root either fits, or scrolls inside itself — content may never be silently cut off by the pinned document. */
-const clippedScreen = (page: Page) =>
-  page.evaluate(() => {
-    const root = document.querySelector('#root main');
-    if (!root) return 'no screen';
-    const overflowY = getComputedStyle(root).overflowY;
-    const fits = root.scrollHeight <= root.clientHeight + 1;
-    return fits || overflowY === 'auto' || overflowY === 'scroll' ? 'ok' : `cut by ${root.scrollHeight - root.clientHeight}px`;
-  });
-
 const SIZES = [
   { name: '320×568', width: 320, height: 568 },
   { name: '375×667', width: 375, height: 667 },
@@ -198,10 +189,32 @@ test.describe('no page scroll on any screen (A1)', () => {
         expect(html).toBeLessThanOrEqual(0);
         expect(body).toBeLessThanOrEqual(0);
         expect(wide).toBeLessThanOrEqual(0);
-        expect(await clippedScreen(page)).toBe('ok');
+        expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
       });
     }
   }
+});
+
+test('the fit check sees content that the pinned document cuts off', async ({ page }) => {
+  await openFight(page);
+  expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
+  await page.evaluate(() => {
+    const tall = document.createElement('div');
+    tall.style.height = '2000px';
+    tall.style.flex = 'none';
+    document.querySelector('#root main')!.appendChild(tall);
+  });
+  expect(await screenOverflow(page)).toBeGreaterThan(0);
+});
+
+test('a too-wide child is caught even where the screen scrolls vertically', async ({ page }) => {
+  await openSettings(page);
+  await page.evaluate(() => {
+    const wide = document.createElement('div');
+    wide.style.cssText = 'width: 2000px; height: 10px; flex: none';
+    document.querySelector('#root main')!.appendChild(wide);
+  });
+  expect(await screenOverflow(page)).toBeGreaterThan(0);
 });
 
 test.describe('long screens scroll inside themselves', () => {

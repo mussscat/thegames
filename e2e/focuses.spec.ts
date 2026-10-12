@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { screenOverflow } from './helpers/fit';
 
 const REWARD = { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 };
 
@@ -82,11 +83,11 @@ test.describe('two focuses on a small portrait screen', () => {
     await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'], jokers: ['looter', 'small'] }));
     await page.getByRole('button', { name: /Следующий бой/ }).click();
     await expect(page.getByTestId('focus-bar')).toBeVisible();
-    const overflow = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    const overflow = await screenOverflow(page);
     expect(overflow).toBeLessThanOrEqual(0);
     await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
     await expect(page.getByRole('button', { name: 'Сыграть' })).toBeVisible();
-    const withButtons = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    const withButtons = await screenOverflow(page);
     expect(withButtons).toBeLessThanOrEqual(0);
   });
 });

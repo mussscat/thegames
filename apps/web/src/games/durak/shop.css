@@ -2,14 +2,15 @@
 .shop {
   --slot-h: clamp(92px, 16vh, 190px);
   --slot-w: calc(var(--slot-h) * 0.7);
-  --owned-w: 2.7em;
+  /* Five owned slots must fit a 320 px screen. */
+  --owned-w: min(2.7em, 13vw);
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas: 'side' 'owned' 'focuses' 'panel' 'status';
   align-content: start;
   gap: 8px;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 8px 10px calc(96px + env(safe-area-inset-bottom, 0px));
