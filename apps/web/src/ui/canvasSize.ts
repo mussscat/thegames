@@ -1,4 +1,8 @@
-/** Backing-store size in whole pixels: a fractional size never equals what the canvas stores, forcing a realloc every frame. */
-export function canvasSize(clientWidth: number, clientHeight: number, dpr: number): { readonly width: number; readonly height: number } {
-  return { width: Math.floor(clientWidth * dpr), height: Math.floor(clientHeight * dpr) };
+/**
+ * Backing-store size of the swirl: one pixel per `cell` CSS px, stretched by the browser without smoothing.
+ * The swirl is drawn in blocks anyway, so this looks the same as drawing every device pixel and costs a few
+ * hundred times less (a 1440×900 window at 2× is 5 million shader runs per frame the other way).
+ */
+export function cellGridSize(clientWidth: number, clientHeight: number, cell: number): { readonly width: number; readonly height: number } {
+  return { width: Math.max(1, Math.ceil(clientWidth / cell)), height: Math.max(1, Math.ceil(clientHeight / cell)) };
 }
