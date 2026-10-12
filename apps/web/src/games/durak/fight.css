@@ -82,7 +82,7 @@
 .enemy-badge--boss { background: #9c2a2a; }
 .enemy-badge__anchor { position: absolute; inset: 0; pointer-events: none; }
 .hp--enemy .hp__label { display: none; }
-.hp--enemy { grid-template-columns: auto 1fr 3.2em; }
+.hp.hp--enemy { grid-template-columns: auto 1fr 3.2em; }
 
 /* ---------- HP ---------- */
 .hp { position: relative; display: grid; grid-template-columns: 6.9em 1fr 3.2em; align-items: center; gap: 8px; padding: 6px 10px; font-size: 0.9rem; }
@@ -155,7 +155,8 @@
 /* ---------- hit pop: big damage, small chips × mult board (Balatro-like) ---------- */
 
 /* ---------- focuses: picture chips next to the joker stack; Сыграть / Отмена live in the action row ---------- */
-.focus-bar__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.focus-chip { display: flex; }
+.focus-bar__list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .focus-chip--empty { width: 44px; height: 44px; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
 .focus-chip__face { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 2px; border: 2px solid #000000; border-radius: 6px; background: linear-gradient(180deg, #2b6b8f, #12324a); color: #ffffff; font: inherit; cursor: pointer; }
 .focus-chip--selected .focus-chip__face { translate: 0 -4px; box-shadow: 0 0 0 2px var(--gold), 0 0 10px var(--gold); }
@@ -171,8 +172,8 @@
 .hand--enemy { height: calc(var(--card-w) * 1.4); }
 
 /* Portrait: the deck chips share one row and their words become visually hidden (still read aloud), so the narrow deck
-   column does not wrap them into a tall block that dictates the height of the screen. */
-@media (max-aspect-ratio: 5/4) {
+   column does not wrap them into a tall block that dictates the height of the screen. The same on any short screen. */
+@media (max-aspect-ratio: 5/4), (max-height: 500px) {
   .deck { gap: 2px; }
   .deck__info { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
   .deck__info .chip { position: relative; padding: 0 5px; font-size: 0.75rem; }
@@ -197,7 +198,7 @@
 .hand--enemy { grid-area: ehand; }
 .fight__mid { grid-area: mid; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 0; }
 .fight__mid .table { align-self: stretch; min-height: 0; }
-.fight__side-stack { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.fight__side-stack { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .hand--player { grid-area: hand; height: calc(var(--card-w) * 1.4 + 12px); }
 .charges { grid-area: charges; }
 .hp--player { grid-area: php; }
@@ -225,13 +226,14 @@
   /* A: a narrow sidebar on the left holds the top bar and both HP bars; the board is everything else. */
   .fight[data-layout='a'] {
     grid-template-columns: minmax(11em, 19%) minmax(0, 1fr);
+    /* The sidebar's top bar spans two rows, so it never makes the enemy-hand row taller. */
     grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
     grid-template-areas:
       'top ehand'
+      'top mid'
       'ehp mid'
       'php mid'
       'charges mid'
-      '. mid'
       '. hand'
       '. actions';
     column-gap: 1.2em;
@@ -247,6 +249,8 @@
   .fight[data-layout='a'] .fight__top { grid-template-columns: 1fr 1fr; align-self: start; }
   .fight[data-layout='a'] .fight__menu { grid-column: 1 / -1; }
   .fight[data-layout='a'] .hp { grid-template-columns: auto 1fr auto; row-gap: 0.35em; }
+  /* The sidebar is narrow: the bar takes a row of its own under the name and the numbers. */
+  .fight[data-layout='a'] .hp__track { grid-column: 1 / -1; grid-row: 2; }
 
   /* B: no sidebar — the top bar shares a row with the enemy HP, the player HP shares one with the actions. */
   .fight[data-layout='b'] {
@@ -261,6 +265,12 @@
 /* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */
 @media (min-aspect-ratio: 5/4) and (max-height: 420px) {
   .fight { --card-fit: clamp(40px, min(12.5vh, 9vw), 74px); gap: 4px; }
+  /* One row of top-bar boxes (the deal shows its number only) and the focus chips side by side. */
+  .fight[data-layout='a'] .fight__top { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fight[data-layout='a'] .fight__menu { grid-column: auto; padding-inline: 2px; font-size: 0.8rem; }
+  .fight .stats__label { display: none; }
+  .fight__side-stack .focus-bar__list { flex-direction: row; }
+  .hand--player { height: calc(var(--card-w) * 1.4 + 6px); }
 }
 /* On screens with 2+ device pixels per CSS px, 37 CSS px is still 74 device px: a whole scale of the art. */
 @media (min-aspect-ratio: 5/4) and (min-resolution: 2dppx) {

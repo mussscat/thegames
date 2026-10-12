@@ -57,6 +57,21 @@ for (const layout of ['a', 'b'] as const) {
       await fullFight(page, layout);
       expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
       expect(await tooSmall(page)).toBe(0);
+      const geometry = await page.evaluate(() => {
+        const rect = (el: Element | null) => el!.getBoundingClientRect();
+        const handTop = rect(document.querySelector('[data-testid="player-hand"]')).top;
+        const midParts = [...document.querySelectorAll('.fight__mid > *')].map((el) => rect(el).bottom);
+        const segs = [...document.querySelectorAll('.hp__seg')].map((el) => rect(el).width);
+        return { badge: rect(document.querySelector('[data-testid="enemy-badge"]')).width, midOverHand: Math.max(...midParts) - handTop, thinnestSeg: Math.min(...segs) };
+      });
+      expect(geometry.badge).toBeLessThanOrEqual(60);
+      expect(geometry.midOverHand).toBeLessThanOrEqual(1);
+      expect(geometry.thinnestSeg).toBeGreaterThanOrEqual(6);
+      await page.getByTestId('enemy-badge').click();
+      const tip = await page.getByRole('tooltip').boundingBox();
+      expect(tip!.x).toBeGreaterThanOrEqual(0);
+      expect(tip!.x + tip!.width).toBeLessThanOrEqual(width);
+      await page.getByTestId('enemy-badge').click();
       await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
       expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
     });

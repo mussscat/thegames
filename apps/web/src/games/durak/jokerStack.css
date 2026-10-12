@@ -1,10 +1,10 @@
 /* ---------- the joker stack in the fight ---------- */
-.jstack { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.jstack { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .jstack:disabled { cursor: default; }
 .jstack__pile { --jface-w: var(--card-w); position: relative; display: block; width: var(--card-w); aspect-ratio: 5 / 7; }
 .jstack__card { position: absolute; inset: 0; display: block; }
 .jstack__hole { position: absolute; inset: 0; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
-.jstack__count { padding: 0 6px; border-radius: 4px; background: rgb(0 0 0 / 45%); font-size: 0.75rem; }
+.jstack__count { position: absolute; right: -6px; bottom: -6px; z-index: 7; padding: 0 5px; border: 2px solid #000000; border-radius: 4px; background: rgb(20 14 30 / 92%); font-size: 0.75rem; }
 
 /* ---------- the sheet: the stack fanned out ---------- */
 .jsheet-backdrop { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(0 0 0 / 65%); }
