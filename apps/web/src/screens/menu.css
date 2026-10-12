@@ -36,7 +36,7 @@
 .settings__row input[type='range'] { accent-color: #f39c32; }
 
 /* Short landscape screens: let the centred column scroll instead of clipping. */
-.menu { overflow-y: auto; justify-content: safe center; }
+.menu { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; justify-content: safe center; }
 .settings__select { font: inherit; padding: 6px 8px; border: 3px solid #000000; border-radius: 6px; background: #f4efe2; color: var(--ink); }
 .settings__group { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 10px; border: 2px solid rgb(255 255 255 / 20%); border-radius: 8px; }
 

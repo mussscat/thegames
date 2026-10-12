@@ -110,6 +110,8 @@ test.describe('no browser chrome behaviour (A2, A3)', () => {
   test('WebKit: the long-press callout is off', async ({ page, browserName }) => {
     test.skip(browserName !== 'webkit', '-webkit-touch-callout exists only in WebKit');
     await openMenu(page);
+    // Desktop WebKit builds do not know the property at all; only iOS does — the owner checks that on the phone.
+    test.skip(!(await page.evaluate(() => CSS.supports('-webkit-touch-callout', 'none'))), 'this WebKit build has no touch callout');
     expect(await page.evaluate(() => getComputedStyle(document.body).getPropertyValue('-webkit-touch-callout'))).toBe('none');
   });
 
@@ -148,16 +150,29 @@ test.describe('no browser chrome behaviour (A2, A3)', () => {
 });
 
 test.describe('focus and cursor (A5)', () => {
-  test('a mouse click leaves no focus ring, the keyboard shows one', async ({ page }) => {
-    await openMenu(page);
-    const button = page.getByRole('button', { name: 'Настройки' });
-    await page.keyboard.press('Tab');
+  test('a mouse click leaves no focus ring, the keyboard shows one', async ({ page, browserName }) => {
+    await openSettings(page);
+    const palette = page.locator('.settings__palette').first();
+    await palette.click();
+    await expect(page.locator(':focus-visible')).toHaveCount(0);
+    expect(await palette.evaluate((el) => getComputedStyle(el).cursor)).toBe('pointer');
+    // Safari moves focus between buttons with Option+Tab; plain Tab only visits form fields.
+    await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
     const focused = page.locator(':focus-visible');
     await expect(focused).toHaveCount(1);
     expect(await focused.evaluate((el) => getComputedStyle(el).outlineStyle)).not.toBe('none');
-    expect(await button.evaluate((el) => getComputedStyle(el).cursor)).toBe('pointer');
   });
 });
+
+/** The screen root either fits, or scrolls inside itself — content may never be silently cut off by the pinned document. */
+const clippedScreen = (page: Page) =>
+  page.evaluate(() => {
+    const root = document.querySelector('#root main');
+    if (!root) return 'no screen';
+    const overflowY = getComputedStyle(root).overflowY;
+    const fits = root.scrollHeight <= root.clientHeight + 1;
+    return fits || overflowY === 'auto' || overflowY === 'scroll' ? 'ok' : `cut by ${root.scrollHeight - root.clientHeight}px`;
+  });
 
 const SIZES = [
   { name: '320×568', width: 320, height: 568 },
@@ -183,6 +198,7 @@ test.describe('no page scroll on any screen (A1)', () => {
         expect(html).toBeLessThanOrEqual(0);
         expect(body).toBeLessThanOrEqual(0);
         expect(wide).toBeLessThanOrEqual(0);
+        expect(await clippedScreen(page)).toBe('ok');
       });
     }
   }
@@ -192,11 +208,14 @@ test.describe('long screens scroll inside themselves', () => {
   test('the last pack of the shop is reachable at 320×568 and clears the bottom bar', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await openShop(page);
-    const lastPack = page.locator('.shop__packs > *').last();
-    await lastPack.scrollIntoViewIfNeeded();
-    const pack = await lastPack.boundingBox();
+    // Scroll the shop to its end, as a thumb would: the last pack and the status line must clear the fixed bar.
+    await page.locator('.shop').evaluate((el) => el.scrollTo(0, el.scrollHeight));
     const bar = await page.locator('.shop__bar').boundingBox();
-    expect(pack && bar && pack.y + pack.height <= bar.y + 1).toBe(true);
+    const pack = await page.locator('.shop__packs > *').last().boundingBox();
+    const status = await page.locator('.shop__status').boundingBox();
+    expect(bar).not.toBeNull();
+    expect(pack!.y + pack!.height).toBeLessThanOrEqual(bar!.y + 1);
+    expect(status!.y + status!.height).toBeLessThanOrEqual(bar!.y + 1);
     expect(await page.locator('.shop').evaluate((el) => getComputedStyle(el).overscrollBehaviorY)).toBe('contain');
   });
 

@@ -4,6 +4,8 @@ const PORT = 4173;
 
 export default defineConfig({
   testDir: 'e2e',
+  // Three projects (two of them WebKit) at the default five workers starve the animated specs into timeouts.
+  workers: 4,
   use: { baseURL: `http://localhost:${PORT}`, storageState: 'e2e/storage-state.json' },
   projects: [
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
