@@ -24,7 +24,7 @@ import { FocusBar, type FocusPick } from './FocusBar';
 import { chargeChips, toggleTarget } from './focusView';
 import { Icon } from '../../ui/Icon';
 import { JokerPanel } from './JokerPanel';
-import { RunHeader } from './RunHeader';
+import { EnemyBadge } from './EnemyBadge';
 import { ScoreBoard } from './ScoreBoard';
 import { ScorePops } from './ScorePops';
 import { fightSound, isNewError } from './sounds';
@@ -82,9 +82,9 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
       <main className="screen fight">
         {/* Portrait: both wrappers are `display: contents` and a grid places each child; landscape: two columns. */}
         <aside className="fight__side">
-          <RunHeader run={run} />
           <HpBar
             label="Соперник"
+            lead={<EnemyBadge run={run} />}
             className="hp--enemy"
             hp={fight.hp.enemy}
             maxHp={fight.maxHp.enemy}

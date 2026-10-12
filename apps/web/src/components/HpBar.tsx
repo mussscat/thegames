@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import type { ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { hpSegments } from './hpSegments';
 
@@ -14,9 +15,11 @@ type HpBarProps = {
   readonly scoreTarget?: string;
   /** Extra class for screen layout (grid placement). */
   readonly className?: string;
+  /** Shown before the label (the enemy badge). */
+  readonly lead?: ReactNode;
 };
 
-export function HpBar({ label, hp, maxHp, shakeKey = 0, scoreTarget, className = '' }: HpBarProps) {
+export function HpBar({ label, hp, maxHp, shakeKey = 0, scoreTarget, className = '', lead }: HpBarProps) {
   return (
     <div
       className={`hp panel ${className}`}
@@ -27,6 +30,7 @@ export function HpBar({ label, hp, maxHp, shakeKey = 0, scoreTarget, className =
       aria-valuenow={hp}
       data-score-hp={scoreTarget}
     >
+      {lead}
       <span className="hp__label">
         <Icon id="heart" /> {label}
       </span>
