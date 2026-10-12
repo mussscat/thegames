@@ -27,6 +27,7 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
           onLeaveFight={() => act({ type: 'leaveFight' })}
           onExit={onExit}
           onUseFocus={(slot, targets) => act({ type: 'useFocus', slot, targets })}
+          onMoveJoker={(from, to) => act({ type: 'moveJoker', from, to })}
         />
       );
     case 'shop':

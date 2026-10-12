@@ -24,6 +24,7 @@ import { FocusBar, type FocusPick } from './FocusBar';
 import { chargeChips, toggleTarget } from './focusView';
 import { Icon } from '../../ui/Icon';
 import { firingJoker } from './firingJoker';
+import { JokerSheet } from './JokerSheet';
 import { JokerStack } from './JokerStack';
 import { EnemyBadge } from './EnemyBadge';
 import { ScoreBoard } from './ScoreBoard';
@@ -47,9 +48,10 @@ type DurakFightScreenProps = {
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
   readonly onUseFocus: (slot: number, targets: readonly string[]) => void;
+  readonly onMoveJoker: (from: number, to: number) => void;
 };
 
-export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -68,6 +70,10 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
   const focuses = run.focuses;
   const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The scoring show needs the stack on screen: it closes the sheet.
+  useEffect(() => {
+    if (playback.active) setSheetOpen(false);
+  }, [playback.active]);
   useEffect(() => setFocusPick(null), [fight.roundNumber]);
   const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
   const targeting =
@@ -146,6 +152,15 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
           <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
           <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
         </section>
+        {sheetOpen && (
+          <JokerSheet
+            jokers={fight.jokers.player}
+            state={fight.jokerState.player}
+            enemyTakes={fight.fightTakes.enemy}
+            onMove={onMoveJoker}
+            onClose={() => setSheetOpen(false)}
+          />
+        )}
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />
       <ScorePops playback={playback} />

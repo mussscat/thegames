@@ -27,6 +27,43 @@ test('the fight shows the jokers as one stack with a «n/5» tag and one score a
   await expect(page.getByRole('region', { name: 'Джокеры' })).toHaveCount(0);
 });
 
+test('the stack opens into a sheet where jokers are read and reordered, and the order is saved', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), { ...SHOP_RUN, jokers: ['looter', 'small'] });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  await page.getByTestId('joker-stack').click();
+  const sheet = page.getByRole('dialog', { name: 'Джокеры' });
+  await expect(sheet).toBeVisible();
+  const cards = sheet.getByRole('option');
+  await expect(cards).toHaveCount(2);
+  await expect(sheet.getByTestId('joker-sheet-info')).toContainText('+1 монета за каждый «Беру» соперника');
+  await cards.nth(1).click();
+  await expect(sheet.getByTestId('joker-sheet-info')).toContainText('Мелочь');
+  await sheet.getByRole('button', { name: 'Мелочь левее' }).click();
+  await expect(cards.nth(0)).toHaveAccessibleName('Мелочь');
+  await sheet.getByRole('button', { name: 'Закрыть' }).click();
+  await expect(sheet).toBeHidden();
+  const saved = await page.evaluate(() => JSON.parse(window.localStorage.getItem('thegame.durak.run')!).run.jokers);
+  expect(saved).toEqual(['small', 'looter']);
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await expect(page.getByTestId('joker-stack').locator('[data-score-joker="player-0"] img').first()).toBeAttached();
+});
+
+test.describe('reduced motion', () => {
+  test.use({ reducedMotion: 'reduce' });
+
+  test('the joker sheet still opens and closes', async ({ page }) => {
+    await fightWithLooter(page);
+    await page.getByTestId('joker-stack').click();
+    await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeVisible();
+    await page.getByRole('button', { name: 'Закрыть' }).click();
+    await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeHidden();
+  });
+});
+
 test('jokers can be bought and reordered in the shop', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
