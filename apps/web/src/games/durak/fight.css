@@ -181,8 +181,9 @@
 }
 
 /* ---------- fight layout (owner, 2026-10-12) ----------
-   Phones in portrait: one column — top bar, enemy HP, enemy hand, deck | table | jokers, hand, player HP, actions.
-   Wide screens: variant A (a narrow Balatro-like sidebar) or B (no sidebar); the owner picks one. */
+   Phones in portrait and narrow windows: one column — top bar, enemy HP, enemy hand, deck | table | jokers, hand,
+   player HP, actions. `.fight__side` and `.fight__board` are `display: contents` there, so one grid places every piece.
+   Wide screens: layout A (touch: a narrow Balatro-like sidebar) or B (mouse: no sidebar), see fightLayout.ts. */
 .fight {
   --card-w: clamp(44px, min(13.5vw, 11.5vh), 74px);
   display: grid;
@@ -191,6 +192,7 @@
   grid-template-areas: 'top' 'ehp' 'ehand' 'mid' 'hand' 'charges' 'php' 'actions';
   gap: 6px;
 }
+.fight__side, .fight__board { display: contents; }
 .fight__top { grid-area: top; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .fight__top > * { min-height: 44px; }
 .fight__menu { padding: 4px 8px; font-size: 0.9rem; }
@@ -199,11 +201,18 @@
 .fight__mid { grid-area: mid; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 0; }
 .fight__mid .table { align-self: stretch; min-height: 0; }
 .fight__side-stack { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.hand--player { grid-area: hand; height: calc(var(--card-w) * 1.4 + 12px); }
+/* The hand keeps the room its raised playable cards (10% of a card) and the fan's corners need above them, so
+   they never rest on the table's edge. */
+.hand--player { grid-area: hand; height: calc(var(--card-w) * 1.6 + 2px); }
 .charges { grid-area: charges; }
 .hp--player { grid-area: php; }
-.actions { grid-area: actions; display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 52px; }
+.actions { grid-area: actions; display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 52px; margin-top: 2px; }
 .actions .pbtn { min-width: 8em; min-height: 44px; }
+
+/* Short portrait screens (iPhone SE class, or any phone with Safari's bars): tighter gaps. */
+@media (max-aspect-ratio: 5/4) and (max-height: 600px) {
+  .fight { gap: 4px; }
+}
 
 /* Exactly the 74 px art on phones tall enough for it. */
 @media (max-aspect-ratio: 5/4) and (min-height: 780px) and (min-width: 396px) {
@@ -212,7 +221,7 @@
 
 @media (min-aspect-ratio: 5/4) {
   .fight {
-    --card-fit: clamp(44px, min(14vh, 9vw), 222px);
+    --card-fit: clamp(40px, min(14vh, 9vw), 222px);
     --card-step: 74px;
     --card-w: var(--card-fit);
     max-width: none;
@@ -222,37 +231,45 @@
   .fight .table { grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
   /* The middle row is short on wide screens: focus chips stand beside the joker stack, not under it. */
   .fight__side-stack { flex-direction: row; align-items: flex-start; }
+  .fight__side-stack .focus-bar__list { flex-direction: row; }
 
-  /* A: a narrow sidebar on the left holds the top bar and both HP bars; the board is everything else. */
+  /* A (touch): a narrow sidebar holds the menu, coins, deal and both HP bars, one under the other; the board is the rest. */
   .fight[data-layout='a'] {
     grid-template-columns: minmax(11em, 19%) minmax(0, 1fr);
-    /* The sidebar's top bar spans two rows, so it never makes the enemy-hand row taller. */
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      'top ehand'
-      'top mid'
-      'ehp mid'
-      'php mid'
-      'charges mid'
-      '. hand'
-      '. actions';
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'side board';
+    padding: 0 max(1em, env(safe-area-inset-right)) 0 0;
     column-gap: 1.2em;
   }
-  .fight[data-layout='a']::before {
-    content: '';
-    grid-column: 1;
-    grid-row: 1 / -1;
-    margin: calc(-1 * max(0.5em, env(safe-area-inset-top))) 0 calc(-1 * max(0.5em, env(safe-area-inset-bottom))) calc(-1 * max(1em, env(safe-area-inset-left)));
+  .fight[data-layout='a'] .fight__side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    min-height: 0;
+    overflow: hidden;
+    padding: max(0.6em, env(safe-area-inset-top)) 0.6em max(0.6em, env(safe-area-inset-bottom)) max(0.6em, env(safe-area-inset-left));
     background: rgb(20 14 30 / 82%);
     border-right: 4px solid #000000;
+    box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
   }
-  .fight[data-layout='a'] .fight__top { grid-template-columns: 1fr 1fr; align-self: start; }
+  .fight[data-layout='a'] .fight__board {
+    grid-area: board;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'ehand' 'mid' 'hand' 'actions';
+    gap: 0.4em;
+    min-height: 0;
+    padding-block: max(0.5em, env(safe-area-inset-top)) max(0.5em, env(safe-area-inset-bottom));
+  }
+  .fight[data-layout='a'] .fight__top { grid-template-columns: 1fr 1fr; }
   .fight[data-layout='a'] .fight__menu { grid-column: 1 / -1; }
   .fight[data-layout='a'] .hp { grid-template-columns: auto 1fr auto; row-gap: 0.35em; }
   /* The sidebar is narrow: the bar takes a row of its own under the name and the numbers. */
   .fight[data-layout='a'] .hp__track { grid-column: 1 / -1; grid-row: 2; }
 
-  /* B: no sidebar — the top bar shares a row with the enemy HP, the player HP shares one with the actions. */
+  /* B (mouse): no sidebar — the top bar shares a row with the enemy HP, the player HP shares one with the actions. */
   .fight[data-layout='b'] {
     width: min(100%, 72em);
     margin-inline: auto;
@@ -264,13 +281,9 @@
 }
 /* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */
 @media (min-aspect-ratio: 5/4) and (max-height: 420px) {
-  .fight { --card-fit: clamp(40px, min(12.5vh, 9vw), 74px); gap: 4px; }
-  /* One row of top-bar boxes (the deal shows its number only) and the focus chips side by side. */
-  .fight[data-layout='a'] .fight__top { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .fight[data-layout='a'] .fight__menu { grid-column: auto; padding-inline: 2px; font-size: 0.8rem; }
-  .fight .stats__label { display: none; }
-  .fight__side-stack .focus-bar__list { flex-direction: row; }
-  .hand--player { height: calc(var(--card-w) * 1.4 + 6px); }
+  .fight { --card-fit: clamp(36px, min(12.5vh, 9vw), 74px); }
+  .fight, .fight[data-layout='a'] .fight__side, .fight[data-layout='a'] .fight__board { gap: 4px; }
+  .fight[data-layout='a'] .stats__label { display: none; }
 }
 /* On screens with 2+ device pixels per CSS px, 37 CSS px is still 74 device px: a whole scale of the art. */
 @media (min-aspect-ratio: 5/4) and (min-resolution: 2dppx) {

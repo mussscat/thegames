@@ -43,15 +43,20 @@ async function fullFight(page: Page, layout: 'a' | 'b'): Promise<void> {
 
 const tooSmall = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll('.fight button')]
+    // Playing cards overlap in the fan by design (down to 36 px wide on a phone with Safari's bars); every other button is a real tap target.
+    [...document.querySelectorAll('.fight button:not(.card)')]
       .map((b) => b.getBoundingClientRect())
       .filter((r) => r.width > 0 && (r.width < 43.5 || r.height < 43.5)).length,
   );
 
-const SIZES = [[320, 568], [375, 667], [390, 844], [412, 915], [430, 932], [667, 375], [915, 412], [1280, 800], [1440, 900]] as const;
+// 390×670 and 844×335 are an iPhone with Safari's bars showing: the real play area is smaller than the phone.
+const SIZES = [[320, 568], [375, 667], [390, 670], [390, 844], [412, 915], [430, 932], [667, 375], [844, 335], [915, 412], [1280, 800], [1440, 900]] as const;
+
+/** Layout B belongs to mouse browsers: a wide window under 420 px tall is not a case (a phone always gets A). */
+const sizesFor = (layout: 'a' | 'b') => SIZES.filter(([width, height]) => layout === 'a' || height >= 420 || width < height);
 
 for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of SIZES) {
+  for (const [width, height] of sizesFor(layout)) {
     test(`layout ${layout}: the full fight fits ${width}×${height}, also with a focus picked`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await fullFight(page, layout);
@@ -107,3 +112,87 @@ test.describe('desktop on a 2× screen', () => {
     expect(w % 37).toBe(0);
   });
 });
+
+/** Same fight, no `?layout` override: what a player really gets. */
+async function realFight(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.evaluate((run) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), FULL_RUN);
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  await expect(page.getByTestId('player-hand')).toBeVisible();
+}
+const layoutOf = (page: Page) => page.locator('main.fight').getAttribute('data-layout');
+
+test.describe('a phone (touch) gets the sidebar layout in both orientations', () => {
+  test.use({ hasTouch: true, isMobile: true });
+  for (const [width, height] of [[412, 915], [915, 412]] as const) {
+    test(`${width}×${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await realFight(page);
+      expect(await layoutOf(page)).toBe('a');
+    });
+  }
+});
+
+test.describe('a desktop browser (mouse) gets the layout without a sidebar, narrow and wide', () => {
+  test.use({ hasTouch: false, isMobile: false });
+  for (const [width, height] of [[700, 900], [1440, 900]] as const) {
+    test(`${width}×${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await realFight(page);
+      expect(await layoutOf(page)).toBe('b');
+    });
+  }
+});
+
+for (const [width, height] of [[915, 412], [667, 375], [844, 390], [1280, 800]] as const) {
+  test(`sidebar ${width}×${height}: menu on its own row, coins and deal side by side, nothing sticks out`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page, 'a');
+    const g = await page.evaluate(() => {
+      const r = (el: Element) => el.getBoundingClientRect();
+      const side = r(document.querySelector('.fight__side')!);
+      const tiles = [...document.querySelectorAll('.fight__side .stats__tile')].map(r);
+      const menu = r(document.querySelector('.fight__side .fight__menu')!);
+      const inside = [...document.querySelectorAll('.fight__side *')].map(r).filter((b) => b.width > 0);
+      return {
+        menuBottom: menu.bottom, tilesTop: Math.min(...tiles.map((t) => t.top)), tilesTopSpread: Math.max(...tiles.map((t) => t.top)) - Math.min(...tiles.map((t) => t.top)),
+        overRight: Math.max(...inside.map((b) => b.right)) - side.right, overBottom: Math.max(...inside.map((b) => b.bottom)) - innerHeight,
+      };
+    });
+    expect(g.tilesTop).toBeGreaterThanOrEqual(g.menuBottom);
+    expect(g.tilesTopSpread).toBeLessThanOrEqual(1);
+    expect(g.overRight).toBeLessThanOrEqual(0.5);
+    expect(g.overBottom).toBeLessThanOrEqual(0);
+  });
+}
+
+for (const layout of ['a', 'b'] as const) {
+  for (const [width, height] of sizesFor(layout)) {
+    test(`layout ${layout} ${width}×${height}: cards never rest on the table edge, buttons keep clear of the HP bar`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page, layout);
+      await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+      const g = await page.evaluate(() => {
+        const r = (el: Element) => el.getBoundingClientRect();
+        const table = r(document.querySelector('[data-testid="table"]')!);
+        const hand = [...document.querySelectorAll('[data-testid="player-hand"] .card')].map(r);
+        const enemy = [...document.querySelectorAll('[data-testid="enemy-hand"] .card')].map(r);
+        const hp = r(document.querySelector('.hp--player')!);
+        const btns = [...document.querySelectorAll('[data-testid="actions"] button')].map(r);
+        const sharesColumn = btns.some((b) => b.left < hp.right && b.right > hp.left);
+        return {
+          handOverTable: table.bottom - Math.min(...hand.map((c) => c.top)),
+          enemyOverTable: Math.max(...enemy.map((c) => c.bottom)) - table.top,
+          gapToHp: sharesColumn ? Math.min(...btns.map((b) => b.top)) - hp.bottom : 99,
+          belowScreen: Math.max(...btns.map((b) => b.bottom)) - innerHeight,
+        };
+      });
+      expect(g.handOverTable).toBeLessThanOrEqual(0.5);
+      expect(g.enemyOverTable).toBeLessThanOrEqual(0.5);
+      expect(g.gapToHp).toBeGreaterThanOrEqual(6);
+      expect(g.belowScreen).toBeLessThanOrEqual(-6);
+    });
+  }
+}

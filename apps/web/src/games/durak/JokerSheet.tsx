@@ -13,10 +13,9 @@ type JokerSheetProps = {
   readonly onClose: () => void;
 };
 
-/** The stack fanned out over a dimmed screen: tap a joker to read it, drag it or use ◀ ▶ to change the scoring order. */
+/** The stack fanned out over a dimmed screen: tap a joker to read it, drag it to change the scoring order. */
 export function JokerSheet({ jokers, state, enemyTakes, onMove, onClose }: JokerSheetProps) {
   const [selected, setSelected] = useState<JokerId | null>(jokers[0] ?? null);
-  const index = selected ? jokers.indexOf(selected) : -1;
   // Reorder reports the whole new order while dragging; each step moves the dragged joker by one place.
   const reorder = (next: JokerId[]): void => {
     const moved = next.findIndex((id, i) => id !== jokers[i]);
@@ -25,7 +24,6 @@ export function JokerSheet({ jokers, state, enemyTakes, onMove, onClose }: Joker
     if (id === undefined) return;
     onMove(moved, next.indexOf(id));
   };
-  const name = selected ? JOKERS[selected].name : '';
   return (
     <div className="jsheet-backdrop" onClick={onClose}>
       <section className="jsheet panel" role="dialog" aria-modal="true" aria-label="Джокеры" onClick={(event) => event.stopPropagation()}>
@@ -48,21 +46,14 @@ export function JokerSheet({ jokers, state, enemyTakes, onMove, onClose }: Joker
         </Reorder.Group>
         {selected && (
           <div className="jsheet__info" data-testid="joker-sheet-info">
-            <strong className="jsheet__name">{name}</strong>
+            <strong className="jsheet__name">{JOKERS[selected].name}</strong>
             <span className="jsheet__text">{JOKERS[selected].description}</span>
           </div>
         )}
-        <div className="jsheet__actions">
-          <PixelButton tone="blue" aria-label={`${name} левее`} disabled={index <= 0} onClick={() => onMove(index, index - 1)}>
-            ◀
-          </PixelButton>
-          <PixelButton tone="green" onClick={onClose}>
-            Закрыть
-          </PixelButton>
-          <PixelButton tone="blue" aria-label={`${name} правее`} disabled={index < 0 || index >= jokers.length - 1} onClick={() => onMove(index, index + 1)}>
-            ▶
-          </PixelButton>
-        </div>
+        <p className="jsheet__hint">Перетащи джокера, чтобы поменять порядок</p>
+        <PixelButton tone="green" onClick={onClose}>
+          Закрыть
+        </PixelButton>
       </section>
     </div>
   );

@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
+import { useMediaQuery } from '../../ui/useMediaQuery';
 import { usePrevious } from '../../ui/usePrevious';
 import { ActionBar, type FocusAction } from './ActionBar';
 import { DeckView } from './DeckView';
@@ -31,6 +32,7 @@ import { JokerStack } from './JokerStack';
 import { EnemyBadge } from './EnemyBadge';
 import { ScoreBoard } from './ScoreBoard';
 import { ScorePops } from './ScorePops';
+import { fightLayout } from './fightLayout';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
@@ -38,8 +40,11 @@ import { useScorePlayback } from './useScorePlayback';
 import './fight.css';
 import './score.css';
 
-/** Wide-screen layout variant for the owner to choose (`?layout=b`); removed once chosen. */
-const FIGHT_LAYOUT = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('layout') === 'b' ? 'b' : 'a';
+/** `?layout=a|b` forces a wide-screen layout (tests, comparing); otherwise the device decides, see `fightLayout`. */
+const LAYOUT_OVERRIDE = (() => {
+  const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('layout');
+  return value === 'a' || value === 'b' ? value : null;
+})();
 
 type DurakFightScreenProps = {
   readonly fight: FightState;
@@ -59,6 +64,8 @@ type DurakFightScreenProps = {
 export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
+  const touch = useMediaQuery('(pointer: coarse)');
+  const layout = fightLayout(touch, LAYOUT_OVERRIDE);
   const previous = usePrevious(fight);
   useEffect(() => {
     if (!previous || previous === fight) return;
@@ -104,59 +111,63 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
 
   return (
     <LayoutGroup>
-      <main className="screen fight" data-layout={FIGHT_LAYOUT}>
-        <div className="fight__top">
-          <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
-            Меню
-          </PixelButton>
-          <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
-        </div>
-        <HpBar
-          label="Соперник"
-          lead={<EnemyBadge run={run} />}
-          className="hp--enemy"
-          hp={fight.hp.enemy}
-          maxHp={fight.maxHp.enemy}
-          shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
-          scoreTarget="enemy"
-        />
-        <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
-        <div className="fight__mid">
-          <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-          <TableView table={round.table} attacker={round.attacker}>
-            {playback.board && <ScoreBoard board={playback.board} />}
-          </TableView>
-          <div className="fight__side-stack">
-            <JokerStack
-              jokers={fight.jokers.player}
-              state={fight.jokerState.player}
-              enemyTakes={fight.fightTakes.enemy}
-              firing={firingJoker(playback.current)}
-              disabled={playback.active}
-              onOpen={() => setSheetOpen(true)}
-            />
-            <FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />
+      <main className="screen fight" data-layout={layout}>
+        <div className="fight__side">
+          <div className="fight__top">
+            <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
+              Меню
+            </PixelButton>
+            <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
           </div>
+          <HpBar
+            label="Соперник"
+            lead={<EnemyBadge run={run} />}
+            className="hp--enemy"
+            hp={fight.hp.enemy}
+            maxHp={fight.maxHp.enemy}
+            shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
+            scoreTarget="enemy"
+          />
+          <HpBar
+            label="Ты"
+            className="hp--player"
+            hp={fight.hp.player}
+            maxHp={fight.maxHp.player}
+            shakeKey={fight.hits.some((h) => h.target === 'player') ? fight.hitSeq : 0}
+            scoreTarget="player"
+          />
+          {chargeChips(fight.focusCharges).length > 0 && (
+            <p className="charges" data-testid="focus-charges">
+              {chargeChips(fight.focusCharges).map((chip) => (
+                <span key={chip.text} className="chip">
+                  <Icon id={chip.icon} /> {chip.text}
+                </span>
+              ))}
+            </p>
+          )}
         </div>
-        <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
-        {chargeChips(fight.focusCharges).length > 0 && (
-          <p className="charges" data-testid="focus-charges">
-            {chargeChips(fight.focusCharges).map((chip) => (
-              <span key={chip.text} className="chip">
-                <Icon id={chip.icon} /> {chip.text}
-              </span>
-            ))}
-          </p>
-        )}
-        <HpBar
-          label="Ты"
-          className="hp--player"
-          hp={fight.hp.player}
-          maxHp={fight.maxHp.player}
-          shakeKey={fight.hits.some((h) => h.target === 'player') ? fight.hitSeq : 0}
-          scoreTarget="player"
-        />
-        <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} />
+        <div className="fight__board">
+          <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
+          <div className="fight__mid">
+            <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
+            <TableView table={round.table} attacker={round.attacker}>
+              {playback.board && <ScoreBoard board={playback.board} />}
+            </TableView>
+            <div className="fight__side-stack">
+              <JokerStack
+                jokers={fight.jokers.player}
+                state={fight.jokerState.player}
+                enemyTakes={fight.fightTakes.enemy}
+                firing={firingJoker(playback.current)}
+                disabled={playback.active}
+                onOpen={() => setSheetOpen(true)}
+              />
+              <FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />
+            </div>
+          </div>
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} />
+        </div>
         <p className="sr-only" role="status">
           {error ?? statusText(fight)}
         </p>

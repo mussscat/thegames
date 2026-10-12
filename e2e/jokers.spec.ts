@@ -41,7 +41,15 @@ test('the stack opens into a sheet where jokers are read and reordered, and the 
   await expect(sheet.getByTestId('joker-sheet-info')).toContainText('+1 монета за каждый «Беру» соперника');
   await cards.nth(1).click();
   await expect(sheet.getByTestId('joker-sheet-info')).toContainText('Мелочь');
-  await sheet.getByRole('button', { name: 'Мелочь левее' }).click();
+  // No ◀ ▶ buttons (owner, 2026-10-12): the order changes by dragging a card.
+  await expect(sheet.getByRole('button', { name: /левее|правее/ })).toHaveCount(0);
+  const from = (await cards.nth(1).boundingBox())!;
+  const to = (await cards.nth(0).boundingBox())!;
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + from.width / 2 - 10, from.y + from.height / 2, { steps: 4 });
+  await page.mouse.move(to.x + to.width / 4, to.y + to.height / 2, { steps: 12 });
+  await page.mouse.up();
   await expect(cards.nth(0)).toHaveAccessibleName('Мелочь');
   await sheet.getByRole('button', { name: 'Закрыть' }).click();
   await expect(sheet).toBeHidden();

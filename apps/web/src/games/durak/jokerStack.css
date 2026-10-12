@@ -15,5 +15,4 @@
 .jsheet__info { display: flex; flex-direction: column; gap: 4px; min-height: 3.6em; text-align: center; }
 .jsheet__name { font-family: var(--font-head); font-size: 0.85rem; }
 .jsheet__text { font-size: 0.9rem; line-height: 1.3; }
-.jsheet__actions { display: flex; gap: 8px; }
-.jsheet__actions .pbtn { min-width: 44px; min-height: 44px; }
+.jsheet__hint { margin: 0; font-size: 0.8rem; opacity: 0.75; }
