@@ -1,6 +1,6 @@
 import { NO_CHARGES } from '@game/durak';
 import { describe, expect, it } from 'vitest';
-import { chargeBadges, chargeChips, targetHint, toggleTarget } from './focusView';
+import { chargeBadges, chargeChips, playLabel, toggleTarget } from './focusView';
 
 describe('chargeBadges', () => {
   it('shows nothing without charges and each charge otherwise', () => {
@@ -31,10 +31,10 @@ describe('toggleTarget', () => {
   });
 });
 
-describe('targetHint', () => {
-  it('asks for cards only when the focus needs them', () => {
-    expect(targetHint('boost')).toBeNull();
-    expect(targetHint('redeal')).toBe('Выбери 1–2 карты в руке');
-    expect(targetHint('swap')).toBe('Выбери карту в руке');
+describe('playLabel', () => {
+  it('counts the picked cards against the most the focus takes; no count when it takes none', () => {
+    expect(playLabel('boost', 0)).toBe('Сыграть');
+    expect(playLabel('redeal', 1)).toBe('Сыграть 1/2');
+    expect(playLabel('swap', 0)).toBe('Сыграть 0/1');
   });
 });

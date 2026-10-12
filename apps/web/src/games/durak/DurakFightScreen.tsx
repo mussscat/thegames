@@ -1,7 +1,9 @@
 import type { Card } from '@game/core';
 import {
+  applyFocus,
   currentActor,
   FOCUSES,
+  focusReady,
   revealsTopCard,
   type EnhancementSource,
   type FightAction,
@@ -15,13 +17,13 @@ import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
-import { ActionBar } from './ActionBar';
+import { ActionBar, type FocusAction } from './ActionBar';
 import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
 import { FocusBar, type FocusPick } from './FocusBar';
-import { chargeChips, toggleTarget } from './focusView';
+import { chargeChips, playLabel, toggleTarget } from './focusView';
 import { Icon } from '../../ui/Icon';
 import { firingJoker } from './firingJoker';
 import { JokerSheet } from './JokerSheet';
@@ -80,6 +82,18 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
     focusPick && pickedId && FOCUSES[pickedId].maxTargets > 0
       ? { picked: focusPick.targets, onPick: (card: Card) => setFocusPick({ ...focusPick, targets: toggleTarget(focusPick.targets, card.id, FOCUSES[pickedId].maxTargets) }) }
       : null;
+  const focusAction: FocusAction | null =
+    focusPick && pickedId
+      ? {
+          label: playLabel(pickedId, focusPick.targets.length),
+          ready: myTurn && focusReady(fight, pickedId) && applyFocus(fight, pickedId, focusPick.targets).ok,
+          onPlay: () => {
+            onUseFocus(focusPick.slot, focusPick.targets);
+            setFocusPick(null);
+          },
+          onCancel: () => setFocusPick(null),
+        }
+      : null;
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
     onFightAction(use ? { ...base, use } : base);
@@ -125,21 +139,11 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             disabled={playback.active}
             onOpen={() => setSheetOpen(true)}
           />
-          <FocusBar
-            focuses={focuses}
-            fight={fight}
-            myTurn={myTurn}
-            pick={focusPick}
-            onPick={setFocusPick}
-            onPlay={(pick) => {
-              onUseFocus(pick.slot, pick.targets);
-              setFocusPick(null);
-            }}
-          />
+          <FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />
           <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
             Меню
           </PixelButton>
-          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} />
         </aside>
         <section className="fight__board">
           <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />

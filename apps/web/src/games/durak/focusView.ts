@@ -26,8 +26,8 @@ export function toggleTarget(picked: readonly string[], cardId: string, max: num
   return picked.length < max ? [...picked, cardId] : picked;
 }
 
-export function targetHint(id: FocusId): string | null {
-  const { minTargets, maxTargets } = FOCUSES[id];
-  if (maxTargets === 0) return null;
-  return minTargets === maxTargets ? 'Выбери карту в руке' : `Выбери ${minTargets}–${maxTargets} карты в руке`;
+/** The play button of a picked focus: how many target cards are picked out of the most it takes (no hint text). */
+export function playLabel(id: FocusId, picked: number): string {
+  const { maxTargets } = FOCUSES[id];
+  return maxTargets === 0 ? 'Сыграть' : `Сыграть ${picked}/${maxTargets}`;
 }

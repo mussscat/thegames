@@ -76,6 +76,24 @@ test('«Сыграть» is enabled on the player turn and goes disabled as soon
   await expect(play).toBeDisabled();
 });
 
+test('picking a focus puts Сыграть and Отмена in the bottom row and moves nothing', async ({ page }) => {
+  await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'] }));
+  await toMyTurn(page);
+  const handBefore = await page.getByTestId('player-hand').boundingBox();
+  await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+  const row = page.getByTestId('actions');
+  await expect(row.getByRole('button', { name: /Сыграть/ })).toBeVisible();
+  await expect(row.getByRole('button', { name: 'Отмена' })).toBeVisible();
+  await expect(page.getByTestId('focus-bar').getByRole('button', { name: /Сыграть|Отмена/ })).toHaveCount(0);
+  const handAfter = await page.getByTestId('player-hand').boundingBox();
+  expect(Math.abs(handAfter!.y - handBefore!.y)).toBeLessThanOrEqual(1);
+  const rowBox = await row.boundingBox();
+  const hp = await page.getByRole('meter', { name: 'Ты' }).boundingBox();
+  expect(rowBox!.y).toBeGreaterThanOrEqual(hp!.y + hp!.height - 1);
+  await row.getByRole('button', { name: 'Отмена' }).click();
+  await expect(row.getByRole('button', { name: 'Отмена' })).toHaveCount(0);
+});
+
 test.describe('two focuses on a small portrait screen', () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
