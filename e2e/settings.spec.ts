@@ -21,16 +21,6 @@ test('sound can be switched off and the volume slider follows it', async ({ page
   await expect(page.getByRole('heading', { name: 'Карточный рогалик' })).toBeVisible();
 });
 
-test('card sway can be switched off and stays off after a reload', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Настройки' }).click();
-  await page.getByLabel('Эффекты').check();
-  await page.getByLabel('Покачивание карт').uncheck();
-  await page.reload();
-  await page.getByRole('button', { name: 'Настройки' }).click();
-  await expect(page.getByLabel('Покачивание карт')).not.toBeChecked();
-});
-
 test('the hand is sorted by suit with trumps on the right, and the order is configurable', async ({ page }) => {
   await page.goto('/?seed=42');
   await page.getByRole('button', { name: 'Новый забег' }).click();

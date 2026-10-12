@@ -25,10 +25,8 @@ describe('fanDrop', () => {
   });
 
   it('drops the outer cards at most 4 px', () => {
-    for (const count of [2, 6, 12]) {
-      expect(fanDrop(0, count)).toBeLessThanOrEqual(4);
-      expect(fanDrop(Math.floor((count - 1) / 2), count)).toBeLessThanOrEqual(1);
-    }
+    for (const count of [2, 6, 12]) expect(fanDrop(0, count)).toBeLessThanOrEqual(4);
+    for (const count of [3, 7, 13]) expect(fanDrop((count - 1) / 2, count)).toBe(0);
   });
 });
 

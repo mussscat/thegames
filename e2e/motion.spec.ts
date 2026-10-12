@@ -26,29 +26,10 @@ test('with effects off (the e2e default) the hand does not sway', async ({ page 
 test.describe('effects on', () => {
   test.use({ storageState: EFFECTS_ON });
 
-  test('the hand sways', async ({ page }) => {
+  test('the hand never sways, even with effects on (owner, 2026-10-12)', async ({ page }) => {
     await startFight(page);
     const samples = await handTransforms(page);
-    expect(new Set(samples).size).toBeGreaterThan(1);
-  });
-
-  test('jokers sway on their own, each with its own phase', async ({ page }) => {
-    const run = {
-      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter', 'small', 'rage'], collected: 0, profile: {}, focuses: [], bosses: ['general', 'witch'],
-      phase: { kind: 'shop', shop: { items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
-    };
-    await page.goto('/');
-    await page.evaluate((saved) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run: saved })), run);
-    await page.reload();
-    await page.getByRole('button', { name: 'Продолжить забег' }).click();
-    await page.getByRole('button', { name: /Следующий бой/ }).click();
-    const read = () => page.evaluate(() => [...document.querySelectorAll('.jslot .feel')].map((el) => getComputedStyle(el).transform));
-    await expect(page.locator('.jslot .feel')).toHaveCount(3);
-    const a = await read();
-    await page.waitForTimeout(700);
-    const b = await read();
-    expect(b).not.toEqual(a);
-    expect(new Set(b).size).toBeGreaterThan(1);
+    expect(new Set(samples).size).toBe(1);
   });
 });
 
