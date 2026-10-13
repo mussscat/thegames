@@ -12,10 +12,18 @@ test.describe('the chips × mult counter (side panel)', () => {
     const counter = page.getByTestId('score-counter');
     await expect(counter).toBeVisible();
     await expect(page.getByTestId('counter-chips')).toHaveText('0');
-    await expect(page.getByTestId('counter-damage')).toHaveText('= 0');
+    await expect(page.getByTestId('counter-mult')).toHaveText('0');
+    await expect(page.getByTestId('counter-damage')).toHaveText('0');
     await page.locator('[data-testid="player-hand"] .card--playable').first().click();
     await expect.poll(async () => Number(await page.getByTestId('counter-chips').textContent())).toBeGreaterThan(0);
-    await expect.poll(async () => Number((await page.getByTestId('counter-damage').textContent())?.replace('= ', ''))).toBeGreaterThan(0);
+    await expect.poll(async () => Number(await page.getByTestId('counter-mult').textContent())).toBeGreaterThanOrEqual(1);
+    await expect.poll(async () => Number(await page.getByTestId('counter-damage').textContent())).toBeGreaterThan(0);
+    // The total stands above the chips × mult row, without «=» (owner, 2026-10-13).
+    const order = await page.evaluate(() => ({
+      damage: document.querySelector('[data-testid="counter-damage"]')!.getBoundingClientRect().bottom,
+      row: document.querySelector('.counter__row')!.getBoundingClientRect().top,
+    }));
+    expect(order.damage).toBeLessThanOrEqual(order.row + 0.5);
     await expect(counter).toContainText('Удар по сопернику');
   });
 });

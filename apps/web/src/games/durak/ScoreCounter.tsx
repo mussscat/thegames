@@ -6,11 +6,14 @@ import './scoreCounter.css';
  * Balatro's «chips × mult» counter (owner, 2026-10-13): it follows the cards on the table and shows the hit the
  * taker would suffer if the table were taken now. Shown in the side panel only; portrait phones do not have it.
  */
-export function ScoreCounter({ preview }: { readonly preview: TakePreview | null }) {
-  const view = counterView(preview);
+export function ScoreCounter({ preview, tableHasCards }: { readonly preview: TakePreview | null; readonly tableHasCards: boolean }) {
+  const view = counterView(preview, tableHasCards);
   return (
     <section className={`counter counter--${view.taker ?? 'none'}`} data-testid="score-counter" aria-label="Подсчёт удара">
       <p className="counter__label">{view.label || 'Стол пуст'}</p>
+      <p className="counter__damage" data-testid="counter-damage">
+        {view.damage}
+      </p>
       <div className="counter__row">
         <span className="counter__chips" data-testid="counter-chips" aria-label="Фишки">
           {view.chips}
@@ -22,9 +25,6 @@ export function ScoreCounter({ preview }: { readonly preview: TakePreview | null
           {view.mult}
         </span>
       </div>
-      <p className="counter__damage" data-testid="counter-damage">
-        = {view.damage}
-      </p>
     </section>
   );
 }

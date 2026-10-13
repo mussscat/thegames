@@ -123,7 +123,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
               scoreTarget="enemy"
             />
           </EnemyBlock>
-          <ScoreCounter preview={previewTake(fight)} />
+          <ScoreCounter preview={previewTake(fight)} tableHasCards={round.table.length > 0} />
           <HpBar
             label="Ты"
             className="hp--player"

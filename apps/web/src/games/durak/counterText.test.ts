@@ -20,6 +20,11 @@ describe('counterView', () => {
   });
 
   it('an empty preview (no fight) reads as zeros', () => {
-    expect(counterView(null)).toEqual({ taker: null, label: '', chips: '0', mult: '1', damage: '0' });
+    expect(counterView(null)).toEqual({ taker: null, label: '', chips: '0', mult: '0', damage: '0' });
+  });
+
+  it('before a card is on the table it reads 0 × 0, whatever a focus charge or the tier would add (owner)', () => {
+    expect(counterView({ taker: 'enemy', chips: 8, mult: 1, damage: 8 }, false)).toEqual({ taker: 'enemy', label: 'Удар по сопернику', chips: '0', mult: '0', damage: '0' });
+    expect(counterView({ taker: 'player', chips: 3, mult: 1.25, damage: 3 }, false)).toMatchObject({ chips: '0', mult: '0', damage: '0', label: 'Удар по тебе' });
   });
 });

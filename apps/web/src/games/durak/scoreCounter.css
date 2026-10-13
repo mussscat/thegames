@@ -29,5 +29,5 @@
   .counter__chips { background: #2f7fe0; text-align: right; }
   .counter__mult { background: #e2503f; text-align: left; }
   .counter__times { font-family: var(--font-head); font-size: 1.1em; color: #e2503f; text-shadow: 2px 2px 0 rgb(0 0 0 / 60%); }
-  .counter__damage { margin: 0; font-family: var(--font-head); font-size: 1em; color: var(--gold); text-shadow: 2px 2px 0 rgb(0 0 0 / 60%); }
+  .counter__damage { margin: 0; font-family: var(--font-head); font-size: 1.6em; line-height: 1.1; color: var(--gold); text-shadow: 2px 2px 0 rgb(0 0 0 / 60%); }
 }
