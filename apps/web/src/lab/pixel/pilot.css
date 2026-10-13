@@ -118,8 +118,8 @@
 .pp-hand-note { position: absolute; left: calc(var(--u) * 6); top: calc(var(--u) * 6); margin: 0; }
 
 .pp-stage--scroll { overflow-y: auto; overscroll-behavior: contain; }
-.pk { display: flex; flex-direction: column; gap: 6px; padding: 8px; font: 11px/13px 'm6x11', monospace; }
-.pk__note, .pk__h { margin: 0; font-weight: 400; font-size: 11px; }
+.pk { display: flex; flex-direction: column; gap: 6px; padding: 8px; font: 22px/26px 'm6x11', monospace; }
+.pk__note, .pk__h { margin: 0; font-weight: 400; font-size: 11px; line-height: 13px; }
 .pk__h { margin-top: 6px; color: #f2c94c; }
 .pk__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .pk__row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

@@ -100,6 +100,16 @@
 - [ ] `PixelText`: m6x11 with the hard 1 px shadow; sizes `body` (11) and `title` (22).
 - [ ] Commit per component pair.
 
+### Owner review of the kit and the old fight inside `?pixel` (2026-10-14) — requirements carried into tasks 6–7
+
+- **Text size.** At n = 3 on an iPhone one art pixel is one CSS px, so m6x11 at 11 is too small to read. The stage default is **22** (2× the font grid), captions 11, big numbers 33. Button labels are 22. Small buttons are 36 high (was 32) to fit 22 px text.
+- **No fake bold.** m6x11 has no bold; `font-synthesis: none` in the stage (done), and no `font-weight` above 400 in migrated CSS.
+- **Card highlights** (playable / trump glow) are drawn as a pixel outline: a whole-pixel stepped outline, no blurred glow, no `filter: blur`. A highlight looked crooked as a scaled blur; the new one is crisp and the same on every card.
+- **Damage pop-up** (`ScorePops`): one line, 22 px, hard shadow, never wraps (the chips and mult used to drop to a second line).
+- **Deck icon** and the other icons are drawn at their native size, never shrunk by ÷3–4 (`uiArt.ts` shrink was the cause of the squashed deck): task 6 adds native placeholder icons (deck, chip, mult, heart, coin) to the kit generator; the hand-drawn set replaces them in stage 2.
+- **The words «множитель» и «фишки» leave the interface**: the counter is two plates (blue chips, red mult) and a × between them, nothing else.
+- The old, un-migrated screens inside `?pixel` look wrong by design (rem/vw sizes); only migrated parts are judged.
+
 ### Task 7: Fight screen in portrait (one commit per block, owner check after the first and the last)
 
 **Files:** `games/durak/fight.css` (portrait part), `DurakFightScreen.tsx`, `EnemyBlock.tsx`, `EnemyBadge.tsx`, `FightStats.tsx`, `HpBar.tsx`, `ScoreCounter.tsx`, `scoreCounter.css`, `ScoreBoard.tsx`, `JokerStack.tsx`, `jokerStack.css`, `DeckView.tsx`, `TableView.tsx`, `FightHands.tsx`, `ActionBar.tsx`, `FocusBar.tsx`, `FightOverlay.tsx`, `components/CardTip.tsx`, matching tests.

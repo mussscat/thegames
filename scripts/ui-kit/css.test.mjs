@@ -21,8 +21,8 @@ describe('renderCss', () => {
     expect(css).not.toMatch(/\d\.\d+px/);
   });
 
-  it('sizes large buttons 44 px and small ones 32 px high', () => {
+  it('sizes large buttons 44 px and small ones 36 px high', () => {
     expect(css).toMatch(/\.px-button-red-l {[^}]*height: 44px/);
-    expect(css).toMatch(/\.px-button-red-s {[^}]*height: 32px/);
+    expect(css).toMatch(/\.px-button-red-s {[^}]*height: 36px/);
   });
 });

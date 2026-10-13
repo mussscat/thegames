@@ -46,10 +46,10 @@ const TONES = {
 };
 const GREY = { light: P.greyLight, face: P.greyFace, dark: P.greyDark };
 
-/** Large buttons are 44 art px high, small ones 32 (owner: big targets, nothing to aim at). */
+/** Large buttons are 44 art px high, small ones 36 (owner: big targets, nothing to aim at; text is 22 px). */
 const BUTTON_SIZES = {
   l: { w: 16, h: 44, insets: [3, 1, 1], lip: 4, corner: 5 },
-  s: { w: 16, h: 32, insets: [2, 1], lip: 3, corner: 4 },
+  s: { w: 16, h: 36, insets: [2, 1], lip: 3, corner: 4 },
 };
 
 const GLYPHS = {

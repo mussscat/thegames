@@ -190,7 +190,7 @@
   {
     "name": "button-blue-s-normal",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -201,7 +201,7 @@
   {
     "name": "button-blue-s-pressed",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -212,7 +212,7 @@
   {
     "name": "button-blue-s-disabled",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -256,7 +256,7 @@
   {
     "name": "button-red-s-normal",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -267,7 +267,7 @@
   {
     "name": "button-red-s-pressed",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -278,7 +278,7 @@
   {
     "name": "button-red-s-disabled",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -322,7 +322,7 @@
   {
     "name": "button-orange-s-normal",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -333,7 +333,7 @@
   {
     "name": "button-orange-s-pressed",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -344,7 +344,7 @@
   {
     "name": "button-orange-s-disabled",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -388,7 +388,7 @@
   {
     "name": "button-green-s-normal",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -399,7 +399,7 @@
   {
     "name": "button-green-s-pressed",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,
@@ -410,7 +410,7 @@
   {
     "name": "button-green-s-disabled",
     "w": 16,
-    "h": 32,
+    "h": 36,
     "slice": [
       4,
       4,

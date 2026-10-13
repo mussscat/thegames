@@ -45,7 +45,7 @@
   border-width: 4px 4px 7px 4px;
   border-image: url('../assets/ui-kit/button-blue-s-normal.png') 4 4 7 4 fill / 4px 4px 7px 4px stretch;
   image-rendering: pixelated;
-  height: 32px;
+  height: 36px;
 }
 .px-button-blue-s:active:not(:disabled), .px-button-blue-s.is-pressed {
   border-image-source: url('../assets/ui-kit/button-blue-s-pressed.png');
@@ -75,7 +75,7 @@
   border-width: 4px 4px 7px 4px;
   border-image: url('../assets/ui-kit/button-red-s-normal.png') 4 4 7 4 fill / 4px 4px 7px 4px stretch;
   image-rendering: pixelated;
-  height: 32px;
+  height: 36px;
 }
 .px-button-red-s:active:not(:disabled), .px-button-red-s.is-pressed {
   border-image-source: url('../assets/ui-kit/button-red-s-pressed.png');
@@ -105,7 +105,7 @@
   border-width: 4px 4px 7px 4px;
   border-image: url('../assets/ui-kit/button-orange-s-normal.png') 4 4 7 4 fill / 4px 4px 7px 4px stretch;
   image-rendering: pixelated;
-  height: 32px;
+  height: 36px;
 }
 .px-button-orange-s:active:not(:disabled), .px-button-orange-s.is-pressed {
   border-image-source: url('../assets/ui-kit/button-orange-s-pressed.png');
@@ -135,7 +135,7 @@
   border-width: 4px 4px 7px 4px;
   border-image: url('../assets/ui-kit/button-green-s-normal.png') 4 4 7 4 fill / 4px 4px 7px 4px stretch;
   image-rendering: pixelated;
-  height: 32px;
+  height: 36px;
 }
 .px-button-green-s:active:not(:disabled), .px-button-green-s.is-pressed {
   border-image-source: url('../assets/ui-kit/button-green-s-pressed.png');

@@ -65,7 +65,7 @@ export function PixelPilotTab() {
   const [grid, setGrid] = useState(false);
   const [forceN, setForceN] = useState(0);
   const [fontId, setFontId] = useState(FONTS[0]?.id ?? 'm6x11');
-  const [fontSize, setFontSize] = useState(11);
+  const [fontSize, setFontSize] = useState(22);
   const [hp, setHp] = useState(14);
   const [snap, setSnap] = useState(false);
   const [feel, setFeel] = useState<PilotMotion>(PILOT_MOTION);

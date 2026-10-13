@@ -68,9 +68,11 @@ button:disabled, input:disabled { cursor: default; }
   --font-text: 'm6x11', monospace;
   --font-head: 'm6x11', monospace;
   font-family: 'm6x11', monospace;
-  font-size: 11px;
+  /* 22 = 2 × the font's 11 px grid; captions may use 11. m6x11 has no bold, so the browser must not fake one. */
+  font-size: 22px;
+  font-synthesis: none;
   font-weight: 400;
-  line-height: 13px;
+  line-height: 26px;
   letter-spacing: 0;
   -webkit-font-smoothing: none;
   text-rendering: optimizeSpeed;

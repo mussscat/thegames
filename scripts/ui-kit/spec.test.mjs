@@ -18,11 +18,11 @@ describe('buildKit', () => {
     }
   });
 
-  it('action buttons are big (owner ruling: no aiming): 44 art px high large, 32 small, in all four tones and three states', () => {
+  it('action buttons are big (owner ruling: no aiming): 44 art px high large, 36 small, in all four tones and three states', () => {
     for (const tone of ['blue', 'red', 'orange', 'green']) {
       for (const state of ['normal', 'pressed', 'disabled']) {
         expect(byName.get(`button-${tone}-l-${state}`)?.h).toBe(44);
-        expect(byName.get(`button-${tone}-s-${state}`)?.h).toBe(32);
+        expect(byName.get(`button-${tone}-s-${state}`)?.h).toBe(36);
       }
     }
   });
