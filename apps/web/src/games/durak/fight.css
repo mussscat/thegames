@@ -64,15 +64,16 @@
 }
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
-.deck { position: relative; width: calc(var(--card-w) * 1.4); height: calc(var(--card-w) * 1.4); font-size: 0.8rem; text-align: center; }
-.deck__pile { position: relative; width: 100%; height: 100%; }
+.deck { position: relative; width: calc(var(--card-w) * 1.4); height: calc(var(--card-w) * 1.4 + var(--foot)); font-size: 0.8rem; text-align: center; }
+.deck__pile { position: relative; width: 100%; height: calc(var(--card-w) * 1.4); }
 .deck__layer { position: absolute; left: 0; top: 0; width: var(--card-w); z-index: 1; }
 /* Variant Б from the lab: the trump lies across under the deck and peeks out with its rank and suit corner. */
 .deck__trump-card { position: absolute; left: calc(var(--card-w) * 0.2); top: calc(var(--card-w) * 0.2); rotate: 90deg; }
 .deck__trump { display: inline-flex; align-items: center; gap: 4px; }
-/* The count and the trump suit sit on the pile itself, so the deck column is no wider than its cards. */
-.deck__info { position: absolute; left: 0; right: 0; bottom: -4px; z-index: 3; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
-.deck__info .chip { position: relative; padding: 0 5px; font-size: 0.75rem; background: rgb(20 14 30 / 88%); }
+/* The count and the trump suit stand under the pile, in a strip of their own (`--foot`); the joker column keeps the same strip
+   empty, so the two piles stay level. The strip may reach 8 px past the column, into the gap to the table. */
+.deck__info { position: absolute; left: -8px; right: -8px; top: calc(var(--card-w) * 1.4 + 3px); z-index: 3; display: flex; flex-wrap: nowrap; justify-content: center; gap: 3px; }
+.deck__info .chip { padding: 0 4px; font-size: 0.7rem; background: rgb(0 0 0 / 55%); }
 .deck__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
 .deck__suit--red { color: #ff5a4a; }
@@ -186,6 +187,7 @@
   /* The table (3 columns of pairs, a defending card overhangs by 30 %), its panel padding and the two 1.4-card side
      columns (deck, jokers) must fit the width: 6.5 cards plus 84 px. Table, deck and jokers use this size. */
   --pile-w: max(34px, min(var(--card-w), calc((100vw - 84px) / 6.5)));
+  --foot: 26px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto auto;
@@ -202,7 +204,7 @@
 .fight__mid { grid-area: mid; display: grid; grid-template-columns: calc(var(--pile-w) * 1.4) minmax(0, 1fr) calc(var(--pile-w) * 1.4); align-items: center; gap: 8px; min-height: 0; }
 .fight__mid .table { align-self: stretch; min-height: 0; }
 .fight__mid .deck { justify-self: start; }
-.fight__side-stack { justify-self: end; height: calc(var(--card-w) * 1.4); display: flex; align-items: center; }
+.fight__side-stack { justify-self: end; height: calc(var(--card-w) * 1.4 + var(--foot)); display: flex; align-items: flex-start; }
 /* What stands in the middle row is drawn at the table size, not at the hand's. */
 .table, .deck, .fight__side-stack { --card-w: var(--pile-w); }
 /* The hand keeps the room its raised playable cards (10% of a card) and the fan's corners need above them, so
@@ -269,38 +271,47 @@
     border-right: 4px solid #000000;
     box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
   }
-  .fight[data-layout='a'] .fight__board {
-    grid-area: board;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    grid-template-areas: 'ehand' 'mid' 'hand' 'actions';
-    gap: 0.4em;
-    min-height: 0;
-    padding-block: max(0.5em, var(--safe-top)) max(0.5em, var(--safe-bottom));
-  }
+  .fight[data-layout='a'] .fight__board { grid-area: board; padding-block: max(0.5em, var(--safe-top)) max(0.5em, var(--safe-bottom)); }
   .fight[data-layout='a'] .fight__top { grid-template-columns: 1fr 1fr; }
   .fight[data-layout='a'] .fight__menu { grid-column: 1 / -1; }
   .fight[data-layout='a'] .hp { grid-template-columns: auto 1fr auto; row-gap: 0.35em; }
   /* The sidebar is narrow: the bar takes a row of its own under the name and the numbers. */
   .fight[data-layout='a'] .hp__track { grid-column: 1 / -1; grid-row: 2; }
 
-  /* B (mouse): no sidebar — the top bar shares a row with the enemy HP, the player HP shares one with the actions. */
+  /* B (mouse): no sidebar — the top bar shares a row with the enemy HP; the board, the charges and the player HP follow. */
   .fight[data-layout='b'] {
     width: min(100%, 72em);
     margin-inline: auto;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
-    grid-template-areas: 'top ehp' 'ehand ehand' 'mid mid' 'hand hand' 'charges charges' 'php actions';
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'top ehp' 'board board' 'charges charges' 'php php';
   }
-  .fight[data-layout='b'] .actions { grid-template-columns: auto 1fr; }
-  .fight[data-layout='b'] .actions__buttons { grid-column: 2; justify-content: flex-end; }
+  .fight[data-layout='b'] .fight__board { grid-area: board; }
+
+  /* The board, in both wide layouts (owner, 2026-10-13): the focus chips stand left of the player's hand and the action
+     buttons right of it, so the table gets the height the button row used to take. */
+  .fight__board {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'ehand ehand ehand' 'mid mid mid' 'chips hand buttons';
+    gap: 0.4em;
+    min-height: 0;
+    /* Everything the board draws stays inside it; `clip` (unlike `hidden`) makes no scroll container, so a few px of
+       row rounding at the bottom edge never count as page overflow. */
+    overflow: clip;
+  }
+  .actions { display: contents; }
+  .actions__chips { grid-area: chips; align-self: center; justify-self: start; }
+  .actions__buttons { grid-area: buttons; align-self: center; flex-direction: column; gap: 6px; }
 }
 /* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */
 @media (min-aspect-ratio: 5/4) and (max-height: 420px) {
   .fight { --card-fit: clamp(36px, min(calc(12.5 * var(--vh)), 9vw, var(--fit-w)), 74px); }
-  .fight, .fight[data-layout='a'] .fight__side, .fight[data-layout='a'] .fight__board { gap: 4px; }
+  .fight, .fight[data-layout='a'] .fight__side, .fight__board { gap: 4px; }
   .fight[data-layout='a'] .stats__label { display: none; }
+  /* The two buttons of a picked focus stand side by side: stacked they would make the hand row taller than the hand. */
+  .actions__buttons { flex-direction: row; }
 }
 /* On screens with 2+ device pixels per CSS px, 37 CSS px is still 74 device px: a whole scale of the art. */
 @media (min-aspect-ratio: 5/4) and (min-resolution: 2dppx) {

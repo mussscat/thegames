@@ -79,6 +79,7 @@ for (const layout of ['a', 'b'] as const) {
       expect(tip!.x + tip!.width).toBeLessThanOrEqual(width);
       await page.getByTestId('enemy-badge').click();
       await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+      await page.waitForTimeout(400); // the hand re-fans when the buttons appear; measure after its 0.28 s transition
       expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
     });
   }
@@ -176,6 +177,8 @@ for (const layout of ['a', 'b'] as const) {
       await page.setViewportSize({ width, height });
       await fullFight(page, layout);
       await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+      await page.mouse.move(1, 1);
+      await page.waitForTimeout(400); // lifted cards finish their 0.15–0.28 s transitions
       const g = await page.evaluate(() => {
         const r = (el: Element) => el.getBoundingClientRect();
         const table = r(document.querySelector('[data-testid="table"]')!);
@@ -188,7 +191,8 @@ for (const layout of ['a', 'b'] as const) {
         return {
           handOverTable: table.bottom - Math.min(...hand.map((c) => c.top)),
           enemyOverTable: Math.max(...enemy.map((c) => c.bottom)) - table.top,
-          gapToHp: sharesColumn ? Math.min(...btns.map((b) => b.top)) - hp.bottom : 99,
+          // Wide screens: the buttons stand beside the hand and may sit above the HP bar; they just must not touch it.
+          gapToHp: !sharesColumn ? 99 : innerWidth > innerHeight ? Math.max(Math.min(...btns.map((b) => b.top)) - hp.bottom, hp.top - Math.max(...btns.map((b) => b.bottom))) : Math.min(...btns.map((b) => b.top)) - hp.bottom,
           belowScreen: Math.max(...btns.map((b) => b.bottom)) - innerHeight,
         };
       });
@@ -286,11 +290,13 @@ for (const layout of ['a', 'b'] as const) {
       const g = await page.evaluate(() => {
         const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
         const table = r('[data-testid="table"]');
-        const deck = r('.deck__pile');
+        const deck = r('.deck');
         const stack = r('.jstack__pile');
+        const pile = r('.deck__pile');
         const mid = r('.fight__mid');
         return {
-          level: Math.abs(deck.top - stack.top),
+          // The deck column is the pile and the strip under it; the jokers keep that strip empty, so both piles start level.
+          level: Math.abs(pile.top - stack.top),
           deckCentre: Math.abs((deck.top + deck.bottom) / 2 - (table.top + table.bottom) / 2),
           tableCentred: Math.abs(table.left - mid.left - (mid.right - table.right)),
         };
@@ -331,4 +337,60 @@ for (const [width, height] of [[932, 321], [844, 335], [667, 375]] as const) {
     expect(g.valueCut).toBeLessThanOrEqual(0.5);
     expect(g.trackWidth).toBeGreaterThanOrEqual(60);
   });
+}
+
+for (const layout of ['a', 'b'] as const) {
+  for (const [width, height] of sizesFor(layout)) {
+    test(`layout ${layout} ${width}×${height}: the deck's count and trump sit under the pile, inside the middle row`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page, layout);
+      const g = await page.evaluate(() => {
+        const r = (el: Element) => el.getBoundingClientRect();
+        const pile = r(document.querySelector('.deck__pile')!);
+        const info = r(document.querySelector('.deck__info')!);
+        const mid = r(document.querySelector('.fight__mid')!);
+        const table = r(document.querySelector('[data-testid="table"]')!);
+        const chips = [...document.querySelectorAll('.deck__info .chip')].map(r);
+        return {
+          overPile: pile.bottom - Math.min(...chips.map((c) => c.top)),
+          belowMid: Math.max(...chips.map((c) => c.bottom)) - mid.bottom,
+          intoTable: Math.max(...chips.map((c) => c.right)) - table.left,
+          offLeft: mid.left - Math.min(...chips.map((c) => c.left)),
+          infoTop: info.top - pile.bottom,
+        };
+      });
+      const shown = JSON.stringify(g);
+      expect(g.overPile, shown).toBeLessThanOrEqual(1);
+      expect(g.belowMid, shown).toBeLessThanOrEqual(0.5);
+      expect(g.intoTable, shown).toBeLessThanOrEqual(0.5);
+      expect(g.offLeft, shown).toBeLessThanOrEqual(8);
+    });
+  }
+}
+
+for (const layout of ['a', 'b'] as const) {
+  for (const [width, height] of sizesFor(layout).filter(([w, h]) => w > h)) {
+    test(`layout ${layout} ${width}×${height}: the action buttons stand right of the hand, the focus chips left of it`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page, layout);
+      await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+      const g = await page.evaluate(() => {
+        const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+        const hand = r('[data-testid="player-hand"]');
+        const buttons = r('.actions__buttons');
+        const chips = r('.actions__chips');
+        const table = r('[data-testid="table"]');
+        return {
+          buttonsLeftOfHandEnd: hand.right - buttons.left,
+          chipsRightOfHandStart: chips.right - hand.left,
+          buttonsOutsideRow: Math.max(hand.top - buttons.top, buttons.bottom - Math.max(hand.bottom, buttons.bottom)),
+          buttonsOverTable: table.bottom - buttons.top,
+        };
+      });
+      const shown = JSON.stringify(g);
+      expect(g.buttonsLeftOfHandEnd, shown).toBeLessThanOrEqual(0.5);
+      expect(g.chipsRightOfHandStart, shown).toBeLessThanOrEqual(0.5);
+      expect(g.buttonsOverTable, shown).toBeLessThanOrEqual(0.5);
+    });
+  }
 }
