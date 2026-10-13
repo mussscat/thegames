@@ -30,7 +30,7 @@
 - Coordinates under `transform` (task 3): every place that reads `getBoundingClientRect`, `clientX/Y`, `innerWidth` is converted or proven independent of scale; tests use `cssPerArt` ≠ 1.
 - Every `data-sprite` box is a whole number of art pixels at n = 3 on iPhone and at Pixel 7 emulation (dpr 2.625).
 - Safe-area insets (notch, home bar) stay correct inside a scaled stage (task 2).
-- Touch targets: smallest control ≥ 44 CSS px on a phone (24 art px at n = 3 is 24 css px: buttons must be taller than the kit's 24 or get a larger hit area).
+- Touch targets (owner ruling 2026-10-14): action buttons are drawn large so the player never has to aim; **no artificial hit-area padding**. Fight action buttons ≥ 44 art px high (44 css px at n = 3), other buttons ≥ 32; the hit area is the sprite itself.
 - Nothing in `fight.css` still depends on viewport units or `rem`.
 
 ---
@@ -81,6 +81,7 @@
 **Files:** `scripts/gen-ui-kit.mjs` (from the pilot generator), `scripts/ui-kit/plate.mjs` (pure), `scripts/ui-kit/plate.test.mjs`, `apps/web/src/assets/ui-kit/*.png`, `apps/web/src/ui/ui-kit.css` (generated, committed), `package.json` script `kit`; vitest `include` gets `scripts/**/*.test.mjs`.
 
 - [ ] RED: `plate()` tests: corner insets, outline follows the shape, lip rows, fully transparent corners, deterministic output.
+- [ ] Sizes by the owner's touch ruling: primary buttons 44 art px high, secondary and danger 32; icon buttons (close, arrows) 32×32. Amend spec §4 stage 1 accordingly in the same commit.
 - [ ] Elements (names fixed so the hand-drawn kit of stage 2 drops in): `panel`, `window`, `tip` (+4 arrows), `button-primary|secondary|danger` × `normal|pressed|disabled`, `hp-frame`, `price` × `ok|short`, `slot` × `empty|filled|selected`, `badge` × 3 rarities, `close`, `divider`. A `ui-kit.json` lists size, 9-slice insets and states.
 - [ ] The generator writes the PNGs and `ui-kit.css` (classes `.px-panel`, `.px-btn--primary`, … with `border-image` and states by `:active`, `:disabled`, `[aria-pressed]`, `[aria-selected]`).
 - [ ] Lab page «Кит» in the «Пиксели» tab: every element with every state, plus a grid overlay.
@@ -135,6 +136,6 @@ Order (each block: RED layout test or e2e assertion → rebuild → GREEN → co
 
 ## Open items carried into execution
 
-- Touch-target size: 24-art-pixel buttons are 24 css px at n = 3 (below 44). Decision at task 6: make the hit area larger than the sprite (invisible padding) or enlarge the kit buttons to 32–36.
+- Touch targets are settled (owner ruling): big drawn buttons, no invisible hit padding. The kit sizes follow: `button-primary` 44 high, `button-secondary` 32, `button-danger` 32 (the spec's 24/18/14 heights are replaced, spec §4 is amended in task 5).
 - `TARGET_H = 320` is untested for tall phones and desktop (a 1920×1080 stage is 640×360 art px): checked in task 2, adjusted in `SCREEN_TARGET` if needed.
 - m6x11 at 11 px may be small for long tip text on desktop: stage 3 decides the ×2 layer (spec §5.4).
