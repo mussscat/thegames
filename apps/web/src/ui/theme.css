@@ -58,7 +58,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+  padding: max(12px, var(--safe-top)) 16px max(12px, var(--safe-bottom));
   text-shadow: 2px 2px 0 rgb(0 0 0 / 45%);
 }
 

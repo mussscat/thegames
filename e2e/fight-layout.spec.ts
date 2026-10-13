@@ -50,7 +50,8 @@ const tooSmall = (page: Page) =>
   );
 
 // 390×670 and 844×335 are an iPhone with Safari's bars showing: the real play area is smaller than the phone.
-const SIZES = [[320, 568], [375, 667], [390, 670], [390, 844], [412, 915], [430, 932], [667, 375], [844, 335], [915, 412], [1280, 800], [1440, 900]] as const;
+// 390×670, 430×742, 844×335 and 932×321 are an iPhone with Safari's bars showing; 500×1000 is a narrow tall desktop window.
+const SIZES = [[320, 568], [375, 667], [390, 670], [390, 844], [412, 915], [430, 742], [430, 932], [500, 1000], [667, 375], [844, 335], [915, 412], [932, 321], [1280, 800], [1440, 900]] as const;
 
 /** Layout B belongs to mouse browsers: a wide window under 420 px tall is not a case (a phone always gets A). */
 const sizesFor = (layout: 'a' | 'b') => SIZES.filter(([width, height]) => layout === 'a' || height >= 420 || width < height);
@@ -106,7 +107,8 @@ test.describe('desktop on a 2× screen', () => {
   test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
 
   test('cards are 111 px or more, a whole multiple of 37 px (74 device px)', async ({ page }) => {
-    await fullFight(page, 'a');
+    // A desktop browser is a mouse device: it gets layout B (layout A, the phone's sidebar, gives its width to the sidebar).
+    await fullFight(page, 'b');
     const w = await page.locator('[data-testid="player-hand"] .card').first().evaluate((el) => (el as HTMLElement).offsetWidth);
     expect(w).toBeGreaterThanOrEqual(111);
     expect(w % 37).toBe(0);
@@ -180,7 +182,8 @@ for (const layout of ['a', 'b'] as const) {
         const hand = [...document.querySelectorAll('[data-testid="player-hand"] .card')].map(r);
         const enemy = [...document.querySelectorAll('[data-testid="enemy-hand"] .card')].map(r);
         const hp = r(document.querySelector('.hp--player')!);
-        const btns = [...document.querySelectorAll('[data-testid="actions"] button')].map(r);
+        // The action buttons; a selected focus chip lifts 4 px by design and is not what must keep clear of the bar.
+        const btns = [...document.querySelectorAll('[data-testid="actions"] .pbtn')].map(r);
         const sharesColumn = btns.some((b) => b.left < hp.right && b.right > hp.left);
         return {
           handOverTable: table.bottom - Math.min(...hand.map((c) => c.top)),
@@ -189,10 +192,11 @@ for (const layout of ['a', 'b'] as const) {
           belowScreen: Math.max(...btns.map((b) => b.bottom)) - innerHeight,
         };
       });
-      expect(g.handOverTable).toBeLessThanOrEqual(0.5);
-      expect(g.enemyOverTable).toBeLessThanOrEqual(0.5);
-      expect(g.gapToHp).toBeGreaterThanOrEqual(6);
-      expect(g.belowScreen).toBeLessThanOrEqual(-6);
+      const shown = JSON.stringify(g);
+      expect(g.handOverTable, shown).toBeLessThanOrEqual(0.5);
+      expect(g.enemyOverTable, shown).toBeLessThanOrEqual(0.5);
+      expect(g.gapToHp, shown).toBeGreaterThanOrEqual(6);
+      expect(g.belowScreen, shown).toBeLessThanOrEqual(-6);
     });
   }
 }
@@ -217,5 +221,114 @@ for (const [layout, width, height] of [['a', 390, 844], ['a', 915, 412], ['b', 7
     expect(g.stackRight).toBeLessThanOrEqual(1);
     // On a phone on its side the focus chips stand beside the stack (layout A), so that column is wider on purpose.
     if (!(layout === 'a' && width > height)) expect(g.centred).toBeLessThanOrEqual(2);
+  });
+}
+
+/** Fills the table with the most a round can hold: six attacks, each defended (the defending card overhangs its attack). */
+async function fillTable(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const table = document.querySelector('[data-testid="table"]')!;
+    const sample = document.querySelector('[data-testid="player-hand"] .card')!;
+    // A card from the hand carries the fan's position as an inline style: a table card must not.
+    const copy = () => {
+      const clone = sample.cloneNode(true) as HTMLElement;
+      clone.removeAttribute('style');
+      clone.classList.remove('card--playable');
+      return clone;
+    };
+    for (let i = 0; i < 6; i++) {
+      const pair = document.createElement('div');
+      pair.className = 'table__pair';
+      pair.append(copy());
+      const defense = document.createElement('div');
+      defense.className = 'table__defense';
+      defense.append(copy());
+      pair.append(defense);
+      table.append(pair);
+    }
+  });
+}
+
+for (const layout of ['a', 'b'] as const) {
+  for (const [width, height] of sizesFor(layout)) {
+    test(`layout ${layout} ${width}×${height}: a full table keeps every card inside its panel and clear of the hand`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page, layout);
+      await fillTable(page);
+      const g = await page.evaluate(() => {
+        const r = (el: Element) => el.getBoundingClientRect();
+        const table = r(document.querySelector('[data-testid="table"]')!);
+        const hand = r(document.querySelector('[data-testid="player-hand"]')!);
+        const cards = [...document.querySelectorAll('[data-testid="table"] .card')].map(r);
+        return {
+          left: table.left - Math.min(...cards.map((c) => c.left)),
+          right: Math.max(...cards.map((c) => c.right)) - table.right,
+          top: table.top - Math.min(...cards.map((c) => c.top)),
+          bottom: Math.max(...cards.map((c) => c.bottom)) - table.bottom,
+          overHand: table.bottom - hand.top,
+        };
+      });
+      const shown = JSON.stringify(g);
+      expect(g.left, shown).toBeLessThanOrEqual(1);
+      expect(g.right, shown).toBeLessThanOrEqual(1);
+      expect(g.top, shown).toBeLessThanOrEqual(1);
+      expect(g.bottom, shown).toBeLessThanOrEqual(1);
+      expect(g.overHand, shown).toBeLessThanOrEqual(0.5);
+    });
+  }
+}
+
+for (const layout of ['a', 'b'] as const) {
+  for (const [width, height] of sizesFor(layout)) {
+    test(`layout ${layout} ${width}×${height}: the deck and the jokers sit level at the middle of the table, equally wide`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page, layout);
+      const g = await page.evaluate(() => {
+        const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+        const table = r('[data-testid="table"]');
+        const deck = r('.deck__pile');
+        const stack = r('.jstack__pile');
+        const mid = r('.fight__mid');
+        return {
+          level: Math.abs(deck.top - stack.top),
+          deckCentre: Math.abs((deck.top + deck.bottom) / 2 - (table.top + table.bottom) / 2),
+          tableCentred: Math.abs(table.left - mid.left - (mid.right - table.right)),
+        };
+      });
+      expect(g.level).toBeLessThanOrEqual(1);
+      expect(g.deckCentre).toBeLessThanOrEqual(2);
+      expect(g.tableCentred).toBeLessThanOrEqual(2);
+    });
+  }
+}
+
+for (const [width, height] of [[932, 321], [844, 335], [667, 375]] as const) {
+  test(`sidebar ${width}×${height} on a phone with a notch (59 px left and right, 21 px home bar): nothing is cut off`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page, 'a');
+    await page.evaluate(() => {
+      const root = document.documentElement.style;
+      root.setProperty('--safe-left', '59px');
+      root.setProperty('--safe-right', '59px');
+      root.setProperty('--safe-bottom', '21px');
+    });
+    const g = await page.evaluate(() => {
+      const r = (el: Element) => el.getBoundingClientRect();
+      const side = r(document.querySelector('.fight__side')!);
+      const inside = [...document.querySelectorAll('.fight__side *')].map(r).filter((b) => b.width > 0);
+      const hp = [...document.querySelectorAll('.fight__side .hp')].map((el) => ({ box: r(el), value: r(el.querySelector('.hp__value')!) }));
+      return {
+        contentLeft: Math.min(...inside.map((b) => b.left)),
+        overRight: Math.max(...inside.map((b) => b.right)) - side.right,
+        overBottom: Math.max(...inside.map((b) => b.bottom)) - (innerHeight - 21),
+        valueCut: Math.max(...hp.map((h) => h.value.right - h.box.right)),
+        trackWidth: Math.min(...[...document.querySelectorAll('.fight__side .hp__track')].map((t) => r(t).width)),
+      };
+    });
+    expect(g.contentLeft).toBeGreaterThanOrEqual(59);
+    expect(g.overRight).toBeLessThanOrEqual(0.5);
+    expect(g.overBottom).toBeLessThanOrEqual(0);
+    expect(g.valueCut).toBeLessThanOrEqual(0.5);
+    expect(g.trackWidth).toBeGreaterThanOrEqual(60);
   });
 }

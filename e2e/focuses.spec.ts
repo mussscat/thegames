@@ -59,7 +59,7 @@ test('Пересдача needs chosen cards before it can be played', async ({ p
   await page.getByTestId('focus-bar').getByRole('button', { name: 'Пересдача' }).click();
   const play = page.getByRole('button', { name: 'Сыграть' });
   await expect(play).toBeDisabled();
-  await page.getByTestId('player-hand').locator('.hand__slot').first().click();
+  await page.getByTestId('player-hand').locator('.hand__slot .card').first().click();
   await expect(play).toBeEnabled();
   await play.click();
   await expect(page.getByTestId('focus-bar').getByRole('button', { name: 'Пересдача' })).toHaveCount(0);
@@ -71,9 +71,17 @@ test('«Сыграть» is enabled on the player turn and goes disabled as soon
   await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
   const play = page.getByRole('button', { name: 'Сыграть' });
   await expect(play).toBeEnabled();
-  await page.getByTestId('player-hand').locator('.hand__slot').first().click();
-  // Playwright polls, so the enemy turn only has to last one poll for this to be seen.
-  await expect(play).toBeDisabled();
+  // The enemy's turn can be shorter than one poll, so record every moment the button is disabled instead of racing it.
+  await page.evaluate(() => {
+    const w = window as unknown as { sawDisabled: boolean };
+    w.sawDisabled = false;
+    new MutationObserver(() => {
+      const button = [...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Сыграть'));
+      if (button?.disabled) w.sawDisabled = true;
+    }).observe(document.body, { subtree: true, attributes: true, childList: true });
+  });
+  await page.getByTestId('player-hand').locator('.hand__slot .card').first().click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { sawDisabled: boolean }).sawDisabled)).toBe(true);
 });
 
 test('picking a focus puts Сыграть and Отмена in the bottom row and moves nothing', async ({ page }) => {

@@ -162,11 +162,10 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
                 disabled={playback.active}
                 onOpen={() => setSheetOpen(true)}
               />
-              <FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />
-            </div>
+              </div>
           </div>
           <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
-          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
         </div>
         <p className="sr-only" role="status">
           {error ?? statusText(fight)}

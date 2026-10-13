@@ -1,3 +1,16 @@
+/* The notch and home-bar insets and the visible-height unit, in one place (the Telegram adapter will feed the same
+   variables). `dvh` follows the toolbars of iPhone Safari; plain `vh` does not (it is the height without them). */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --vh: 1vh;
+}
+@supports (height: 1dvh) {
+  :root { --vh: 1dvh; }
+}
+
 /* The document is a fixed stage, not a page: nothing scrolls, pulls, selects, zooms or opens a menu. */
 html, body, #root {
   position: fixed;
