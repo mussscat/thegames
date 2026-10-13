@@ -15,7 +15,8 @@
     "build": "npm run build -w @game/web",
     "e2e": "playwright test",
     "simulate": "SIM=1 vitest run packages/durak/src/sim/report.test.ts --silent=false",
-    "perf": "node scripts/perf.mjs"
+    "perf": "node scripts/perf.mjs",
+    "kit": "node scripts/gen-ui-kit.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

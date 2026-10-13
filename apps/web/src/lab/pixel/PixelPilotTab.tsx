@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CRT_DEFAULT, CrtOverlay, type CrtSettings } from './CrtOverlay';
+import { PilotKit } from './PilotKit';
 import { PilotHand } from './PilotHand';
 import { PILOT_MOTION, PilotCard, type PilotMotion } from './PilotCard';
 import { computeScale, PILOT_TARGET, SCREEN_TARGET, type PixelScale } from '../../ui/pixelScale';
@@ -72,7 +73,7 @@ export function PixelPilotTab() {
   const [sway, setSway] = useState(false);
   const [jumpKey, setJumpKey] = useState(0);
   const [crt, setCrt] = useState<CrtSettings>(CRT_DEFAULT);
-  const [scene, setScene] = useState<'ui' | 'hand'>('ui');
+  const [scene, setScene] = useState<'ui' | 'hand' | 'kit'>('ui');
   const [targetW, setTargetW] = useState(SCREEN_TARGET.w);
   const [handCount, setHandCount] = useState(7);
   const [sheet, setSheet] = useState(false);
@@ -80,8 +81,8 @@ export function PixelPilotTab() {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const scale = useMemo(() => computeScale(viewport, { w: targetW, h: PILOT_TARGET.h }, forceN > 0 ? forceN : undefined), [viewport, forceN, targetW]);
-  const windowW = scene === 'hand' ? 300 : WINDOW_ART.w;
-  const windowH = scene === 'hand' ? 220 : WINDOW_ART.h;
+  const windowW = scene === 'hand' || scene === 'kit' ? 300 : WINDOW_ART.w;
+  const windowH = scene === 'hand' ? 220 : scene === 'kit' ? 420 : WINDOW_ART.h;
   const artW = full ? scale.artW : windowW;
   const artH = full ? scale.artH : windowH;
   const { sizer, stage } = stageStyle(mode, scale, artW, artH);
@@ -96,9 +97,11 @@ export function PixelPilotTab() {
   const vars = { ...stage, '--pp-font': family, '--pp-font-size': fontSize, '--pp-lh': fontSize + 2, '--pp-grid': `calc(var(--u) * ${gridPx})` } as CSSProperties;
   const stageEl = (
     <div className="pp-sizer" style={sizer}>
-      <div className="pp-stage" ref={stageRef} style={vars}>
+      <div className={scene === 'kit' ? 'pp-stage pp-stage--scroll' : 'pp-stage'} ref={stageRef} style={vars}>
         {scene === 'hand' ? (
           <PilotHand artW={artW} artH={artH} count={handCount} />
+        ) : scene === 'kit' ? (
+          <PilotKit />
         ) : (
           <>
         <section className="pp-panel" data-sprite="panel">
@@ -123,7 +126,7 @@ export function PixelPilotTab() {
   const controls = (
     <>
       <div className="pp-controls">
-        <label>Сцена <select value={scene} onChange={(e) => setScene(e.target.value as 'ui' | 'hand')}><option value="ui">Кит</option><option value="hand">Рука карт</option></select></label>
+        <label>Сцена <select value={scene} onChange={(e) => setScene(e.target.value as 'ui' | 'hand' | 'kit')}><option value="ui">Пилот</option><option value="kit">Кит</option><option value="hand">Рука карт</option></select></label>
         <label>Мин. ширина экрана (px арта): {targetW} <input type="range" min={120} max={360} step={10} value={targetW} onChange={(e) => setTargetW(Number(e.target.value))} /></label>
         <label>Карт в руке: {handCount} <input type="range" min={3} max={7} value={handCount} onChange={(e) => setHandCount(Number(e.target.value))} /></label>
         <label>Масштаб <select value={mode} onChange={(e) => setMode(e.target.value as Mode)}>{MODES.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>

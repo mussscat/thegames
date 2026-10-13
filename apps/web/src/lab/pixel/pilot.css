@@ -116,3 +116,16 @@
 
 .pp-hand-card { position: absolute; image-rendering: pixelated; }
 .pp-hand-note { position: absolute; left: calc(var(--u) * 6); top: calc(var(--u) * 6); margin: 0; }
+
+.pp-stage--scroll { overflow-y: auto; overscroll-behavior: contain; }
+.pk { display: flex; flex-direction: column; gap: 6px; padding: 8px; font: 11px/13px 'm6x11', monospace; }
+.pk__note, .pk__h { margin: 0; font-weight: 400; font-size: 11px; }
+.pk__h { margin-top: 6px; color: #f2c94c; }
+.pk__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pk__row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pk__box { padding: 2px 4px; }
+.pk__hp { width: 120px; height: 15px; }
+.pk__hp-fill { height: 100%; background: #d9393f; }
+.pk__chip { min-width: 60px; padding: 0 2px; }
+.pk__badge { padding: 0 2px; }
+.pk__divider { width: 120px; height: 3px; }
