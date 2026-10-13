@@ -7,6 +7,7 @@ import { CardTip, useCardTip } from './CardTip';
 import { FeelBox } from '../ui/FeelBox';
 import { backUrl } from '../ui/pixel/cardSprite';
 import { backArtUrl } from '../ui/pixel/cardArt';
+import { useCardSize } from '../ui/CardSizeContext';
 
 const CARD_SPRING = { type: 'spring', stiffness: 500, damping: 35 } as const;
 
@@ -90,9 +91,10 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
 type CardBackProps = { readonly layoutId?: string };
 
 export function CardBack({ layoutId }: CardBackProps) {
+  const size = useCardSize();
   return (
     <motion.div layoutId={layoutId} transition={CARD_SPRING} className="card card--back" aria-hidden="true">
-      <img className="sprite" src={backArtUrl() ?? backUrl()} alt="" draggable={false} />
+      <img className="sprite" src={backArtUrl(size) ?? backUrl()} alt="" draggable={false} />
     </motion.div>
   );
 }

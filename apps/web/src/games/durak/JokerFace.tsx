@@ -1,4 +1,5 @@
 import { JOKERS, type JokerId } from '@game/durak';
+import { useCardSize } from '../../ui/CardSizeContext';
 import { jokerArtUrl, plainArtUrl } from '../../ui/pixel/cardArt';
 import { emblemUrl } from '../../ui/pixel/jokerEmblem';
 import './JokerFace.css';
@@ -15,7 +16,8 @@ type JokerFaceProps = {
  */
 export function JokerFace({ id, badge = null }: JokerFaceProps) {
   const joker = JOKERS[id];
-  const art = jokerArtUrl(id);
+  const size = useCardSize();
+  const art = jokerArtUrl(id, size);
   const paper = plainArtUrl();
   return (
     <span className={`jface jface--${joker.rarity}`}>

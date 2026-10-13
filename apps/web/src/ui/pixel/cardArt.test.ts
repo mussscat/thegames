@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, composeJoker, composeSuitLayer, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
+import { ART_H, ART_W, CARD_S_H, CARD_S_W, JOKER_S_H, JOKER_S_W, toSmallCard, toSmallJoker, composeJoker, composeSuitLayer, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -159,5 +159,29 @@ describe('suitLayer', () => {
     const colors = (suit: 'hearts' | 'clubs') => new Set(suitLayer(makeCard(suit, 6)).data.filter(Boolean));
     expect(colors('hearts')).toEqual(new Set(['#c2292e']));
     expect(colors('clubs')).toEqual(new Set(['#1b1426']));
+  });
+});
+
+describe('the small sprites of the pixel stage (own native sizes, never CSS-scaled)', () => {
+  it('a small playing card is 52×73, a small joker 53×72', () => {
+    expect([CARD_S_W, CARD_S_H]).toEqual([52, 73]);
+    expect([JOKER_S_W, JOKER_S_H]).toEqual([53, 72]);
+    const card = toSmallCard(solid(ART_W, ART_H));
+    expect([card.w, card.h]).toEqual([52, 73]);
+    const joker = toSmallJoker(solid(JOKER_W, JOKER_H));
+    expect([joker.w, joker.h]).toEqual([53, 72]);
+  });
+
+  it('keeps a transparent layer transparent and a thick shape visible', () => {
+    const empty: Pixels = { w: ART_W, h: ART_H, data: new Uint8ClampedArray(ART_W * ART_H * 4) };
+    expect(Array.from(toSmallCard(empty).data).every((v) => v === 0)).toBe(true);
+    const blob: Pixels = { w: ART_W, h: ART_H, data: new Uint8ClampedArray(ART_W * ART_H * 4) };
+    for (let y = 20; y < 40; y++) for (let x = 20; x < 40; x++) blob.data.set([10, 20, 30, 255], (y * ART_W + x) * 4);
+    const small = toSmallCard(blob);
+    expect(small.data[(Math.round(30 * 73 / ART_H) * 52 + Math.round(30 * 52 / ART_W)) * 4 + 3]).toBe(255);
+  });
+
+  it('refuses to grow a sprite', () => {
+    expect(() => toSmallCard(solid(40, 60))).toThrow();
   });
 });

@@ -1,6 +1,7 @@
 /* The fight on the pixel stage: every size is a whole number of art pixels (1 css px inside the stage). */
 .pfight {
   --card-w: 74px;
+  --card-h: 104px;
   --pile-w: 52px;
   --foot: 26px;
   position: relative;
@@ -26,3 +27,50 @@
 .pfight__badge { width: 44px; padding: 0; }
 .pfight__badge > span { display: flex; align-items: center; justify-content: center; }
 .pfight__anchor { position: absolute; inset: 0; pointer-events: none; }
+
+/* ---------- cards: sprites are shown 1:1, never scaled by CSS ---------- */
+.pfight .card { width: var(--card-w); height: var(--card-h); aspect-ratio: auto; font-size: 11px; }
+.pfight .face { aspect-ratio: auto; height: 100%; }
+.pfight .face::before { display: none; }
+/* The index of a card: m6x11 at its grid size (11), in the corner column (x = 12 on the big card, 8 on the small one). */
+.pfight .face__rank { font-family: 'm6x11', monospace; font-weight: 400; font-size: 11px; line-height: 11px; letter-spacing: 0; text-shadow: none; }
+.pfight .face--art .face__rank { top: 6px; left: 12px; }
+.pfight .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
+.pfight .face--s.face--art .face__rank { top: 3px; left: 8px; }
+.pfight .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 8px; }
+/* Playable cards lift a whole 10 px; the glow is a hard outline that follows the sprite, not a blur. */
+.pfight .card--playable { translate: 0 -10px; filter: drop-shadow(1px 0 0 var(--glow-playable)) drop-shadow(-1px 0 0 var(--glow-playable)) drop-shadow(0 1px 0 var(--glow-playable)) drop-shadow(0 -1px 0 var(--glow-playable)); }
+.pfight .card--trump.card--playable .feel { filter: drop-shadow(2px 0 0 var(--glow-trump)) drop-shadow(-2px 0 0 var(--glow-trump)) drop-shadow(0 2px 0 var(--glow-trump)) drop-shadow(0 -2px 0 var(--glow-trump)); }
+
+/* ---------- hands ---------- */
+.pfight .hand--player { height: 136px; }
+.pfight .hand--enemy { height: 104px; }
+
+/* ---------- the middle row: deck | table | jokers, all small sprites (52×73) ---------- */
+.pfight .fight__mid {
+  --card-w: 52px;
+  --card-h: 73px;
+  --pile-w: 52px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+}
+.pfight .table { gap: 26px 6px; padding: 4px 4px 28px; background: none; }
+.pfight .table__defense { top: 25px; left: 16px; }
+.pfight .deck { width: 72px; height: 99px; font-size: 11px; }
+.pfight .deck__pile { height: 73px; }
+.pfight .deck__trump-card { left: 10px; top: 10px; }
+.pfight .deck__hole { width: 52px; height: 73px; aspect-ratio: auto; border-radius: 0; box-shadow: none; background: none; }
+.pdeck__info { position: absolute; left: -4px; right: -4px; top: 77px; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 4px; }
+.pdeck__count, .pdeck__trump { display: inline-flex; align-items: center; gap: 2px; }
+
+/* ---------- the joker stack: small joker sprites 53×72 ---------- */
+.pfight .fight__side-stack { height: auto; justify-self: end; }
+.pfight .jstack { min-width: 0; min-height: 0; }
+.pfight .jstack__pile { --jface-w: 53px; width: 53px; height: 72px; aspect-ratio: auto; }
+.pfight .jface { aspect-ratio: auto; height: 72px; border-radius: 0; filter: none; }
+.pfight .jface__badge { border-radius: 0; font: 400 11px/13px 'm6x11', monospace; bottom: -6px; padding: 0 3px; }
+.pfight .jstack__count { right: -4px; bottom: -6px; padding: 0 3px; border: 1px solid #1b1426; border-radius: 0; background: #1b1426; font: 400 11px/13px 'm6x11', monospace; }

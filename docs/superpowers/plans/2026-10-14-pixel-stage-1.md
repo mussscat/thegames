@@ -125,7 +125,7 @@ Order (each block: RED layout test or e2e assertion → rebuild → GREEN → co
 - [x] a. Top bar (menu, coins, deal), enemy badge (kit button, tier = colour) with its HP bar, player HP row: `games/durak/pixel/*`; shared logic extracted to `useFightView` (the old screen uses it too). `PixelFightScreen` renders when the stage is on; hands, table, deck, jokers, actions are still the old pieces.
 - [ ] b. Score counter (`chips × mult`), pops (`ScorePops`) and the score board.
 - [ ] c. Joker row/stack, joker sheet, focus bar.
-- [ ] d. Table and deck pile (card sprites unchanged, shown at natural size on the grid; cards of different natural widths are placed on whole pixels).
+- [x] d (first pass, needs the owner's eyes). Small sprites 52×73 / 53×72 (`toSmallCard`, `toSmallJoker`, `CardSizeContext`), table as a kit well (`px-slot-empty`), `PixelDeckView` with the native deck icon, joker stack on the small sprites, hand cards 1:1 with a hard 1 px highlight outline; e2e asserts every card image is shown at its natural size. Old text of this item: table and deck pile (card sprites unchanged, shown at natural size on the grid; cards of different natural widths are placed on whole pixels).
 - [ ] e. Player hand fan: index strip ≥ 18 art px visible, 7 cards fit at artW ≥ 360 (test with the real card widths); enemy hand.
 - [ ] f. Action bar and round button (always on screen, as in `fight-shell`), status line.
 - [ ] g. Overlays: result, card tip, joker sheet.

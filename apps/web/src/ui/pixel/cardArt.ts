@@ -29,6 +29,25 @@ import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside
 export const ART_W = 74;
 export const ART_H = 104;
 
+/**
+ * The pixel stage shows a second, smaller sprite where a card is small (table, deck, joker stack): a separate sprite at its
+ * own native size, so one art pixel is still one art pixel. Until stage 4 redraws them by hand they are the big card re-rendered
+ * at that size with `downscale`.
+ */
+export const CARD_S_W = 52;
+export const CARD_S_H = 73;
+export const JOKER_S_W = 53;
+export const JOKER_S_H = 72;
+export type CardSize = 'l' | 's';
+
+export function toSmallCard(src: Pixels): Pixels {
+  return downscale(src, CARD_S_W, CARD_S_H);
+}
+
+export function toSmallJoker(src: Pixels): Pixels {
+  return downscale(src, JOKER_S_W, JOKER_S_H);
+}
+
 const FRAME_W = 62;
 const range = (from: number, to: number): readonly number[] => Array.from({ length: to - from }, (_, i) => from + i);
 /** Plain background columns either side of the emblem: doubling them widens the card without touching the emblem. */
@@ -147,6 +166,12 @@ let suitMarkUrls: Readonly<Partial<Record<Suit, string>>> = {};
 let artUrls: Readonly<Partial<Record<EnhancementId, string>>> = {};
 let plainUrl: string | undefined;
 let backUrl: string | undefined;
+/** The big sprites' pixels, kept so the small ones can be derived on first use. */
+let plainPixels: Pixels | undefined;
+let backPixels: Pixels | undefined;
+let artPixels: Readonly<Partial<Record<EnhancementId, Pixels>>> = {};
+let jokerPixels: Readonly<Partial<Record<JokerId, Pixels>>> = {};
+const smallUrls = new Map<string, string>();
 let jokerUrls: Readonly<Partial<Record<JokerId, string>>> = {};
 /** One common-rarity card back per pack kind: the emblem stand-in of the pack art. */
 let backdropUrls: Readonly<Partial<Record<'jokers' | 'arcana' | 'focuses' | 'deck', string>>> = {};
@@ -162,13 +187,16 @@ const SUITS: readonly Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 export async function preloadCardArt(): Promise<void> {
   await Promise.allSettled([
     loadPixels(enhancementSheetUrl).then((sheet) => {
-      artUrls = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, pixelsToUrl(fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id])))]));
+      artPixels = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id]))]));
+      artUrls = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, pixelsToUrl(artPixels[id] as Pixels)]));
     }),
     loadPixels(plainSheetUrl).then((sheet) => {
-      plainUrl = pixelsToUrl(fitWholeCard(crop(sheet, PLAIN_FRAME)));
+      plainPixels = fitWholeCard(crop(sheet, PLAIN_FRAME));
+      plainUrl = pixelsToUrl(plainPixels);
     }),
     loadPixels(backSheetUrl).then((sheet) => {
-      backUrl = pixelsToUrl(fitWholeCard(crop(sheet, BACK_FRAME)));
+      backPixels = fitWholeCard(crop(sheet, BACK_FRAME));
+      backUrl = pixelsToUrl(backPixels);
       backdropUrls = { ...backdropUrls, deck: backUrl };
     }),
     loadJokerArt(),
@@ -202,9 +230,10 @@ async function loadJokerArt(): Promise<void> {
       const pixels = keyOut(await loadPixels(url), sheet.key);
       const cards = sheet.ids.flatMap((id, cell) => {
         const frame = PERS_CELLS[cell];
-        return frame ? [[id, pixelsToUrl(composeJoker(backgrounds[JOKERS[id].rarity], crop(pixels, frame)))] as const] : [];
+        return frame ? [[id, composeJoker(backgrounds[JOKERS[id].rarity], crop(pixels, frame))] as const] : [];
       });
-      jokerUrls = { ...jokerUrls, ...Object.fromEntries(cards) };
+      jokerPixels = { ...jokerPixels, ...Object.fromEntries(cards) };
+      jokerUrls = { ...jokerUrls, ...Object.fromEntries(cards.map(([id, composed]) => [id, pixelsToUrl(composed)])) };
     }),
   );
 }
@@ -247,16 +276,26 @@ async function loadTrickArt(): Promise<void> {
   );
 }
 
-export function enhancementArtUrl(id: EnhancementId): string | undefined {
-  return artUrls[id];
+/** The small version of a sprite, derived once and kept; undefined while the big one is not loaded. */
+function smallUrl(key: string, source: Pixels | undefined, shrink: (src: Pixels) => Pixels): string | undefined {
+  const hit = smallUrls.get(key);
+  if (hit) return hit;
+  if (!source) return undefined;
+  const url = pixelsToUrl(shrink(source));
+  smallUrls.set(key, url);
+  return url;
 }
 
-export function plainArtUrl(): string | undefined {
-  return plainUrl;
+export function enhancementArtUrl(id: EnhancementId, size: CardSize = 'l'): string | undefined {
+  return size === 's' ? smallUrl(`enh:${id}`, artPixels[id], toSmallCard) : artUrls[id];
 }
 
-export function backArtUrl(): string | undefined {
-  return backUrl;
+export function plainArtUrl(size: CardSize = 'l'): string | undefined {
+  return size === 's' ? smallUrl('plain', plainPixels, toSmallCard) : plainUrl;
+}
+
+export function backArtUrl(size: CardSize = 'l'): string | undefined {
+  return size === 's' ? smallUrl('back', backPixels, toSmallCard) : backUrl;
 }
 
 /** A card back in the colours of the pack kind (jokers, tarots, focuses, playing cards). */
@@ -272,16 +311,21 @@ export function tarotArtUrl(id: TarotId): string | undefined {
   return tarotUrls[id];
 }
 
-export function jokerArtUrl(id: JokerId): string | undefined {
-  return jokerUrls[id];
+export function jokerArtUrl(id: JokerId, size: CardSize = 'l'): string | undefined {
+  return size === 's' ? smallUrl(`joker:${id}`, jokerPixels[id], toSmallJoker) : jokerUrls[id];
 }
 
 /** The suit layer of a card face; `plain` adds the big suit. Without the sprites the drawn pips stand in. */
-export function suitLayerUrl(card: Card, plain: boolean): string {
-  const key = `${card.suit}:${plain}`;
+export function suitLayerUrl(card: Card, plain: boolean, size: CardSize = 'l'): string {
+  const key = `${card.suit}:${plain}:${size}`;
   const hit = suitUrls.get(key);
   if (hit) return hit;
-  const url = suitSprites ? pixelsToUrl(composeSuitLayer(card.suit, suitSprites, plain)) : toDataUrl(suitLayer(card));
+  let url: string;
+  if (!suitSprites) url = toDataUrl(suitLayer(card));
+  else {
+    const layer = composeSuitLayer(card.suit, suitSprites, plain);
+    url = pixelsToUrl(size === 's' ? toSmallCard(layer) : layer);
+  }
   suitUrls.set(key, url);
   return url;
 }

@@ -7,6 +7,8 @@ type TableViewProps = {
   readonly attacker: PlayerId;
   /** Overlays drawn over the table (the scoring board). */
   readonly children?: ReactNode;
+  /** The frame class around the pairs: the old panel by default, a kit plate on the pixel stage. */
+  readonly frame?: string;
 };
 
 /** Badges show who played the enhancement: blue — the player, red — the enemy. */
@@ -15,10 +17,10 @@ function badge(enhancement: TablePair['attackEnh'], playedByPlayer: boolean) {
   return playedByPlayer ? { own: enhancement } : { foreign: enhancement };
 }
 
-export function TableView({ table, attacker, children }: TableViewProps) {
+export function TableView({ table, attacker, children, frame = 'panel' }: TableViewProps) {
   const playerAttacks = attacker === 'player';
   return (
-    <div className="table panel" data-testid="table">
+    <div className={`table ${frame}`} data-testid="table">
       {table.map((pair) => (
         <div key={pair.attack.id} className="table__pair" data-score-card={pair.attack.id}>
           <CardView card={pair.attack} enhancements={badge(pair.attackEnh, playerAttacks)} />

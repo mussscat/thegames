@@ -113,3 +113,24 @@ test('the pixel fight bar fill is a whole number of art pixels at every HP', asy
   const widths = await page.getByRole('meter').evaluateAll((meters) => meters.map((m) => (m.firstElementChild as HTMLElement).offsetWidth));
   for (const w of widths) expect(Number.isInteger(w)).toBe(true);
 });
+
+test('on the pixel stage every card sprite is shown 1:1 (natural size = displayed size), in the hand, on the table and on the backs', async ({ page }) => {
+  await page.goto('/?pixel&seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  await expect(page.getByTestId('player-hand')).toBeVisible();
+  const mismatches = () =>
+    page.locator('.pfight .card img.sprite').evaluateAll((imgs) =>
+      imgs.flatMap((img) => {
+        const el = img as HTMLImageElement;
+        return el.naturalWidth === el.offsetWidth && el.naturalHeight === el.offsetHeight ? [] : [`${el.naturalWidth}×${el.naturalHeight} shown ${el.offsetWidth}×${el.offsetHeight}`];
+      }),
+    );
+  expect(await mismatches()).toEqual([]);
+  // Play the first playable card so the table has cards (the small 52×73 sprites).
+  const playable = page.locator('.pfight .card--playable').first();
+  if ((await playable.count()) > 0) {
+    await playable.click();
+    await expect(page.getByTestId('table').locator('.card').first()).toBeVisible();
+    expect(await mismatches()).toEqual([]);
+  }
+});

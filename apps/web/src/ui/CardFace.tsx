@@ -1,7 +1,8 @@
 import { isRedSuit, rankLabel, type Card } from '@game/core';
 import type { EnhancementId } from '@game/durak';
 import { frontUrl } from './pixel/cardSprite';
-import { enhancementArtUrl, plainArtUrl, suitLayerUrl } from './pixel/cardArt';
+import { useCardSize } from './CardSizeContext';
+import { enhancementArtUrl, plainArtUrl, suitLayerUrl, type CardSize } from './pixel/cardArt';
 
 type CardFaceProps = {
   readonly card: Card;
@@ -13,20 +14,21 @@ type CardFaceProps = {
 type ArtLayers = { readonly own: string; readonly foreign?: string };
 
 /** Sprite-sheet art for the card; undefined when its sheet did not load (the canvas art is drawn instead). */
-function artLayers(enhancement: EnhancementId | undefined, split: CardFaceProps['split']): ArtLayers | undefined {
+function artLayers(enhancement: EnhancementId | undefined, split: CardFaceProps['split'], size: CardSize): ArtLayers | undefined {
   if (split) {
-    const own = enhancementArtUrl(split.own);
-    const foreign = enhancementArtUrl(split.foreign);
+    const own = enhancementArtUrl(split.own, size);
+    const foreign = enhancementArtUrl(split.foreign, size);
     return own && foreign ? { own, foreign } : undefined;
   }
-  const own = enhancement ? enhancementArtUrl(enhancement) : plainArtUrl();
+  const own = enhancement ? enhancementArtUrl(enhancement, size) : plainArtUrl(size);
   return own ? { own } : undefined;
 }
 
 export function CardFace({ card, enhancement, split }: CardFaceProps) {
   const rankClass = isRedSuit(card.suit) ? 'face__rank face__rank--red' : 'face__rank';
   const rank = rankLabel(card.rank);
-  const art = artLayers(enhancement, split);
+  const size = useCardSize();
+  const art = artLayers(enhancement, split, size);
   const ranks = (
     <>
       <span className={rankClass}>{rank}</span>
@@ -35,10 +37,10 @@ export function CardFace({ card, enhancement, split }: CardFaceProps) {
   );
   if (art) {
     return (
-      <div className="face face--art">
+      <div className={size === 's' ? 'face face--art face--s' : 'face face--art'}>
         <img className={art.foreign ? 'sprite face__sprite face__sprite--own' : 'sprite face__sprite'} src={art.own} alt="" draggable={false} />
         {art.foreign && <img className="sprite face__sprite face__sprite--foreign" src={art.foreign} alt="" draggable={false} />}
-        <img className="sprite face__sprite" src={suitLayerUrl(card, !enhancement && !split)} alt="" draggable={false} />
+        <img className="sprite face__sprite" src={suitLayerUrl(card, !enhancement && !split, size)} alt="" draggable={false} />
         {ranks}
       </div>
     );
