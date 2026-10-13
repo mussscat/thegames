@@ -74,6 +74,7 @@
    empty, so the two piles stay level. The strip may reach 8 px past the column, into the gap to the table. */
 .deck__info { position: absolute; left: -8px; right: -8px; top: calc(var(--card-w) * 1.4 + 3px); z-index: 3; display: flex; flex-wrap: nowrap; justify-content: center; gap: 3px; }
 .deck__info .chip { padding: 0 4px; font-size: 0.7rem; background: rgb(0 0 0 / 55%); }
+.deck__hole { position: absolute; left: 0; top: 0; width: var(--card-w); aspect-ratio: 5 / 7; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
 .deck__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
 .deck__suit--red { color: #ff5a4a; }
@@ -241,7 +242,7 @@
        (0.8em each), the table panel's padding and the gaps of the middle row. `--fit-w` is the card width that fits.
        No `em` in these widths: a card has its own font-size, which depends on its width — that would be a cycle. */
     --fs: clamp(13px, calc(2.1 * var(--vh)), 24px);
-    --fit-w: calc((100vw - max(13 * var(--fs), 24vw) - 8.2 * var(--fs) - 40px - var(--safe-left) - var(--safe-right)) / 9.1);
+    --fit-w: calc((100vw - max(13 * var(--fs), 24vw) - 8.2 * var(--fs) - 56px - var(--safe-left) - var(--safe-right) * 0.4) / 9.1);
     --card-fit: clamp(36px, min(calc(14 * var(--vh)), 9vw), 222px);
     --pile-fit: min(var(--card-fit), var(--fit-w));
     --card-step: 74px;
@@ -254,7 +255,8 @@
     grid-template-columns: minmax(calc(13em + var(--safe-left)), calc(24% + var(--safe-left))) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'side board';
-    padding: 0 max(1em, var(--safe-right)) 0 0;
+    /* Only part of the right notch inset stays: the corner needs little, and the notch sits on the other side. */
+    padding: 0 max(0.6em, calc(var(--safe-right) * 0.4)) 0 0;
     column-gap: 1.2em;
   }
   .fight .table { grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
@@ -347,10 +349,16 @@
     gap: 0.4em;
     min-height: 0;
     padding-block: max(0.5em, var(--safe-top)) max(0.5em, var(--safe-bottom));
-    /* Everything the board draws stays inside it; `clip` (unlike `hidden`) makes no scroll container, so a few px of
-       row rounding at the bottom edge never count as page overflow. */
-    overflow: clip;
+    /* The fan drops its outer cards a few px below the hand, into the board's padding: that must not count as page
+       overflow. Only the bottom edge clips; sideways nothing is cut (the deck's back cards reach out to the left). */
+    overflow-x: visible;
+    overflow-y: clip;
   }
+  /* The deck and the jokers stand 8 px in from the board's edges: the deck's back cards reach 4 px to the left and must
+     not touch the sidebar. */
+  .fight__mid { grid-template-columns: calc(var(--pile-w) * 1.4 + 8px) minmax(0, 1fr) calc(var(--pile-w) * 1.4 + 8px); }
+  .fight__mid .deck { margin-left: 8px; }
+  .fight__side-stack { margin-right: 8px; }
   .actions { display: contents; }
   .actions__chips { grid-area: chips; align-self: center; justify-self: start; }
   .actions__buttons { grid-area: buttons; align-self: center; flex-direction: column; gap: 6px; }

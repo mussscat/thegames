@@ -261,8 +261,9 @@ for (const [width, height] of SIZES) {
         // The deck column is the pile and the strip under it; the jokers keep that strip empty, so both piles start level.
         level: Math.abs(pile.top - stack.top),
         deckCentre: Math.abs((deck.top + deck.bottom) / 2 - (table.top + table.bottom) / 2),
-        deckLeft: Math.abs(deck.left - mid.left),
-        stackRight: Math.abs(r('.fight__side-stack').right - mid.right),
+        // On wide screens the deck stands 8 px in from the board's left edge (its back cards reach 4 px further left, clear of the sidebar), the jokers 8 px in from the right.
+        deckLeft: Math.abs(deck.left - mid.left - (innerWidth > innerHeight ? 8 : 0)),
+        stackRight: Math.abs(mid.right - r('.fight__side-stack').right - (innerWidth > innerHeight ? 8 : 0)),
         tableCentred: Math.abs(table.left - mid.left - (mid.right - table.right)),
       };
     });
@@ -303,6 +304,11 @@ for (const [width, height] of [[932, 321], [844, 335], [667, 375]] as const) {
     expect(g.overBottom).toBeLessThanOrEqual(0);
     expect(g.valueCut).toBeLessThanOrEqual(0.5);
     expect(g.trackWidth).toBeGreaterThanOrEqual(60);
+    // Only part of the notch inset is kept on the right (owner: a lot of empty room beside the jokers): the corner needs
+    // little, the notch is on the other side of a phone on its side.
+    const rightFree = await page.evaluate(() => innerWidth - document.querySelector('.fight__side-stack')!.getBoundingClientRect().right);
+    expect(rightFree).toBeLessThanOrEqual(40);
+    expect(rightFree).toBeGreaterThanOrEqual(8);
   });
 }
 
@@ -356,3 +362,47 @@ for (const [width, height] of WIDE_SIZES) {
     expect(g.buttonsOverTable, shown).toBeLessThanOrEqual(0.5);
   });
 }
+
+for (const [width, height] of WIDE_SIZES) {
+  test(`${width}×${height}: the deck is drawn whole — the board does not clip it and its back cards keep clear of the sidebar`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    const g = await page.evaluate(() => {
+      const board = document.querySelector('.fight__board')!;
+      const style = getComputedStyle(board);
+      const layers = [...document.querySelectorAll('.deck__layer')].map((el) => el.getBoundingClientRect());
+      const back = layers[layers.length - 1]!;
+      const probe = document.elementFromPoint(back.left + 1, back.top + back.height / 2);
+      return {
+        clip: `${style.overflowX}/${style.overflowY}`,
+        gapToSidebar: Math.min(...layers.map((l) => l.left)) - document.querySelector('.fight__side')!.getBoundingClientRect().right,
+        backCardPainted: !!probe && !!probe.closest('.deck'),
+      };
+    });
+    const shown = JSON.stringify(g);
+    // Vertical clip only (it hides the fan's few px at the bottom edge); sideways nothing is cut off.
+    expect(g.clip, shown).toBe('visible/clip');
+    expect(g.gapToSidebar, shown).toBeGreaterThanOrEqual(4);
+    expect(g.backCardPainted, shown).toBe(true);
+  });
+}
+
+test('an empty deck is drawn as an empty slot with a 0, not as nothing (owner: «колода не отображается»)', async ({ page }) => {
+  await page.setViewportSize({ width: 915, height: 412 });
+  await fullFight(page);
+  await page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem('thegame.durak.run')!);
+    saved.run.phase.fight.round.deck = [];
+    localStorage.setItem('thegame.durak.run', JSON.stringify(saved));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await expect(page.getByTestId('player-hand')).toBeVisible();
+  const hole = page.locator('.deck__hole');
+  await expect(hole).toBeVisible();
+  const pile = (await page.locator('.deck__pile').boundingBox())!;
+  const slot = (await hole.boundingBox())!;
+  expect(slot.width).toBeGreaterThan(30);
+  expect(slot.x).toBeGreaterThanOrEqual(pile.x - 1);
+  await expect(page.locator('.deck__info')).toContainText('0');
+});
