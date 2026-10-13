@@ -2,6 +2,7 @@ import { Icon } from '../../ui/Icon';
 import { PixelButton } from '../../ui/PixelButton';
 import type { FightAction, RoundState } from '@game/durak';
 import type { ReactNode } from 'react';
+import { roundButton } from './roundButton';
 
 /** A picked focus takes over the row: its play button (with the pick count) and a cancel. */
 export type FocusAction = { readonly label: string; readonly ready: boolean; readonly onPlay: () => void; readonly onCancel: () => void };
@@ -20,16 +21,11 @@ type ActionBarProps = {
  * Play Hand): its label follows who attacks, so nothing appears or disappears and the hand never moves because of it.
  */
 function RoundButton({ round, myTurn, onAct }: Omit<ActionBarProps, 'focus'>) {
-  if (round.attacker === 'enemy') {
-    return (
-      <PixelButton tone="blue" disabled={!myTurn} onClick={() => onAct({ type: 'take' })}>
-        <Icon id="hand" /> Беру
-      </PixelButton>
-    );
-  }
+  const view = roundButton(round, myTurn);
+  const take = view.kind === 'take';
   return (
-    <PixelButton tone="red" disabled={!myTurn || round.table.length === 0} onClick={() => onAct({ type: 'endAttack' })}>
-      <Icon id="check" /> {round.defenderTaking ? 'Готово' : 'Бито'}
+    <PixelButton tone={take ? 'blue' : 'red'} disabled={view.disabled} onClick={() => onAct(take ? { type: 'take' } : { type: 'endAttack' })}>
+      <Icon id={take ? 'hand' : 'check'} /> {view.label}
     </PixelButton>
   );
 }

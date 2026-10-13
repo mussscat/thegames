@@ -290,6 +290,7 @@
 
   /* The enemy block: a title in the colour of its tier, then the portrait left of the HP, then a short line. */
   .enemy-block {
+    flex-shrink: 0; /* a block that shrinks clips its own HP bar: the panel must make room elsewhere */
     --tier: #2f7fe0;
     --tier-dark: #1a3a73;
     display: flex;
@@ -372,8 +373,23 @@
   .enemy-block .hp--enemy .hp__value { align-self: center; }
   .enemy-block .hp--enemy .hp__track { grid-column: 1 / -1; align-self: center; }
   .fight__side { font-size: 1em; gap: 4px; }
-  .counter { padding: 0.3em; gap: 0.2em; }
-  .counter__chips, .counter__mult { font-size: 1.1em; }
+  .counter { padding: 0.25em; gap: 0.1em; }
+  .counter__damage { font-size: 1.2em; }
+  .counter__chips, .counter__mult { font-size: 1.05em; padding-block: 0.1em; }
+  .fight__side .hp--player { padding-block: 0.25em; row-gap: 0.15em; }
+  .fight__stats .stats__tile { padding-block: 0.1em; min-height: 0; }
+  .fight__side .charges { gap: 2px; }
+  .fight__side .charges .chip { padding-block: 0; }
+}
+
+/* The lowest phones on their side (an iPhone with Safari's bars: ≤ 340 px tall): every px counts in the panel. */
+@media (min-aspect-ratio: 5/4) and (max-height: 340px) {
+  .fight__side { gap: 2px; padding-top: max(0.3em, var(--safe-top)); padding-bottom: max(0.3em, var(--safe-bottom)); }
+  .counter { padding: 0.15em 0.25em; }
+  .counter__damage { font-size: 1.1em; line-height: 1; }
+  .fight__side .hp--player { padding-block: 0.15em; }
+  .enemy-block .hp--enemy { padding-block: 0.2em; row-gap: 0.1em; }
+  .counter__chips, .counter__mult { padding-block: 0; }
 }
 
 /* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */

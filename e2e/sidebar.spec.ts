@@ -85,5 +85,58 @@ for (const [width, height] of WIDE.filter(([, h]) => h <= 500)) {
     await fullFight(page);
     await expect(page.locator('.enemy-title')).toBeHidden();
     await expect(page.locator('.counter__label')).toBeHidden();
+    // «Nothing cut off»: the enemy block shows all of itself, its HP bar included (a clipped child still reports its full box).
+    const clipped = await page.evaluate(() => {
+      const block = document.querySelector('.enemy-block') as HTMLElement;
+      const track = document.querySelector('.hp--enemy .hp__track')!.getBoundingClientRect();
+      const hit = document.elementFromPoint(track.left + track.width / 2, track.top + track.height / 2);
+      return { blockClipped: block.scrollHeight - block.clientHeight, trackVisible: !!hit && !!hit.closest('.hp__track') };
+    });
+    expect(clipped.blockClipped).toBeLessThanOrEqual(0.5);
+    expect(clipped.trackVisible).toBe(true);
   });
+}
+
+/** Plays «Разгон» so that the panel shows a focus charge (an extra row that used to squeeze the enemy block). */
+async function withCharge(page: import('@playwright/test').Page): Promise<void> {
+  await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+  await page.getByTestId('actions').getByRole('button', { name: /Сыграть/ }).click();
+  await expect(page.getByTestId('focus-charges')).toBeVisible();
+}
+
+for (const [width, height] of WIDE) {
+  for (const notch of [false, true]) {
+    test(`${width}×${height}${notch ? ' with a notch' : ''}, focus charge shown: the enemy block and its HP bar are not clipped`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await fullFight(page);
+      if (notch) {
+        await page.evaluate(() => {
+          const root = document.documentElement.style;
+          root.setProperty('--safe-left', '59px');
+          root.setProperty('--safe-right', '59px');
+          root.setProperty('--safe-bottom', '21px');
+        });
+      }
+      await withCharge(page);
+      await page.waitForTimeout(300);
+      const g = await page.evaluate((bottomInset) => {
+        const block = document.querySelector('.enemy-block') as HTMLElement;
+        const side = document.querySelector('.fight__side') as HTMLElement;
+        const track = document.querySelector('.hp--enemy .hp__track')!.getBoundingClientRect();
+        const hit = document.elementFromPoint(track.left + track.width / 2, track.top + track.height / 2);
+        const menu = document.querySelector('.fight__menu')!.getBoundingClientRect();
+        return {
+          blockClipped: block.scrollHeight - block.clientHeight,
+          sideClipped: side.scrollHeight - side.clientHeight,
+          trackVisible: !!hit && !!hit.closest('.hp__track'),
+          menuBelowScreen: menu.bottom - (innerHeight - bottomInset),
+        };
+      }, notch ? 21 : 0);
+      const shown = JSON.stringify(g);
+      expect(g.blockClipped, shown).toBeLessThanOrEqual(0.5);
+      expect(g.sideClipped, shown).toBeLessThanOrEqual(0.5);
+      expect(g.trackVisible, shown).toBe(true);
+      expect(g.menuBelowScreen, shown).toBeLessThanOrEqual(0.5);
+    });
+  }
 }
