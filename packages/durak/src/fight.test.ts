@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFightAction, createFight, NO_CHARGES, NO_REVEAL, type FightAction, type FightState } from './fight';
+import { applyFightAction, createFight, NO_CHARGES, NO_REVEAL, previewTake, type FightAction, type FightState } from './fight';
 import { c, filler, roundState } from './fixtures';
 import type { JokerId } from './jokers/catalog';
 import type { PlayerId, RoundState } from './types';
@@ -357,5 +357,53 @@ describe('focus charges in a fight', () => {
     const result = applyFightAction(ended, 'player', { type: 'nextRound' });
     if (!result.ok) throw new Error(result.error);
     expect(result.value.focusCharges.chips).toBe(8);
+  });
+});
+
+describe('previewTake', () => {
+  const fightWith = (round: RoundState, over: Partial<FightState> = {}): FightState => ({ ...base, hp: { player: 500, enemy: 500 }, round, ...over });
+  /** What the real take scores: the attacker ends the attack on a table the defender is taking. */
+  const realHit = (state: FightState, attacker: PlayerId) => {
+    const next = expectOk(applyFightAction({ ...state, round: { ...state.round, defenderTaking: true } }, attacker, { type: 'endAttack' }));
+    const { chips, mult, damage } = next.lastScore!;
+    return { chips, mult, damage };
+  };
+  const preview = (state: FightState) => {
+    const result = previewTake(state);
+    return result ? { chips: result.chips, mult: result.mult, damage: result.damage } : null;
+  };
+
+  it('an empty table: no chips, the attacker\'s base multiplier, no damage, and the defender is the one who would take', () => {
+    const state = fightWith(roundState({ hands: { player: filler(5), enemy: filler(5, 'diamonds') }, table: [] }), { baseMult: { player: 1, enemy: 1.25 } });
+    expect(previewTake(state)).toEqual({ taker: 'enemy', chips: 0, mult: 1, damage: 0 });
+    const enemyAttacks = fightWith(roundState({ attacker: 'enemy', hands: { player: filler(5), enemy: filler(5, 'diamonds') }, table: [] }), { baseMult: { player: 1, enemy: 1.25 } });
+    expect(previewTake(enemyAttacks)).toEqual({ taker: 'player', chips: 0, mult: 1.25, damage: 0 });
+  });
+
+  it('equals the real hit of the same table when the enemy takes two attack cards', () => {
+    const state = fightWith(takingRound);
+    expect(preview(state)).toEqual(realHit(state, 'player'));
+  });
+
+  it('equals the real hit with player jokers and focus charges (Разгон, Прокладка, Двойник)', () => {
+    const state = fightWith(takingRound, { jokers: { player: ['small', 'cardSharp'], enemy: [] }, focusCharges: { chips: 4, mult: 2, times: 2, shield: 1 } });
+    const hit = realHit(state, 'player');
+    expect(hit.damage).toBeGreaterThan(2);
+    expect(preview(state)).toEqual(hit);
+  });
+
+  it('equals the real hit of an enemy attack on the player with a Щит and the enemy tier multiplier', () => {
+    const round = roundState({
+      attacker: 'enemy',
+      hands: { player: filler(5), enemy: filler(5, 'diamonds') },
+      table: [{ attack: c(9, 'spades'), defense: null, attackEnh: 'sharp' }, { attack: c(12, 'hearts'), defense: null }],
+      deck: filler(6, 'hearts').slice(2),
+    });
+    const state = fightWith(round, { baseMult: { player: 1, enemy: 1.5 }, focusCharges: { chips: 0, mult: 0, times: 1, shield: 0.5 } });
+    expect(preview(state)).toEqual(realHit(state, 'enemy'));
+  });
+
+  it('is null once the fight is over', () => {
+    expect(previewTake({ ...base, winner: 'player' })).toBeNull();
   });
 });

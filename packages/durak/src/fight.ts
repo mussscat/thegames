@@ -2,7 +2,7 @@ import { createRng, err, nextInt, ok, SUITS, type Card, type Result, type RngSta
 import { dealRound } from './deal';
 import { EMPTY_PROFILES, type EnhancementId, type Profiles } from './enhancements';
 import { jokerHandSizes, type SideJokers } from './jokers/catalog';
-import { scoreTake, type TakeScore, type TakenCard } from './jokers/score';
+import { scoreTake, type ScoreInput, type TakeScore, type TakenCard } from './jokers/score';
 import { afterBeaten, afterHitDealt, afterOwnTake, afterRound, EMPTY_JOKER_STATE, type JokerState } from './jokers/state';
 import { applyRoundAction } from './reducer';
 import {
@@ -164,23 +164,41 @@ function withSide<T>(record: Readonly<Record<PlayerId, T>>, id: PlayerId, value:
   return id === 'player' ? { ...record, player: value } : { ...record, enemy: value };
 }
 
-/** Only taking the table hurts: the attacker's jokers score the take, the taker's defensive jokers apply last. */
-function chargeTake(state: FightState, bout: BoutResult, before: RoundState): FightState {
-  const taker = bout.damaged;
+/** Everything a take is scored from; the real take and the preview build their input here, so they cannot drift apart. */
+function takeScoreInput(state: FightState, taker: PlayerId, taken: readonly TakenCard[], round: RoundState): ScoreInput {
   const attacker = opponentOf(taker);
-  const taken: readonly TakenCard[] = bout.attackCards.map((card, i) => ({ card, enhancement: bout.takenEnhancements[i] ?? null }));
-  const score = scoreTake({
+  return {
     taken,
-    trumpSuit: before.trumpSuit,
+    trumpSuit: round.trumpSuit,
     boss: state.boss,
-    topCard: topCardOf(before),
+    topCard: topCardOf(round),
     takerPriorTakes: state.fightTakes[taker],
     baseMult: state.baseMult[attacker],
     attacker: { jokers: state.jokers[attacker], state: state.jokerState[attacker] },
     defender: { jokers: state.jokers[taker], state: state.jokerState[taker] },
     boost: attacker === 'player' ? state.focusCharges : undefined,
     shield: taker === 'player' ? state.focusCharges.shield : 1,
-  });
+  };
+}
+
+/** What taking the table right now would score, as the counter shows it: the table's attack cards with the enhancement each was played with. */
+export type TakePreview = { readonly taker: PlayerId; readonly chips: number; readonly mult: number; readonly damage: number };
+
+export function previewTake(state: FightState): TakePreview | null {
+  if (state.winner) return null;
+  const { round } = state;
+  const taker = opponentOf(round.attacker);
+  const taken: readonly TakenCard[] = round.table.map((pair) => ({ card: pair.attack, enhancement: pair.attackEnh ?? null }));
+  const { chips, mult, damage } = scoreTake(takeScoreInput(state, taker, taken, round));
+  return { taker, chips, mult, damage };
+}
+
+/** Only taking the table hurts: the attacker's jokers score the take, the taker's defensive jokers apply last. */
+function chargeTake(state: FightState, bout: BoutResult, before: RoundState): FightState {
+  const taker = bout.damaged;
+  const attacker = opponentOf(taker);
+  const taken: readonly TakenCard[] = bout.attackCards.map((card, i) => ({ card, enhancement: bout.takenEnhancements[i] ?? null }));
+  const score = scoreTake(takeScoreInput(state, taker, taken, before));
   const afterAttacker = withSide(state.jokerState, attacker, afterHitDealt(state.jokerState[attacker], state.jokers[attacker], taken));
   const counted: FightState = {
     ...state,
