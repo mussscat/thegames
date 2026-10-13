@@ -30,3 +30,17 @@ export function computeScale(viewport: Viewport, target: ScaleTarget, forceN?: n
   const n = Math.max(1, forceN === undefined ? auto : Math.floor(forceN));
   return { n, cssPerArt: n / dpr, artW: Math.floor(deviceW / n), artH: Math.floor(deviceH / n) };
 }
+
+export type ScreenPoint = { readonly x: number; readonly y: number };
+
+/** Where the stage sits on the screen and how many CSS pixels one art pixel covers there. */
+export type StageFrame = { readonly left: number; readonly top: number; readonly cssPerArt: number };
+
+/**
+ * A pointer position (`clientX/Y`) in stage coordinates, i.e. in art pixels. Under the stage's `transform: scale`
+ * screen coordinates and layout coordinates differ by `cssPerArt`; every read of a screen point goes through here.
+ */
+export function toArt(point: ScreenPoint, stage: StageFrame): ScreenPoint {
+  const k = Number.isFinite(stage.cssPerArt) && stage.cssPerArt > 0 ? stage.cssPerArt : 1;
+  return { x: (point.x - stage.left) / k, y: (point.y - stage.top) / k };
+}

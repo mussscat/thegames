@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { CRT_DEFAULT, CrtOverlay, type CrtSettings } from './CrtOverlay';
 import { PilotHand } from './PilotHand';
 import { PILOT_MOTION, PilotCard, type PilotMotion } from './PilotCard';
-import { computeScale, PILOT_TARGET, SCREEN_TARGET, type PixelScale } from './pixelScale';
+import { computeScale, PILOT_TARGET, SCREEN_TARGET, type PixelScale } from '../../ui/pixelScale';
 import './pilot.css';
 
 type Mode = 'zoom' | 'transform' | 'var';

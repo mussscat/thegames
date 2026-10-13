@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeScale, PILOT_TARGET, SCREEN_TARGET } from './pixelScale';
+import { computeScale, PILOT_TARGET, SCREEN_TARGET, toArt } from './pixelScale';
 
 describe('computeScale', () => {
   it('Pixel 7 portrait: whole device pixels per art pixel, CSS size is n / dpr', () => {
@@ -63,5 +63,23 @@ describe('SCREEN_TARGET (owner pick 2026-10-14: 360 art pixels across)', () => {
 
   it('desktop keeps whole device pixels per art pixel', () => {
     expect(computeScale({ cssW: 1920, cssH: 1080, dpr: 1 }, SCREEN_TARGET)).toMatchObject({ n: 3, artW: 640, artH: 360 });
+  });
+});
+
+describe('toArt', () => {
+  it('turns a screen point into stage (art pixel) coordinates', () => {
+    expect(toArt({ x: 150, y: 90 }, { left: 30, top: 10, cssPerArt: 2 })).toEqual({ x: 60, y: 40 });
+  });
+
+  it('works with a fractional css size per art pixel', () => {
+    const point = toArt({ x: 100 + 2.2857 * 50, y: 20 + 2.2857 * 8 }, { left: 100, top: 20, cssPerArt: 2.2857 });
+    expect(point.x).toBeCloseTo(50, 6);
+    expect(point.y).toBeCloseTo(8, 6);
+  });
+
+  it('treats a zero, negative or NaN scale as 1 instead of dividing by it', () => {
+    for (const cssPerArt of [0, -2, Number.NaN]) {
+      expect(toArt({ x: 12, y: 7 }, { left: 2, top: 1, cssPerArt })).toEqual({ x: 10, y: 6 });
+    }
   });
 });
