@@ -16,7 +16,6 @@ import { useEffect, useState } from 'react';
 import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
-import { useMediaQuery } from '../../ui/useMediaQuery';
 import { usePrevious } from '../../ui/usePrevious';
 import { ActionBar, type FocusAction } from './ActionBar';
 import { DeckView } from './DeckView';
@@ -32,19 +31,12 @@ import { JokerStack } from './JokerStack';
 import { EnemyBadge } from './EnemyBadge';
 import { ScoreBoard } from './ScoreBoard';
 import { ScorePops } from './ScorePops';
-import { fightLayout } from './fightLayout';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
 import { useScorePlayback } from './useScorePlayback';
 import './fight.css';
 import './score.css';
-
-/** `?layout=a|b` forces a wide-screen layout (tests, comparing); otherwise the device decides, see `fightLayout`. */
-const LAYOUT_OVERRIDE = (() => {
-  const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('layout');
-  return value === 'a' || value === 'b' ? value : null;
-})();
 
 type DurakFightScreenProps = {
   readonly fight: FightState;
@@ -64,8 +56,6 @@ type DurakFightScreenProps = {
 export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
-  const touch = useMediaQuery('(pointer: coarse)');
-  const layout = fightLayout(touch, LAYOUT_OVERRIDE);
   const previous = usePrevious(fight);
   useEffect(() => {
     if (!previous || previous === fight) return;
@@ -111,7 +101,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
 
   return (
     <LayoutGroup>
-      <main className="screen fight" data-layout={layout}>
+      <main className="screen fight">
         <div className="fight__side">
           <div className="fight__top">
             <PixelButton tone="orange" className="fight__menu" onClick={onExit}>

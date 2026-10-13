@@ -15,17 +15,20 @@ type ActionBarProps = {
   readonly chips?: ReactNode;
 };
 
-function RoundButtons({ round, myTurn, onAct }: Omit<ActionBarProps, 'focus'>) {
-  if (!myTurn || (round.attacker === 'player' && round.table.length === 0)) return null;
+/**
+ * The round button is always on screen, greyed out while it cannot be pressed (owner, 2026-10-13, like Balatro's
+ * Play Hand): its label follows who attacks, so nothing appears or disappears and the hand never moves because of it.
+ */
+function RoundButton({ round, myTurn, onAct }: Omit<ActionBarProps, 'focus'>) {
   if (round.attacker === 'enemy') {
     return (
-      <PixelButton tone="blue" onClick={() => onAct({ type: 'take' })}>
+      <PixelButton tone="blue" disabled={!myTurn} onClick={() => onAct({ type: 'take' })}>
         <Icon id="hand" /> Беру
       </PixelButton>
     );
   }
   return (
-    <PixelButton tone="red" onClick={() => onAct({ type: 'endAttack' })}>
+    <PixelButton tone="red" disabled={!myTurn || round.table.length === 0} onClick={() => onAct({ type: 'endAttack' })}>
       <Icon id="check" /> {round.defenderTaking ? 'Готово' : 'Бито'}
     </PixelButton>
   );
@@ -47,7 +50,7 @@ export function ActionBar({ round, myTurn, onAct, focus, chips }: ActionBarProps
           </PixelButton>
         </>
       ) : (
-        <RoundButtons round={round} myTurn={myTurn} onAct={onAct} />
+        <RoundButton round={round} myTurn={myTurn} onAct={onAct} />
       )}
       </div>
     </div>

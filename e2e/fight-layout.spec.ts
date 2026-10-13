@@ -31,9 +31,9 @@ const FULL_RUN = {
   phase: { kind: 'shop', shop: { items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
 };
 
-/** A fight with five jokers and two focuses; `layout` picks the wide-screen variant (owner's choice pending). */
-async function fullFight(page: Page, layout: 'a' | 'b'): Promise<void> {
-  await page.goto(`/?layout=${layout}`);
+/** A fight with five jokers and two focuses. */
+async function fullFight(page: Page): Promise<void> {
+  await page.goto('/');
   await page.evaluate((run) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), FULL_RUN);
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
@@ -49,45 +49,40 @@ const tooSmall = (page: Page) =>
       .filter((r) => r.width > 0 && (r.width < 43.5 || r.height < 43.5)).length,
   );
 
-// 390×670 and 844×335 are an iPhone with Safari's bars showing: the real play area is smaller than the phone.
 // 390×670, 430×742, 844×335 and 932×321 are an iPhone with Safari's bars showing; 500×1000 is a narrow tall desktop window.
 const SIZES = [[320, 568], [375, 667], [390, 670], [390, 844], [412, 915], [430, 742], [430, 932], [500, 1000], [667, 375], [844, 335], [915, 412], [932, 321], [1280, 800], [1440, 900]] as const;
+const WIDE_SIZES = SIZES.filter(([width, height]) => width > height);
 
-/** Layout B belongs to mouse browsers: a wide window under 420 px tall is not a case (a phone always gets A). */
-const sizesFor = (layout: 'a' | 'b') => SIZES.filter(([width, height]) => layout === 'a' || height >= 420 || width < height);
-
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout)) {
-    test(`layout ${layout}: the full fight fits ${width}×${height}, also with a focus picked`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
-      expect(await tooSmall(page)).toBe(0);
-      const geometry = await page.evaluate(() => {
-        const rect = (el: Element | null) => el!.getBoundingClientRect();
-        const handTop = rect(document.querySelector('[data-testid="player-hand"]')).top;
-        const midParts = [...document.querySelectorAll('.fight__mid > *')].map((el) => rect(el).bottom);
-        const segs = [...document.querySelectorAll('.hp__seg')].map((el) => rect(el).width);
-        return { badge: rect(document.querySelector('[data-testid="enemy-badge"]')).width, midOverHand: Math.max(...midParts) - handTop, thinnestSeg: Math.min(...segs) };
-      });
-      expect(geometry.badge).toBeLessThanOrEqual(60);
-      expect(geometry.midOverHand).toBeLessThanOrEqual(1);
-      expect(geometry.thinnestSeg).toBeGreaterThanOrEqual(6);
-      await page.getByTestId('enemy-badge').click();
-      const tip = await page.getByRole('tooltip').boundingBox();
-      expect(tip!.x).toBeGreaterThanOrEqual(0);
-      expect(tip!.x + tip!.width).toBeLessThanOrEqual(width);
-      await page.getByTestId('enemy-badge').click();
-      await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
-      await page.waitForTimeout(400); // the hand re-fans when the buttons appear; measure after its 0.28 s transition
-      expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
+for (const [width, height] of SIZES) {
+  test(`the full fight fits ${width}×${height}, also with a focus picked`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
+    expect(await tooSmall(page)).toBe(0);
+    const geometry = await page.evaluate(() => {
+      const rect = (el: Element | null) => el!.getBoundingClientRect();
+      const handTop = rect(document.querySelector('[data-testid="player-hand"]')).top;
+      const midParts = [...document.querySelectorAll('.fight__mid > *')].map((el) => rect(el).bottom);
+      const segs = [...document.querySelectorAll('.hp__seg')].map((el) => rect(el).width);
+      return { badge: rect(document.querySelector('[data-testid="enemy-badge"]')).width, midOverHand: Math.max(...midParts) - handTop, thinnestSeg: Math.min(...segs) };
     });
-  }
+    expect(geometry.badge).toBeLessThanOrEqual(60);
+    expect(geometry.midOverHand).toBeLessThanOrEqual(1);
+    expect(geometry.thinnestSeg).toBeGreaterThanOrEqual(6);
+    await page.getByTestId('enemy-badge').click();
+    const tip = await page.getByRole('tooltip').boundingBox();
+    expect(tip!.x).toBeGreaterThanOrEqual(0);
+    expect(tip!.x + tip!.width).toBeLessThanOrEqual(width);
+    await page.getByTestId('enemy-badge').click();
+    await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+    await page.waitForTimeout(400); // the hand re-fans when the buttons change; measure after its 0.28 s transition
+    expect(await screenOverflow(page)).toBeLessThanOrEqual(0);
+  });
 }
 
 test('portrait order: top bar, enemy HP, enemy hand, table, hand, player HP, actions', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await fullFight(page, 'a');
+  await fullFight(page);
   const ys = await page.evaluate(() =>
     ['.fight__top', '.hp--enemy', '[data-testid="enemy-hand"]', '[data-testid="table"]', '[data-testid="player-hand"]', '.hp--player', '[data-testid="actions"]'].map(
       (s) => document.querySelector(s)!.getBoundingClientRect().top,
@@ -97,7 +92,7 @@ test('portrait order: top bar, enemy HP, enemy hand, table, hand, player HP, act
 });
 
 test('top-bar boxes are all the same size', async ({ page }) => {
-  await fullFight(page, 'a');
+  await fullFight(page);
   const boxes = await page.locator('.fight__top > *').evaluateAll((els) => els.map((e) => [Math.round(e.getBoundingClientRect().width), Math.round(e.getBoundingClientRect().height)]));
   expect(boxes).toHaveLength(3);
   expect(new Set(boxes.map((b) => b[0])).size).toBe(1);
@@ -107,52 +102,60 @@ test('top-bar boxes are all the same size', async ({ page }) => {
 test.describe('desktop on a 2× screen', () => {
   test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
 
-  test('cards are 111 px or more, a whole multiple of 37 px (74 device px)', async ({ page }) => {
-    // A desktop browser is a mouse device: it gets layout B (layout A, the phone's sidebar, gives its width to the sidebar).
-    await fullFight(page, 'b');
-    const w = await page.locator('[data-testid="player-hand"] .card').first().evaluate((el) => (el as HTMLElement).offsetWidth);
-    expect(w).toBeGreaterThanOrEqual(111);
-    expect(w % 37).toBe(0);
+  test('the hands are 111 px or more, the table pieces at least 74 px, all whole multiples of 37 px (74 device px)', async ({ page }) => {
+    await fullFight(page);
+    const sizes = await page.evaluate(() => ({
+      hand: (document.querySelector('[data-testid="player-hand"] .card') as HTMLElement).offsetWidth,
+      pile: (document.querySelector('.deck__pile') as HTMLElement).offsetWidth / 1.4,
+    }));
+    expect(sizes.hand).toBeGreaterThanOrEqual(111);
+    expect(sizes.hand % 37).toBe(0);
+    expect(Math.round(sizes.pile)).toBeGreaterThanOrEqual(74);
+    expect(Math.round(sizes.pile) % 37).toBe(0);
   });
 });
 
-/** Same fight, no `?layout` override: what a player really gets. */
-async function realFight(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate((run) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), FULL_RUN);
-  await page.reload();
-  await page.getByRole('button', { name: 'Продолжить забег' }).click();
-  await page.getByRole('button', { name: /Следующий бой/ }).click();
-  await expect(page.getByTestId('player-hand')).toBeVisible();
-}
-const layoutOf = (page: Page) => page.locator('main.fight').getAttribute('data-layout');
+test.describe('a desktop browser (mouse, no touch) gets the same layout as a phone (owner, 2026-10-13)', () => {
+  test.use({ hasTouch: false, isMobile: false });
 
-test.describe('a phone (touch) gets the sidebar layout in both orientations', () => {
-  test.use({ hasTouch: true, isMobile: true });
-  for (const [width, height] of [[412, 915], [915, 412]] as const) {
-    test(`${width}×${height}`, async ({ page }) => {
+  for (const [width, height] of [[1440, 900], [1280, 800]] as const) {
+    test(`${width}×${height}: the sidebar is there`, async ({ page }) => {
       await page.setViewportSize({ width, height });
-      await realFight(page);
-      expect(await layoutOf(page)).toBe('a');
+      await fullFight(page);
+      const side = await page.locator('.fight__side').boundingBox();
+      expect(side!.x).toBeLessThanOrEqual(1);
+      expect(side!.width).toBeGreaterThan(150);
+      expect(side!.width).toBeLessThan(width * 0.3);
+      expect(await page.locator('.fight__side').evaluate((el) => getComputedStyle(el).display)).toBe('flex');
     });
   }
 });
 
-test.describe('a desktop browser (mouse) gets the layout without a sidebar, narrow and wide', () => {
-  test.use({ hasTouch: false, isMobile: false });
-  for (const [width, height] of [[700, 900], [1440, 900]] as const) {
-    test(`${width}×${height}`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await realFight(page);
-      expect(await layoutOf(page)).toBe('b');
-    });
-  }
+test.describe('the round button is always there (Balatro): disabled until it can be pressed, and nothing moves because of it', () => {
+  test.use({ viewport: { width: 915, height: 412 } });
+
+  test('the player attacks: the button waits disabled on the empty table, then lights up', async ({ page }) => {
+    await fullFight(page);
+    const button = page.getByTestId('actions').getByRole('button', { name: /Беру|Бито|Готово/ });
+    await expect(button).toHaveCount(1);
+    await expect(button).toBeDisabled();
+    const before = await page.getByTestId('player-hand').boundingBox();
+    const buttonBefore = await button.boundingBox();
+    await page.locator('[data-testid="player-hand"] .card--playable').first().click();
+    await expect(button).toBeEnabled({ timeout: 10_000 });
+    const after = await page.getByTestId('player-hand').boundingBox();
+    const buttonAfter = await button.boundingBox();
+    expect(Math.abs(after!.x - before!.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(after!.width - before!.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(buttonAfter!.x - buttonBefore!.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(buttonAfter!.y - buttonBefore!.y)).toBeLessThanOrEqual(1);
+  });
 });
 
 for (const [width, height] of [[915, 412], [667, 375], [844, 390], [1280, 800]] as const) {
   test(`sidebar ${width}×${height}: menu on its own row, coins and deal side by side, nothing sticks out`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await fullFight(page, 'a');
+    await fullFight(page);
     const g = await page.evaluate(() => {
       const r = (el: Element) => el.getBoundingClientRect();
       const side = r(document.querySelector('.fight__side')!);
@@ -171,60 +174,35 @@ for (const [width, height] of [[915, 412], [667, 375], [844, 390], [1280, 800]] 
   });
 }
 
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout)) {
-    test(`layout ${layout} ${width}×${height}: cards never rest on the table edge, buttons keep clear of the HP bar`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
-      await page.mouse.move(1, 1);
-      await page.waitForTimeout(400); // lifted cards finish their 0.15–0.28 s transitions
-      const g = await page.evaluate(() => {
-        const r = (el: Element) => el.getBoundingClientRect();
-        const table = r(document.querySelector('[data-testid="table"]')!);
-        const hand = [...document.querySelectorAll('[data-testid="player-hand"] .card')].map(r);
-        const enemy = [...document.querySelectorAll('[data-testid="enemy-hand"] .card')].map(r);
-        const hp = r(document.querySelector('.hp--player')!);
-        // The action buttons; a selected focus chip lifts 4 px by design and is not what must keep clear of the bar.
-        const btns = [...document.querySelectorAll('[data-testid="actions"] .pbtn')].map(r);
-        const sharesColumn = btns.some((b) => b.left < hp.right && b.right > hp.left);
-        return {
-          handOverTable: table.bottom - Math.min(...hand.map((c) => c.top)),
-          enemyOverTable: Math.max(...enemy.map((c) => c.bottom)) - table.top,
-          // Wide screens: the buttons stand beside the hand and may sit above the HP bar; they just must not touch it.
-          gapToHp: !sharesColumn ? 99 : innerWidth > innerHeight ? Math.max(Math.min(...btns.map((b) => b.top)) - hp.bottom, hp.top - Math.max(...btns.map((b) => b.bottom))) : Math.min(...btns.map((b) => b.top)) - hp.bottom,
-          belowScreen: Math.max(...btns.map((b) => b.bottom)) - innerHeight,
-        };
-      });
-      const shown = JSON.stringify(g);
-      expect(g.handOverTable, shown).toBeLessThanOrEqual(0.5);
-      expect(g.enemyOverTable, shown).toBeLessThanOrEqual(0.5);
-      expect(g.gapToHp, shown).toBeGreaterThanOrEqual(6);
-      expect(g.belowScreen, shown).toBeLessThanOrEqual(-6);
-    });
-  }
-}
-
-for (const [layout, width, height] of [['a', 390, 844], ['a', 915, 412], ['b', 700, 900], ['b', 1440, 900]] as const) {
-  test(`layout ${layout} ${width}×${height}: the deck and the joker stack are level, flush to the edges, and the table is centred between them`, async ({ page }) => {
+for (const [width, height] of SIZES) {
+  test(`${width}×${height}: cards never rest on the table edge, buttons keep clear of the HP bar`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await fullFight(page, layout);
+    await fullFight(page);
+    await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(400); // lifted cards finish their 0.15–0.28 s transitions
     const g = await page.evaluate(() => {
-      const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-      const mid = r('.fight__mid');
-      const table = r('[data-testid="table"]');
+      const r = (el: Element) => el.getBoundingClientRect();
+      const table = r(document.querySelector('[data-testid="table"]')!);
+      const hand = [...document.querySelectorAll('[data-testid="player-hand"] .card')].map(r);
+      const enemy = [...document.querySelectorAll('[data-testid="enemy-hand"] .card')].map(r);
+      const hp = r(document.querySelector('.hp--player')!);
+      // The action buttons; a selected focus chip lifts 4 px by design and is not what must keep clear of the bar.
+      const btns = [...document.querySelectorAll('[data-testid="actions"] .pbtn')].map(r);
+      const sharesColumn = btns.some((b) => b.left < hp.right && b.right > hp.left);
       return {
-        pileTops: Math.abs(r('.deck__pile').top - r('.jstack__pile').top),
-        deckLeft: Math.abs(r('.deck').left - mid.left),
-        stackRight: Math.abs(r('.fight__side-stack').right - mid.right),
-        centred: Math.abs(table.left - mid.left - (mid.right - table.right)),
+        handOverTable: table.bottom - Math.min(...hand.map((c) => c.top)),
+        enemyOverTable: Math.max(...enemy.map((c) => c.bottom)) - table.top,
+        // Wide screens: the buttons stand beside the hand and may sit above the HP bar; they just must not touch it.
+        gapToHp: !sharesColumn ? 99 : innerWidth > innerHeight ? Math.max(Math.min(...btns.map((b) => b.top)) - hp.bottom, hp.top - Math.max(...btns.map((b) => b.bottom))) : Math.min(...btns.map((b) => b.top)) - hp.bottom,
+        belowScreen: Math.max(...btns.map((b) => b.bottom)) - innerHeight,
       };
     });
-    expect(g.pileTops).toBeLessThanOrEqual(1);
-    expect(g.deckLeft).toBeLessThanOrEqual(1);
-    expect(g.stackRight).toBeLessThanOrEqual(1);
-    // On a phone on its side the focus chips stand beside the stack (layout A), so that column is wider on purpose.
-    if (!(layout === 'a' && width > height)) expect(g.centred).toBeLessThanOrEqual(2);
+    const shown = JSON.stringify(g);
+    expect(g.handOverTable, shown).toBeLessThanOrEqual(0.5);
+    expect(g.enemyOverTable, shown).toBeLessThanOrEqual(0.5);
+    expect(g.gapToHp, shown).toBeGreaterThanOrEqual(6);
+    expect(g.belowScreen, shown).toBeLessThanOrEqual(-6);
   });
 }
 
@@ -253,65 +231,66 @@ async function fillTable(page: Page): Promise<void> {
   });
 }
 
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout)) {
-    test(`layout ${layout} ${width}×${height}: a full table keeps every card inside its panel and clear of the hand`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      await fillTable(page);
-      const g = await page.evaluate(() => {
-        const r = (el: Element) => el.getBoundingClientRect();
-        const table = r(document.querySelector('[data-testid="table"]')!);
-        const hand = r(document.querySelector('[data-testid="player-hand"]')!);
-        const cards = [...document.querySelectorAll('[data-testid="table"] .card')].map(r);
-        return {
-          left: table.left - Math.min(...cards.map((c) => c.left)),
-          right: Math.max(...cards.map((c) => c.right)) - table.right,
-          top: table.top - Math.min(...cards.map((c) => c.top)),
-          bottom: Math.max(...cards.map((c) => c.bottom)) - table.bottom,
-          overHand: table.bottom - hand.top,
-        };
-      });
-      const shown = JSON.stringify(g);
-      expect(g.left, shown).toBeLessThanOrEqual(1);
-      expect(g.right, shown).toBeLessThanOrEqual(1);
-      expect(g.top, shown).toBeLessThanOrEqual(1);
-      expect(g.bottom, shown).toBeLessThanOrEqual(1);
-      expect(g.overHand, shown).toBeLessThanOrEqual(0.5);
+for (const [width, height] of SIZES) {
+  test(`${width}×${height}: a full table keeps every card inside its panel and clear of the hand`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    await fillTable(page);
+    const g = await page.evaluate(() => {
+      const r = (el: Element) => el.getBoundingClientRect();
+      const table = r(document.querySelector('[data-testid="table"]')!);
+      const hand = r(document.querySelector('[data-testid="player-hand"]')!);
+      const cards = [...document.querySelectorAll('[data-testid="table"] .card')].map(r);
+      return {
+        left: table.left - Math.min(...cards.map((c) => c.left)),
+        right: Math.max(...cards.map((c) => c.right)) - table.right,
+        top: table.top - Math.min(...cards.map((c) => c.top)),
+        bottom: Math.max(...cards.map((c) => c.bottom)) - table.bottom,
+        overHand: table.bottom - hand.top,
+      };
     });
-  }
+    const shown = JSON.stringify(g);
+    expect(g.left, shown).toBeLessThanOrEqual(1);
+    expect(g.right, shown).toBeLessThanOrEqual(1);
+    expect(g.top, shown).toBeLessThanOrEqual(1);
+    expect(g.bottom, shown).toBeLessThanOrEqual(1);
+    expect(g.overHand, shown).toBeLessThanOrEqual(0.5);
+  });
 }
 
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout)) {
-    test(`layout ${layout} ${width}×${height}: the deck and the jokers sit level at the middle of the table, equally wide`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      const g = await page.evaluate(() => {
-        const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-        const table = r('[data-testid="table"]');
-        const deck = r('.deck');
-        const stack = r('.jstack__pile');
-        const pile = r('.deck__pile');
-        const mid = r('.fight__mid');
-        return {
-          // The deck column is the pile and the strip under it; the jokers keep that strip empty, so both piles start level.
-          level: Math.abs(pile.top - stack.top),
-          deckCentre: Math.abs((deck.top + deck.bottom) / 2 - (table.top + table.bottom) / 2),
-          tableCentred: Math.abs(table.left - mid.left - (mid.right - table.right)),
-        };
-      });
-      expect(g.level).toBeLessThanOrEqual(1);
-      expect(g.deckCentre).toBeLessThanOrEqual(2);
-      expect(g.tableCentred).toBeLessThanOrEqual(2);
+for (const [width, height] of SIZES) {
+  test(`${width}×${height}: the deck and the jokers sit level at the middle of the table, equally wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    const g = await page.evaluate(() => {
+      const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const table = r('[data-testid="table"]');
+      const deck = r('.deck');
+      const stack = r('.jstack__pile');
+      const pile = r('.deck__pile');
+      const mid = r('.fight__mid');
+      return {
+        // The deck column is the pile and the strip under it; the jokers keep that strip empty, so both piles start level.
+        level: Math.abs(pile.top - stack.top),
+        deckCentre: Math.abs((deck.top + deck.bottom) / 2 - (table.top + table.bottom) / 2),
+        deckLeft: Math.abs(deck.left - mid.left),
+        stackRight: Math.abs(r('.fight__side-stack').right - mid.right),
+        tableCentred: Math.abs(table.left - mid.left - (mid.right - table.right)),
+      };
     });
-  }
+    const shown = JSON.stringify(g);
+    expect(g.level, shown).toBeLessThanOrEqual(1);
+    expect(g.deckCentre, shown).toBeLessThanOrEqual(2);
+    expect(g.deckLeft, shown).toBeLessThanOrEqual(1);
+    expect(g.stackRight, shown).toBeLessThanOrEqual(1);
+    expect(g.tableCentred, shown).toBeLessThanOrEqual(2);
+  });
 }
 
 for (const [width, height] of [[932, 321], [844, 335], [667, 375]] as const) {
   test(`sidebar ${width}×${height} on a phone with a notch (59 px left and right, 21 px home bar): nothing is cut off`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await fullFight(page, 'a');
+    await fullFight(page);
     await page.evaluate(() => {
       const root = document.documentElement.style;
       root.setProperty('--safe-left', '59px');
@@ -339,58 +318,53 @@ for (const [width, height] of [[932, 321], [844, 335], [667, 375]] as const) {
   });
 }
 
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout)) {
-    test(`layout ${layout} ${width}×${height}: the deck's count and trump sit under the pile, inside the middle row`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      const g = await page.evaluate(() => {
-        const r = (el: Element) => el.getBoundingClientRect();
-        const pile = r(document.querySelector('.deck__pile')!);
-        const info = r(document.querySelector('.deck__info')!);
-        const mid = r(document.querySelector('.fight__mid')!);
-        const table = r(document.querySelector('[data-testid="table"]')!);
-        const chips = [...document.querySelectorAll('.deck__info .chip')].map(r);
-        return {
-          overPile: pile.bottom - Math.min(...chips.map((c) => c.top)),
-          belowMid: Math.max(...chips.map((c) => c.bottom)) - mid.bottom,
-          intoTable: Math.max(...chips.map((c) => c.right)) - table.left,
-          offLeft: mid.left - Math.min(...chips.map((c) => c.left)),
-          infoTop: info.top - pile.bottom,
-        };
-      });
-      const shown = JSON.stringify(g);
-      expect(g.overPile, shown).toBeLessThanOrEqual(1);
-      expect(g.belowMid, shown).toBeLessThanOrEqual(0.5);
-      expect(g.intoTable, shown).toBeLessThanOrEqual(0.5);
-      expect(g.offLeft, shown).toBeLessThanOrEqual(8);
+for (const [width, height] of SIZES) {
+  test(`${width}×${height}: the deck's count and trump sit under the pile, inside the middle row`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    const g = await page.evaluate(() => {
+      const r = (el: Element) => el.getBoundingClientRect();
+      const pile = r(document.querySelector('.deck__pile')!);
+      const info = r(document.querySelector('.deck__info')!);
+      const mid = r(document.querySelector('.fight__mid')!);
+      const table = r(document.querySelector('[data-testid="table"]')!);
+      const chips = [...document.querySelectorAll('.deck__info .chip')].map(r);
+      return {
+        overPile: pile.bottom - Math.min(...chips.map((c) => c.top)),
+        belowMid: Math.max(...chips.map((c) => c.bottom)) - mid.bottom,
+        intoTable: Math.max(...chips.map((c) => c.right)) - table.left,
+        offLeft: mid.left - Math.min(...chips.map((c) => c.left)),
+        infoTop: info.top - pile.bottom,
+      };
     });
-  }
+    const shown = JSON.stringify(g);
+    expect(g.overPile, shown).toBeLessThanOrEqual(1);
+    expect(g.belowMid, shown).toBeLessThanOrEqual(0.5);
+    expect(g.intoTable, shown).toBeLessThanOrEqual(0.5);
+    expect(g.offLeft, shown).toBeLessThanOrEqual(8);
+  });
 }
 
-for (const layout of ['a', 'b'] as const) {
-  for (const [width, height] of sizesFor(layout).filter(([w, h]) => w > h)) {
-    test(`layout ${layout} ${width}×${height}: the action buttons stand right of the hand, the focus chips left of it`, async ({ page }) => {
-      await page.setViewportSize({ width, height });
-      await fullFight(page, layout);
-      await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
-      const g = await page.evaluate(() => {
-        const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-        const hand = r('[data-testid="player-hand"]');
-        const buttons = r('.actions__buttons');
-        const chips = r('.actions__chips');
-        const table = r('[data-testid="table"]');
-        return {
-          buttonsLeftOfHandEnd: hand.right - buttons.left,
-          chipsRightOfHandStart: chips.right - hand.left,
-          buttonsOutsideRow: Math.max(hand.top - buttons.top, buttons.bottom - Math.max(hand.bottom, buttons.bottom)),
-          buttonsOverTable: table.bottom - buttons.top,
-        };
-      });
-      const shown = JSON.stringify(g);
-      expect(g.buttonsLeftOfHandEnd, shown).toBeLessThanOrEqual(0.5);
-      expect(g.chipsRightOfHandStart, shown).toBeLessThanOrEqual(0.5);
-      expect(g.buttonsOverTable, shown).toBeLessThanOrEqual(0.5);
+for (const [width, height] of WIDE_SIZES) {
+  test(`${width}×${height}: the action buttons stand right of the hand, the focus chips left of it`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fullFight(page);
+    await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+    const g = await page.evaluate(() => {
+      const r = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const hand = r('[data-testid="player-hand"]');
+      const buttons = r('.actions__buttons');
+      const chips = r('.actions__chips');
+      const table = r('[data-testid="table"]');
+      return {
+        buttonsLeftOfHandEnd: hand.right - buttons.left,
+        chipsRightOfHandStart: chips.right - hand.left,
+        buttonsOverTable: table.bottom - buttons.top,
+      };
     });
-  }
+    const shown = JSON.stringify(g);
+    expect(g.buttonsLeftOfHandEnd, shown).toBeLessThanOrEqual(0.5);
+    expect(g.chipsRightOfHandStart, shown).toBeLessThanOrEqual(0.5);
+    expect(g.buttonsOverTable, shown).toBeLessThanOrEqual(0.5);
+  });
 }
