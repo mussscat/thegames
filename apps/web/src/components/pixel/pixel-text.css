@@ -1,0 +1,6 @@
+/* The three text sizes of the pixel UI: m6x11 is drawn on an 11 px grid, so 11, 22 (body) and 33 (numbers) are the only
+   sizes whose pixels land on the art grid; line heights are whole art pixels. No bold: the font has none. */
+.px-text { font-family: 'm6x11', monospace; font-weight: 400; font-synthesis: none; letter-spacing: 0; text-shadow: 1px 1px 0 #1b1426; }
+.px-text-s { font-size: 11px; line-height: 13px; }
+.px-text-m { font-size: 22px; line-height: 26px; }
+.px-text-l { font-size: 33px; line-height: 39px; }

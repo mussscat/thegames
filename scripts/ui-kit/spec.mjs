@@ -1,4 +1,4 @@
-import { plate, stamp } from './plate.mjs';
+import { disc, paste, plate, stamp } from './plate.mjs';
 
 const hex = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16), 255];
 
@@ -33,6 +33,8 @@ const P = {
   greyLight: hex('#7b7b8e'),
   greyFace: hex('#5b5b6b'),
   greyDark: hex('#3a3a48'),
+  coinLight: hex('#fff0a0'),
+  coinDark: hex('#b46a10'),
   commonFace: hex('#6b7a9a'),
   rareFace: hex('#3a7bd5'),
   legendaryFace: hex('#f39c32'),
@@ -94,6 +96,43 @@ function tipArrow(direction) {
   return el(`tip-arrow-${direction}`, w, rows.length, stamp(pixels, w, rows, 0, 0, P.white));
 }
 
+const HEART = [
+  '..###.###..',
+  '.#lrr#rrR#.',
+  '#lrrrrrrrR#',
+  '#rrrrrrrrR#',
+  '#rrrrrrrRR#',
+  '.#rrrrrrR#.',
+  '..#rrrrR#..',
+  '...#rrR#...',
+  '....#R#....',
+  '.....#.....',
+];
+
+function bitmap(rows, colors) {
+  return rows.flatMap((row) => [...row].map((ch) => colors[ch] ?? [0, 0, 0, 0]));
+}
+
+function icons() {
+  const heart = el('icon-heart', 11, 10, bitmap(HEART, { '#': P.ink, l: P.redLight, r: P.redFace, R: P.redDark }));
+  const coin = el('icon-coin', 12, 12, disc(12, { outline: P.ink, face: P.gold, light: P.coinLight, dark: P.coinDark }));
+  const chipBase = disc(16, { outline: P.ink, face: P.blueFace, light: P.blueLight, dark: P.blueDark });
+  const ring = chipBase.map((p, i) => {
+    const x = i % 16;
+    const y = Math.floor(i / 16);
+    const d = Math.hypot(x - 7.5, y - 7.5);
+    return p[3] !== 0 && d > 3.4 && d < 4.6 ? P.white : p;
+  });
+  const chip = el('icon-chip', 16, 16, ring);
+  const cross = ['##.....##', '###...###', '.###.###.', '..#####..', '...###...', '..#####..', '.###.###.', '###...###', '##.....##'];
+  const empty = Array.from({ length: 81 }, () => [0, 0, 0, 0]);
+  const mult = el('icon-mult', 9, 9, stamp(empty, 9, cross, 0, 0, P.redFace));
+  const card = plate(12, 16, { insets: [1], outline: P.ink, fill: P.blueFace, edge: P.blueDark, lip: 0, lipColor: P.blueDark, top: P.blueLight });
+  let deckPixels = Array.from({ length: 14 * 18 }, () => [0, 0, 0, 0]);
+  for (const [dx, dy] of [[0, 2], [1, 1], [2, 0]]) deckPixels = paste(deckPixels, 14, card, 12, dx, dy);
+  return [el('icon-deck', 14, 18, deckPixels), chip, mult, heart, coin];
+}
+
 /** Every element of the temporary UI kit: `{ name, w, h, slice: [top, right, bottom, left] | null, pixels }`. */
 export function buildKit() {
   const kit = [];
@@ -115,6 +154,7 @@ export function buildKit() {
   kit.push(el('divider', 12, 3, divider, [0, 4, 0, 4]));
   for (const tone of Object.keys(TONES)) for (const size of Object.keys(BUTTON_SIZES)) for (const state of ['normal', 'pressed', 'disabled']) kit.push(button(tone, size, state));
   for (const name of Object.keys(GLYPHS)) for (const state of ['normal', 'pressed']) kit.push(iconButton(name, state));
+  kit.push(...icons());
   return kit;
 }
 

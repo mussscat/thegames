@@ -49,6 +49,19 @@ describe('buildKit', () => {
     }
   });
 
+  it('has native-size icons (drawn 1:1, never shrunk): deck, chip, mult, heart, coin', () => {
+    const sizes = { 'icon-deck': [14, 18], 'icon-chip': [16, 16], 'icon-mult': [9, 9], 'icon-heart': [11, 10], 'icon-coin': [12, 12] };
+    for (const [name, [w, h]] of Object.entries(sizes)) expect(byName.get(name)).toMatchObject({ w, h, slice: null });
+  });
+
+  it('icons are not blank and keep a transparent corner (they are shapes, not squares)', () => {
+    for (const name of ['icon-deck', 'icon-chip', 'icon-heart', 'icon-coin']) {
+      const e = byName.get(name);
+      expect(e.pixels.some((p) => p[3] !== 0)).toBe(true);
+      expect(e.pixels[0][3]).toBe(0);
+    }
+  });
+
   it('every opaque pixel is on the kit palette', () => {
     const palette = new Set(buildKit.palette.map((c) => c.join()));
     for (const e of kit) for (const p of e.pixels) if (p[3] !== 0) expect(palette.has(p.join())).toBe(true);

@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 /* Base theme first: screen styles imported by the components below must win over it. */
 import './ui/theme.css';
 import './ui/shell.css';
+import './ui/ui-kit.css';
 import { App } from './App';
 import { preloadCardArt } from './ui/pixel/cardArt';
 import { settleWithin } from './ui/pixel/preload';

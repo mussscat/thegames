@@ -81,3 +81,7 @@ button:disabled, input:disabled { cursor: default; }
   --safe-bottom: calc(env(safe-area-inset-bottom, 0px) / var(--k));
   --safe-left: calc(env(safe-area-inset-left, 0px) / var(--k));
 }
+
+/* The HP bar's fill; its width is set in whole art pixels by PixelBar. The frame (.px-hp-frame) is generated. */
+.pixel-bar { height: 15px; }
+.pixel-bar__fill { height: 100%; background: #d9393f; }

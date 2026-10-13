@@ -291,6 +291,46 @@
 .px-arrow-right:active, .px-arrow-right.is-pressed {
   background-image: url('../assets/ui-kit/arrow-right-pressed.png');
 }
+.px-icon-deck {
+  display: inline-block;
+  vertical-align: middle;
+  width: 14px;
+  height: 18px;
+  background: url('../assets/ui-kit/icon-deck.png') 0 0 / 14px 18px no-repeat;
+  image-rendering: pixelated;
+}
+.px-icon-chip {
+  display: inline-block;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  background: url('../assets/ui-kit/icon-chip.png') 0 0 / 16px 16px no-repeat;
+  image-rendering: pixelated;
+}
+.px-icon-mult {
+  display: inline-block;
+  vertical-align: middle;
+  width: 9px;
+  height: 9px;
+  background: url('../assets/ui-kit/icon-mult.png') 0 0 / 9px 9px no-repeat;
+  image-rendering: pixelated;
+}
+.px-icon-heart {
+  display: inline-block;
+  vertical-align: middle;
+  width: 11px;
+  height: 10px;
+  background: url('../assets/ui-kit/icon-heart.png') 0 0 / 11px 10px no-repeat;
+  image-rendering: pixelated;
+}
+.px-icon-coin {
+  display: inline-block;
+  vertical-align: middle;
+  width: 12px;
+  height: 12px;
+  background: url('../assets/ui-kit/icon-coin.png') 0 0 / 12px 12px no-repeat;
+  image-rendering: pixelated;
+}
 .px-tip-arrow-up {
   display: block;
   width: 7px;

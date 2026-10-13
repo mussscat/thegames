@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { PixelIcon } from '../../components/pixel/PixelIcon';
+import { PixelText } from '../../components/pixel/PixelText';
 import kit from '../../assets/ui-kit/ui-kit.json';
 import '../../ui/ui-kit.css';
 
@@ -30,7 +32,19 @@ export function PilotKit() {
         </div>
       ))}
 
-      <h3 className="pk__h">Иконки 32×32</h3>
+      <h3 className="pk__h">Значки родного размера (не сжаты)</h3>
+      <div className="pk__row">
+        {(['deck', 'chip', 'mult', 'heart', 'coin'] as const).map((name) => (
+          <PixelIcon key={name} name={name} />
+        ))}
+      </div>
+
+      <h3 className="pk__h">Текст 11 / 22 / 33</h3>
+      <PixelText size="s">Подпись 11: Враг бьёт на 6</PixelText>
+      <PixelText size="m">Текст 22: Сыграть пару</PixelText>
+      <PixelText size="l">33: 1 250</PixelText>
+
+      <h3 className="pk__h">Иконки-кнопки 32×32</h3>
       <div className="pk__row">
         {['close', 'arrow-left', 'arrow-right'].map((name) => (
           <span key={name} className="pk__row">

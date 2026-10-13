@@ -6,7 +6,7 @@ const css = renderCss(buildKit());
 
 describe('renderCss', () => {
   it('writes a class for every 9-slice element and button', () => {
-    for (const cls of ['.px-panel', '.px-window', '.px-tip', '.px-hp-frame', '.px-price-ok', '.px-slot-selected', '.px-badge-rare', '.px-button-red-l', '.px-button-blue-s', '.px-close']) {
+    for (const cls of ['.px-panel', '.px-window', '.px-tip', '.px-hp-frame', '.px-price-ok', '.px-slot-selected', '.px-badge-rare', '.px-button-red-l', '.px-button-blue-s', '.px-close', '.px-icon-deck', '.px-icon-chip']) {
       expect(css).toContain(`${cls} {`);
     }
   });

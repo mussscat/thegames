@@ -63,6 +63,9 @@ export function renderCss(kit) {
       rule(`.px-${name}:active, .px-${name}.is-pressed`, [`background-image: ${url(`${name}-pressed`)};`]),
     );
   }
+  for (const e of kit.filter((x) => x.name.startsWith('icon-'))) {
+    out.push(rule(`.px-${e.name}`, ['display: inline-block;', 'vertical-align: middle;', `width: ${px(e.w)};`, `height: ${px(e.h)};`, `background: ${url(e.name)} 0 0 / ${px(e.w)} ${px(e.h)} no-repeat;`, 'image-rendering: pixelated;']));
+  }
   for (const direction of ['up', 'down']) {
     const e = byName.get(`tip-arrow-${direction}`);
     out.push(rule(`.px-tip-arrow-${direction}`, ['display: block;', `width: ${px(e.w)};`, `height: ${px(e.h)};`, `background: ${url(`tip-arrow-${direction}`)} 0 0 / ${px(e.w)} ${px(e.h)} no-repeat;`, 'image-rendering: pixelated;']));

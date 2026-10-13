@@ -30,3 +30,31 @@ export function stamp(pixels, w, rows, x0, y0, color) {
   });
   return out;
 }
+
+/** A filled circle `d` px across: 1 px outline, flat face, light upper-left crescent, dark lower-right crescent. */
+export function disc(d, { outline, face, light, dark }) {
+  const c = (d - 1) / 2;
+  const r = d / 2;
+  const inside = (x, y) => (x - c) ** 2 + (y - c) ** 2 <= r * r - 0.25;
+  const pixels = [];
+  for (let y = 0; y < d; y++) {
+    for (let x = 0; x < d; x++) {
+      if (!inside(x, y)) pixels.push([0, 0, 0, 0]);
+      else if (!inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1)) pixels.push(outline);
+      else if (x + y <= c * 0.9 + 1) pixels.push(light);
+      else if (x + y >= d * 2 - c * 0.9 - 3) pixels.push(dark);
+      else pixels.push(face);
+    }
+  }
+  return pixels;
+}
+
+/** Pastes the opaque pixels of `top` (tw wide) onto `base` (bw wide) at (x0, y0); returns a new array. */
+export function paste(base, bw, top, tw, x0, y0) {
+  const out = base.slice();
+  top.forEach((p, i) => {
+    if (p[3] === 0) return;
+    out[(y0 + Math.floor(i / tw)) * bw + x0 + (i % tw)] = p;
+  });
+  return out;
+}

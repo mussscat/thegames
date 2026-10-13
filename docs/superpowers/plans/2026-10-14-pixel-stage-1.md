@@ -96,9 +96,9 @@
 
 - [ ] RED: `barFill(hp, maxHp, innerWidth)` returns a whole number of art pixels, 0 only when `hp = 0`, full only when `hp = maxHp`, never negative or above the width (extends `hpSegments.test.ts` cases).
 - [ ] RED: `PixelButton` renders the kit class for tone and size, `disabled` attribute, plays the select sound (as now), content shifts 1 px on press via CSS.
-- [ ] `PixelSprite`: draws an atlas frame at natural size, `data-sprite` attribute for the e2e whole-pixel check.
+- [x] `PixelIcon` replaces `PixelSprite` in this stage (no atlas exists until stage 4): a kit icon at native size with the `data-sprite` attribute for the e2e whole-pixel check; native placeholder icons (deck, chip, mult, heart, coin) come from the kit generator.
 - [ ] `PixelText`: m6x11 with the hard 1 px shadow; sizes `body` (11) and `title` (22).
-- [ ] Commit per component pair.
+- [x] Commit: `feat: Pixel* components and native kit icons` (`PixelButton`, `PixelPanel`, `PixelBar`, `PixelIcon`, `PixelText`, `classes.ts`).
 
 ### Owner review of the kit and the old fight inside `?pixel` (2026-10-14) — requirements carried into tasks 6–7
 

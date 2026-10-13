@@ -453,5 +453,35 @@
     "w": 32,
     "h": 32,
     "slice": null
+  },
+  {
+    "name": "icon-deck",
+    "w": 14,
+    "h": 18,
+    "slice": null
+  },
+  {
+    "name": "icon-chip",
+    "w": 16,
+    "h": 16,
+    "slice": null
+  },
+  {
+    "name": "icon-mult",
+    "w": 9,
+    "h": 9,
+    "slice": null
+  },
+  {
+    "name": "icon-heart",
+    "w": 11,
+    "h": 10,
+    "slice": null
+  },
+  {
+    "name": "icon-coin",
+    "w": 12,
+    "h": 12,
+    "slice": null
   }
 ]
