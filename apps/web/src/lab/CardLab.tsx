@@ -144,13 +144,13 @@ export function CardLab() {
         <div className="lab__hand">
           {HAND.map((card, i) => (
             <div key={card.id} className="lab__hand-slot" style={{ transform: `rotate(${(i - 2) * 5}deg) translateY(${Math.abs(i - 2) * 6}px)` }}>
-              <PixelCard card={card} feel={feel} width={64} selected={selected.has(card.id)} swayDelay={i * 0.4} onTap={() => toggle(card)} />
+              <PixelCard card={card} feel={feel} width={64} selected={selected.has(card.id)} onTap={() => toggle(card)} />
             </div>
           ))}
         </div>
         <div className="lab__gallery">
           {ENHANCEMENT_IDS.map((id, i) => (
-            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} swayDelay={i * 0.3} showLabel onTap={() => playSound('select', sound)} />
+            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} showLabel onTap={() => playSound('select', sound)} />
           ))}
         </div>
           </>
@@ -165,7 +165,6 @@ export function CardLab() {
         {panel && (
           <div className="lab__controls">
             <Slider label="Наклон" value={feel.tilt} min={0} max={40} onChange={(tilt) => tune({ tilt })} />
-            <Slider label="Покачивание" value={feel.sway} min={0} max={6} step={0.5} onChange={(sway) => tune({ sway })} />
             <Slider label="Жёсткость пружины" value={feel.stiffness} min={60} max={600} step={10} onChange={(stiffness) => tune({ stiffness })} />
             <Slider label="Затухание" value={feel.damping} min={5} max={40} onChange={(damping) => tune({ damping })} />
             <Slider label="Пиксель" value={feel.pixel} min={1} max={6} onChange={(pixel) => tune({ pixel })} />

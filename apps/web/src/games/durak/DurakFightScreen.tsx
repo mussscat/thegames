@@ -1,7 +1,10 @@
 import type { Card } from '@game/core';
 import {
+  applyFocus,
   currentActor,
   FOCUSES,
+  focusReady,
+  previewTake,
   revealsTopCard,
   type EnhancementSource,
   type FightAction,
@@ -15,17 +18,21 @@ import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
-import { ActionBar } from './ActionBar';
+import { ActionBar, type FocusAction } from './ActionBar';
 import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
 import { FocusBar, type FocusPick } from './FocusBar';
-import { chargeChips, toggleTarget } from './focusView';
+import { chargeChips, playLabel, toggleTarget } from './focusView';
 import { Icon } from '../../ui/Icon';
-import { JokerPanel } from './JokerPanel';
-import { RunHeader } from './RunHeader';
+import { firingJoker } from './firingJoker';
+import { JokerSheet } from './JokerSheet';
+import { JokerStack } from './JokerStack';
+import { EnemyBadge } from './EnemyBadge';
+import { EnemyBlock } from './EnemyBlock';
 import { ScoreBoard } from './ScoreBoard';
+import { ScoreCounter } from './ScoreCounter';
 import { ScorePops } from './ScorePops';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
@@ -46,9 +53,10 @@ type DurakFightScreenProps = {
   readonly onLeaveFight: () => void;
   readonly onExit: () => void;
   readonly onUseFocus: (slot: number, targets: readonly string[]) => void;
+  readonly onMoveJoker: (from: number, to: number) => void;
 };
 
-export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus }: DurakFightScreenProps) {
+export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -66,11 +74,28 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
   const defending = myTurn && round.attacker === 'enemy';
   const focuses = run.focuses;
   const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // The scoring show needs the stack on screen: it closes the sheet.
+  useEffect(() => {
+    if (playback.active) setSheetOpen(false);
+  }, [playback.active]);
   useEffect(() => setFocusPick(null), [fight.roundNumber]);
   const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
   const targeting =
     focusPick && pickedId && FOCUSES[pickedId].maxTargets > 0
       ? { picked: focusPick.targets, onPick: (card: Card) => setFocusPick({ ...focusPick, targets: toggleTarget(focusPick.targets, card.id, FOCUSES[pickedId].maxTargets) }) }
+      : null;
+  const focusAction: FocusAction | null =
+    focusPick && pickedId
+      ? {
+          label: playLabel(pickedId, focusPick.targets.length),
+          ready: myTurn && focusReady(fight, pickedId) && applyFocus(fight, pickedId, focusPick.targets).ok,
+          onPlay: () => {
+            onUseFocus(focusPick.slot, focusPick.targets);
+            setFocusPick(null);
+          },
+          onCancel: () => setFocusPick(null),
+        }
       : null;
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
@@ -80,17 +105,25 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
   return (
     <LayoutGroup>
       <main className="screen fight">
-        {/* Portrait: both wrappers are `display: contents` and a grid places each child; landscape: two columns. */}
-        <aside className="fight__side">
-          <RunHeader run={run} />
-          <HpBar
-            label="Соперник"
-            className="hp--enemy"
-            hp={fight.hp.enemy}
-            maxHp={fight.maxHp.enemy}
-            shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
-            scoreTarget="enemy"
-          />
+        <div className="fight__side">
+          <div className="fight__top">
+            <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
+              Меню
+            </PixelButton>
+            <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
+          </div>
+          <EnemyBlock run={run}>
+            <HpBar
+              label="Соперник"
+              lead={<EnemyBadge run={run} />}
+              className="hp--enemy"
+              hp={fight.hp.enemy}
+              maxHp={fight.maxHp.enemy}
+              shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
+              scoreTarget="enemy"
+            />
+          </EnemyBlock>
+          <ScoreCounter preview={previewTake(fight)} tableHasCards={round.table.length > 0} />
           <HpBar
             label="Ты"
             className="hp--player"
@@ -108,35 +141,40 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
               ))}
             </p>
           )}
-          <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
-          <JokerPanel jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} idle={settings.sway && !playback.active} />
-          <FocusBar
-            focuses={focuses}
-            fight={fight}
-            myTurn={myTurn}
-            pick={focusPick}
-            onPick={setFocusPick}
-            onPlay={(pick) => {
-              onUseFocus(pick.slot, pick.targets);
-              setFocusPick(null);
-            }}
-          />
-          <PixelButton tone="orange" className="fight__menu" onClick={onExit}>
-            Меню
-          </PixelButton>
-          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} />
-        </aside>
-        <section className="fight__board">
+        </div>
+        <div className="fight__board">
           <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
-          <TableView table={round.table} attacker={round.attacker}>
-            {playback.board && <ScoreBoard board={playback.board} />}
-          </TableView>
-          <p className="fight__status panel" role="status">
-            {error ?? statusText(fight)}
-          </p>
-          <PlayerHand round={round} myTurn={myTurn} sway={settings.sway && !playback.active} sort={settings.sort} onPlay={play} targeting={targeting} />
-          <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-        </section>
+          <div className="fight__mid">
+            <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
+            <TableView table={round.table} attacker={round.attacker}>
+              {playback.board && <ScoreBoard board={playback.board} />}
+            </TableView>
+            <div className="fight__side-stack">
+              <JokerStack
+                jokers={fight.jokers.player}
+                state={fight.jokerState.player}
+                enemyTakes={fight.fightTakes.enemy}
+                firing={firingJoker(playback.current)}
+                disabled={playback.active}
+                onOpen={() => setSheetOpen(true)}
+              />
+              </div>
+          </div>
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
+        </div>
+        <p className="sr-only" role="status">
+          {error ?? statusText(fight)}
+        </p>
+        {sheetOpen && (
+          <JokerSheet
+            jokers={fight.jokers.player}
+            state={fight.jokerState.player}
+            enemyTakes={fight.fightTakes.enemy}
+            onMove={onMoveJoker}
+            onClose={() => setSheetOpen(false)}
+          />
+        )}
       </main>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />
       <ScorePops playback={playback} />

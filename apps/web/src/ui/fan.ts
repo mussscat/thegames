@@ -1,12 +1,13 @@
-const MAX_STEP_DEG = 6;
-const MAX_SPREAD_DEG = 12;
-const MAX_DROP_PX = 8;
+/* Owner, 2026-10-12: a flat, Balatro-like arc that costs little height. */
+const MAX_STEP_DEG = 1.5;
+const MAX_SPREAD_DEG = 3;
+const MAX_DROP_PX = 4;
 
 function offset(index: number, count: number): number {
   return index - (count - 1) / 2;
 }
 
-/** Rotation of a card in a fanned hand; the whole fan never exceeds ±12°. */
+/** Rotation of a card in a fanned hand; the whole fan never exceeds ±3°. */
 export function fanAngle(index: number, count: number): number {
   if (count <= 1) return 0;
   const step = Math.min(MAX_STEP_DEG, (MAX_SPREAD_DEG * 2) / (count - 1));

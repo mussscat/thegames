@@ -20,6 +20,8 @@ export function DeckView({ round, revealTop, peek = 0 }: DeckViewProps) {
         </div>
       )}
       <div className="deck__pile">
+        {/* An empty deck is drawn as an empty slot (like the jokers' empty stack), never as nothing. */}
+        {round.deck.length === 0 && <span className="deck__hole" aria-hidden="true" />}
         {round.deck.length > 0 && (
           <div className="deck__trump-card">
             <CardView card={round.trumpCard} />
@@ -33,8 +35,8 @@ export function DeckView({ round, revealTop, peek = 0 }: DeckViewProps) {
       </div>
       <div className="deck__info">
       <span className="chip deck__count">
-        <Icon id="deck" /> <span className="deck__label">{round.deck.length > 0 ? 'Колода: ' : 'Колода пуста'}</span>
-        {round.deck.length > 0 ? round.deck.length : ''}
+        <Icon id="deck" /> <span className="deck__label">Колода: </span>
+        {round.deck.length}
       </span>
       <span className="chip deck__trump">
         <span className="deck__label">Козырь </span> <span className={isRedSuit(round.trumpSuit) ? 'deck__suit deck__suit--red' : 'deck__suit'}><SuitMark suit={round.trumpSuit} />

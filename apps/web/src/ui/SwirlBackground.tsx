@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { canvasSize } from './canvasSize';
+import { cellGridSize } from './canvasSize';
 
 const VERTEX = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
 const FRAGMENT = `
@@ -60,13 +60,14 @@ export function SwirlBackground({ colors, pixel, speed }: SwirlBackgroundProps) 
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const uniform = (name: string) => gl.getUniformLocation(program, name);
     colors.forEach((hex, i) => gl.uniform3fv(uniform(`c${i + 1}`), hexToRgb(hex)));
-    gl.uniform1f(uniform('px'), pixel * window.devicePixelRatio);
+    // The canvas holds one pixel per block (see cellGridSize), so the shader's own block size is 1.
+    gl.uniform1f(uniform('px'), 1);
 
     const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     let frame = 0;
     const start = performance.now();
     const draw = (): void => {
-      const { width, height } = canvasSize(canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio);
+      const { width, height } = cellGridSize(canvas.clientWidth, canvas.clientHeight, pixel);
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;

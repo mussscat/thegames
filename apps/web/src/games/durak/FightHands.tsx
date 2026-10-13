@@ -1,6 +1,9 @@
 import type { Card } from '@game/core';
 import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
-import type { CSSProperties } from 'react';
+import { useAnimate } from 'motion/react';
+import { useEffect } from 'react';
+import { usePrevious } from '../../ui/usePrevious';
+import { isNewError } from './sounds';
 import { CardBack, CardView } from '../../components/CardView';
 import { useFan } from '../../ui/useFan';
 import { sortHand, type HandSort } from '../../ui/handSort';
@@ -16,7 +19,6 @@ export function EnemyHand({ cards, revealed = false }: { readonly cards: readonl
           {revealed ? <CardView card={card} /> : <CardBack layoutId={card.id} />}
         </div>
       ))}
-      <span className="hand__count">{cards.length}</span>
     </div>
   );
 }
@@ -30,14 +32,15 @@ function isRoundTrump(round: RoundState, card: Card): boolean {
 type PlayerHandProps = {
   readonly round: RoundState;
   readonly myTurn: boolean;
-  readonly sway: boolean;
+  /** Changes on every rejected move: the hand gives a short shake (0 — nothing yet). */
+  readonly shakeKey?: number;
   readonly sort: HandSort;
   readonly onPlay: (card: Card, use?: EnhancementSource) => void;
   /** A focus choosing its target cards: every card is tappable and a tap picks it instead of playing it. */
   readonly targeting?: { readonly picked: readonly string[]; readonly onPick: (card: Card) => void } | null;
 };
 
-export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null }: PlayerHandProps) {
+export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targeting = null }: PlayerHandProps) {
   const legal = legalActions(round, 'player');
   const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
@@ -45,9 +48,17 @@ export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null
 
   const cards = sortHand(round.hands.player, sort, (card) => isRoundTrump(round, card));
   const fan = useFan(cards.length, true);
+  const [shakeScope, animate] = useAnimate<HTMLDivElement>();
+  // `shakeKey` is run-wide: an error made in the shop must not shake the hand of the next fight, nor a settings change.
+  const previousShakeKey = usePrevious(shakeKey);
+  useEffect(() => {
+    if (!isNewError(previousShakeKey, shakeKey) || !fan.motion || !shakeScope.current) return;
+    void animate(shakeScope.current, { x: [0, -6, 6, -3, 3, 0] }, { duration: 0.3 });
+  }, [shakeKey, previousShakeKey, fan.motion, animate, shakeScope]);
 
   return (
     <div ref={fan.containerRef} className={myTurn ? 'hand hand--player' : 'hand hand--player hand--waiting'} data-testid="player-hand" data-motion={fan.motion ? 'on' : 'off'}>
+      <div ref={shakeScope} className="hand__shake">
       <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
       {cards.map((card, index) => {
         const enhancements = cardEnhancements(round, 'player', card);
@@ -62,12 +73,11 @@ export function PlayerHand({ round, myTurn, sway, sort, onPlay, targeting = null
               onTap={targeting ? () => targeting.onPick(card) : myTurn && !split ? () => onPlay(card) : undefined}
               onTapOption={!targeting && myTurn && split ? (use) => onPlay(card, use) : undefined}
               legalUses={!targeting && myTurn && split ? legalUses(card.id) : undefined}
-              idle={sway}
-              swayDelay={index * 0.4}
             />
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

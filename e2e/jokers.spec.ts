@@ -18,32 +18,88 @@ async function fightWithLooter(page: Page): Promise<void> {
   await page.getByRole('button', { name: /Следующий бой/ }).click();
 }
 
-test('a joker card in the fight shows its rule on tap and hides it on a second tap', async ({ page }) => {
+test('the fight shows the jokers as one stack with a «n/5» tag and one score anchor per joker', async ({ page }) => {
   await fightWithLooter(page);
-  const joker = page.getByRole('button', { name: 'Мародёр' });
-  await expect(joker).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
-  await joker.click();
-  await expect(joker).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
-  await joker.click();
-  await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeHidden();
+  const stack = page.getByTestId('joker-stack');
+  await expect(stack).toHaveAccessibleName('Джокеры: 1 из 5');
+  await expect(stack).toContainText('1/5');
+  await expect(stack.locator('[data-score-joker="player-0"]')).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'Джокеры' })).toHaveCount(0);
 });
 
-test('the fight shows five joker slots: the owned joker as a card and four empty outlines', async ({ page }) => {
-  await fightWithLooter(page);
-  const panel = page.getByRole('region', { name: 'Джокеры' });
-  await expect(panel.locator('.jface')).toHaveCount(5);
-  await expect(panel.locator('.jface--empty')).toHaveCount(4);
+test('the stack opens into a sheet where jokers are read and reordered, and the order is saved', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), { ...SHOP_RUN, jokers: ['looter', 'small'] });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  await page.getByTestId('joker-stack').click();
+  const sheet = page.getByRole('dialog', { name: 'Джокеры' });
+  await expect(sheet).toBeVisible();
+  const cards = sheet.getByRole('option');
+  await expect(cards).toHaveCount(2);
+  await expect(sheet.getByTestId('joker-sheet-info')).toContainText('+1 монета за каждый «Беру» соперника');
+  await cards.nth(1).click();
+  await expect(sheet.getByTestId('joker-sheet-info')).toContainText('Мелочь');
+  // No ◀ ▶ buttons (owner, 2026-10-12): the order changes by dragging a card.
+  await expect(sheet.getByRole('button', { name: /левее|правее/ })).toHaveCount(0);
+  const from = (await cards.nth(1).boundingBox())!;
+  const to = (await cards.nth(0).boundingBox())!;
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + from.width / 2 - 10, from.y + from.height / 2, { steps: 4 });
+  await page.mouse.move(to.x + to.width / 4, to.y + to.height / 2, { steps: 12 });
+  await page.mouse.up();
+  await expect(cards.nth(0)).toHaveAccessibleName('Мелочь');
+  await sheet.getByRole('button', { name: 'Закрыть' }).click();
+  await expect(sheet).toBeHidden();
+  const saved = await page.evaluate(() => JSON.parse(window.localStorage.getItem('thegame.durak.run')!).run.jokers);
+  expect(saved).toEqual(['small', 'looter']);
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await expect(page.getByTestId('joker-stack').locator('[data-score-joker="player-0"] img').first()).toBeAttached();
 });
 
-test.describe('wide screen', () => {
-  test.use({ viewport: { width: 1280, height: 800 } });
+test('the score anchor of a stacked joker is not the element motion lifts, so a bounce cannot cancel the lift', async ({ page }) => {
+  await fightWithLooter(page);
+  const anchorIsLiftedCard = await page.evaluate(() => document.querySelector('[data-score-joker="player-0"]')!.classList.contains('jstack__card'));
+  expect(anchorIsLiftedCard).toBe(false);
+});
 
-  test('hovering a joker card in the sidebar shows its rule', async ({ page }) => {
+test('the sheet is keyboard-friendly: focus goes in, Alt+arrows reorder, Escape closes and focus returns to the stack', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate((run) => window.localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), { ...SHOP_RUN, jokers: ['looter', 'small'] });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByRole('button', { name: /Следующий бой/ }).click();
+  const stack = page.getByTestId('joker-stack');
+  await stack.focus();
+  await page.keyboard.press('Enter');
+  const sheet = page.getByRole('dialog', { name: 'Джокеры' });
+  const cards = sheet.getByRole('option');
+  await expect(cards.first()).toBeFocused();
+  await page.keyboard.press('Alt+ArrowRight');
+  await expect(cards.nth(0)).toHaveAccessibleName('Мелочь');
+  await expect(cards.nth(1)).toHaveAccessibleName('Мародёр');
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(stack).toBeFocused();
+  const saved = await page.evaluate(() => JSON.parse(window.localStorage.getItem('thegame.durak.run')!).run.jokers);
+  expect(saved).toEqual(['small', 'looter']);
+});
+
+test.describe('reduced motion', () => {
+  test.use({ reducedMotion: 'reduce' });
+
+  test('the joker sheet still opens and closes', async ({ page }) => {
     await fightWithLooter(page);
-    await page.getByRole('button', { name: 'Мародёр' }).hover();
-    await expect(page.getByText('+1 монета за каждый «Беру» соперника')).toBeVisible();
+    await page.getByTestId('joker-stack').click();
+    await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeVisible();
+    // No fly-out from the stack: right after opening, the card stands where it belongs.
+    const transform = await page.getByRole('dialog').getByRole('option').first().evaluate((el) => getComputedStyle(el).transform);
+    expect(transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
+    await page.getByRole('button', { name: 'Закрыть' }).click();
+    await expect(page.getByRole('dialog', { name: 'Джокеры' })).toBeHidden();
   });
 });
 

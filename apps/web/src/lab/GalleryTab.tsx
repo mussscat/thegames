@@ -15,9 +15,9 @@ export function GalleryTab() {
       <section className="panel gallery__section">
         <h2 className="gallery__title">Усиления карт</h2>
         <div className="gallery__cards">
-          <PixelCard card={SAMPLE} width={72} idle={false} showLabel />
+          <PixelCard card={SAMPLE} width={72} showLabel />
           {ENHANCEMENT_IDS.map((id) => (
-            <PixelCard key={id} card={SAMPLE} width={72} enhancement={id} idle={false} showLabel />
+            <PixelCard key={id} card={SAMPLE} width={72} enhancement={id} showLabel />
           ))}
         </div>
         <h3 className="gallery__subtitle">В руке: твоё, соперника и обе (диагональ)</h3>

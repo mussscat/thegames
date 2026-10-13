@@ -8,9 +8,12 @@ describe('fanAngle', () => {
     expect(fanAngle(2, 5)).toBe(0);
   });
 
-  it('never spreads past ±12° however many cards there are', () => {
-    expect(Math.abs(fanAngle(0, 30))).toBeCloseTo(12);
-    expect(fanAngle(0, 3)).toBe(-6);
+  it('keeps the whole fan within ±3° (owner: a flat, Balatro-like arc)', () => {
+    for (const count of [2, 3, 6, 8, 12, 30]) {
+      const angles = Array.from({ length: count }, (_, i) => fanAngle(i, count));
+      expect(Math.max(...angles.map(Math.abs))).toBeLessThanOrEqual(3);
+      expect(angles[0]).toBeLessThan(0);
+    }
   });
 });
 
@@ -19,6 +22,11 @@ describe('fanDrop', () => {
     expect(fanDrop(2, 5)).toBe(0);
     expect(fanDrop(0, 5)).toBeGreaterThan(fanDrop(1, 5));
     expect(fanDrop(0, 1)).toBe(0);
+  });
+
+  it('drops the outer cards at most 4 px', () => {
+    for (const count of [2, 6, 12]) expect(fanDrop(0, count)).toBeLessThanOrEqual(4);
+    for (const count of [3, 7, 13]) expect(fanDrop((count - 1) / 2, count)).toBe(0);
   });
 });
 

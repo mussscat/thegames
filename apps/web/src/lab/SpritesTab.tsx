@@ -185,7 +185,7 @@ export function SpritesTab() {
               <SpriteCard card={HAND[3] ?? HERO} art={set.trump.art} url={set.trump.url} foreignUrl={set.coin.url} width={120} corner={corner} suitY={suitY} rankEm={rankEm} />
             </div>
             <div className="sprites__row sprites__row--hand">
-              <PixelCard card={HAND[5] ?? HERO} width={48} idle={false} />
+              <PixelCard card={HAND[5] ?? HERO} width={48} />
               {ENHANCEMENT_IDS.map((id, i) => (
                 <SpriteCard key={id} card={HAND[i] ?? HERO} art={set[id].art} url={set[id].url} width={48} corner={corner} suitY={suitY} rankEm={rankEm} />
               ))}

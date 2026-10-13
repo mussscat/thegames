@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { TipLine } from './tipLines';
 
@@ -7,6 +7,7 @@ const LONG_PRESS_MS = 450;
 const TAP_TIP_MS = 2500;
 const MOVE_TOLERANCE_PX = 10;
 const ROOM_ABOVE_PX = 140;
+const EDGE_PX = 8;
 
 type Anchor = { readonly x: number; readonly top: number; readonly bottom: number };
 
@@ -104,12 +105,22 @@ export function useCardTip(enabled: boolean, tapToggles: boolean): { readonly an
 
 /** The tooltip bubble, rendered over everything so rotated or clipped cards never cut it. */
 export function CardTip({ anchor, lines }: { readonly anchor: Anchor; readonly lines: readonly TipLine[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Centred on the anchor, then pushed back inside the screen when it would stick out (a badge at the screen edge).
+  const [shift, setShift] = useState(0);
+  useLayoutEffect(() => {
+    const width = ref.current?.offsetWidth ?? 0;
+    const left = anchor.x - width / 2;
+    const right = anchor.x + width / 2;
+    setShift(left < EDGE_PX ? EDGE_PX - left : right > window.innerWidth - EDGE_PX ? window.innerWidth - EDGE_PX - right : 0);
+  }, [anchor.x, lines]);
   const above = anchor.top > ROOM_ABOVE_PX;
+  const x = anchor.x + shift;
   const style = above
-    ? { left: anchor.x, top: anchor.top - 8, translate: '-50% -100%' }
-    : { left: anchor.x, top: anchor.bottom + 8, translate: '-50% 0' };
+    ? { left: x, top: anchor.top - 8, translate: '-50% -100%' }
+    : { left: x, top: anchor.bottom + 8, translate: '-50% 0' };
   return createPortal(
-    <div className="card-tip" role="tooltip" style={style}>
+    <div ref={ref} className="card-tip" role="tooltip" style={style}>
       {lines.map((line) => (
         <p key={line.name} className="card-tip__line">
           <strong className="card-tip__name">

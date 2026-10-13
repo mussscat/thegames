@@ -1,8 +1,6 @@
-import { applyFocus, FOCUSES, focusReady, MAX_FOCUSES, type FightState, type FocusId } from '@game/durak';
+import { FOCUSES, MAX_FOCUSES, type FocusId } from '@game/durak';
 import { CardTip, useCardTip } from '../../components/CardTip';
-import { PixelButton } from '../../ui/PixelButton';
 import { focusArtUrl } from '../../ui/pixel/cardArt';
-import { targetHint } from './focusView';
 import { FocusFace } from './FocusFace';
 import { FOCUS_GLYPHS } from './shop/PackCardFace';
 import { cardTipLines } from './shop/shopCopy';
@@ -24,22 +22,15 @@ function FocusChip({ id, selected, onSelect }: { readonly id: FocusId; readonly 
 
 type FocusBarProps = {
   readonly focuses: readonly FocusId[];
-  readonly fight: FightState;
-  /** false while it is not the player's turn or the scoring board plays. */
-  readonly myTurn: boolean;
   readonly pick: FocusPick | null;
   readonly onPick: (pick: FocusPick | null) => void;
-  readonly onPlay: (pick: FocusPick) => void;
 };
 
-/** The two focus slots next to the jokers; a tap selects, «Сыграть» plays it once it is ready and its targets are chosen. */
-export function FocusBar({ focuses, fight, myTurn, pick, onPick, onPlay }: FocusBarProps) {
-  const id = pick ? focuses[pick.slot] : undefined;
-  const ready = Boolean(id && pick && myTurn && focusReady(fight, id) && applyFocus(fight, id, pick.targets).ok);
-  const hint = id ? targetHint(id) : null;
+/** The focus slots next to the joker stack: a tap selects one; Сыграть / Отмена live in the bottom action row. */
+export function FocusBar({ focuses, pick, onPick }: FocusBarProps) {
   if (focuses.length === 0) return null;
   return (
-    <section className="focus-bar panel" data-testid="focus-bar" aria-label="Фокусы">
+    <section className="focus-bar" data-testid="focus-bar" aria-label="Фокусы">
       <ul className="focus-bar__list">
         {Array.from({ length: MAX_FOCUSES }, (_, slot) => {
           const focus = focuses[slot];
@@ -50,17 +41,6 @@ export function FocusBar({ focuses, fight, myTurn, pick, onPick, onPlay }: Focus
           );
         })}
       </ul>
-      {id && pick && (
-        <div className="focus-bar__actions">
-          {hint && <p className="focus-bar__hint">{hint}</p>}
-          <PixelButton tone="orange" small disabled={!ready} onClick={() => onPlay(pick)}>
-            Сыграть
-          </PixelButton>
-          <PixelButton tone="blue" small onClick={() => onPick(null)}>
-            Отмена
-          </PixelButton>
-        </div>
-      )}
     </section>
   );
 }

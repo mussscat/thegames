@@ -4,7 +4,7 @@ test('a new run starts the first fight of circle 1', async ({ page }) => {
   await page.goto('/?seed=42');
   await expect(page.getByRole('button', { name: 'Продолжить забег' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Новый забег' }).click();
-  await expect(page.getByTestId('run-header')).toContainText('Круг 1 · бой 1/3');
+  await expect(page.getByTestId('enemy-badge')).toHaveAccessibleName('Соперник: Скупой');
   await expect(page.getByTestId('player-hand').getByRole('button')).toHaveCount(6);
   await expect(page.getByRole('meter', { name: 'Ты' })).toBeVisible();
   await expect(page.getByTestId('deck')).toContainText('Козырь');
@@ -26,13 +26,30 @@ test('the player can make a move on their turn', async ({ page }) => {
   }
 });
 
+test('the enemy badge tells who the enemy is on tap and keeps the score anchors', async ({ page }) => {
+  await page.goto('/?seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  await page.getByTestId('enemy-badge').click();
+  await expect(page.getByRole('tooltip')).toContainText('Скупой');
+  await expect(page.getByRole('tooltip')).toContainText('соперник');
+  await expect(page.locator('[data-score-tier]')).toHaveCount(1);
+});
+
+test('the enemy badge is a button of its own, not a child of the HP meter (screen readers flatten meter children)', async ({ page }) => {
+  await page.goto('/?seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  await expect(page.getByTestId('enemy-badge')).toBeVisible();
+  await expect(page.getByRole('meter', { name: 'Соперник' })).toHaveAttribute('aria-valuenow', /\d+/);
+  await expect(page.getByRole('meter', { name: 'Соперник' }).getByTestId('enemy-badge')).toHaveCount(0);
+});
+
 test('a reload offers to continue the same run', async ({ page }) => {
   await page.goto('/?seed=42');
   await page.getByRole('button', { name: 'Новый забег' }).click();
-  await expect(page.getByTestId('run-header')).toContainText('Круг 1 · бой 1/3');
+  await expect(page.getByTestId('enemy-badge')).toHaveAccessibleName('Соперник: Скупой');
   await page.reload();
   await page.getByRole('button', { name: 'Продолжить забег' }).click();
-  await expect(page.getByTestId('run-header')).toContainText('Круг 1 · бой 1/3');
+  await expect(page.getByTestId('enemy-badge')).toHaveAccessibleName('Соперник: Скупой');
   await expect(page.getByTestId('player-hand').getByRole('button')).not.toHaveCount(0);
 });
 
@@ -42,7 +59,7 @@ test('a corrupted save is reported and a new run still starts', async ({ page })
   await page.reload();
   await expect(page.getByRole('alert')).toContainText('Сохранение повреждено');
   await page.getByRole('button', { name: 'Новый забег' }).click();
-  await expect(page.getByTestId('run-header')).toBeVisible();
+  await expect(page.getByTestId('enemy-badge')).toBeVisible();
 });
 
 test('garbage seed in the URL still starts a run', async ({ page }) => {

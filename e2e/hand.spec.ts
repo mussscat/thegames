@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const EFFECTS_ON = { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'thegame.settings', value: JSON.stringify({ effects: true, sway: false }) }] }] };
+const EFFECTS_ON = { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'thegame.settings', value: JSON.stringify({ effects: true }) }] }] };
 
 async function startFight(page: Page): Promise<void> {
   await page.goto('/?seed=42');

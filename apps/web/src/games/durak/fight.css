@@ -31,6 +31,7 @@
 /* ---------- hands ---------- */
 /* The hand: slots are positioned with transform only (see useFan), so a re-layout springs instead of jumping. */
 .hand { --slot-w: var(--card-w); position: relative; height: calc(var(--card-w) * 1.5); }
+.hand__shake { position: absolute; inset: 0; }
 .hand__probe { position: absolute; left: 0; top: 0; width: var(--card-w); height: 0; visibility: hidden; pointer-events: none; }
 .hand__slot {
   position: absolute;
@@ -63,21 +64,34 @@
 }
 .table__pair { position: relative; width: var(--card-w); }
 .table__defense { position: absolute; top: 34%; left: 30%; }
-.deck { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; text-align: center; }
-.deck__pile { position: relative; width: calc(var(--card-w) * 1.4); height: calc(var(--card-w) * 1.4); }
+.deck { position: relative; width: calc(var(--card-w) * 1.4); height: calc(var(--card-w) * 1.4 + var(--foot)); font-size: 0.8rem; text-align: center; }
+.deck__pile { position: relative; width: 100%; height: calc(var(--card-w) * 1.4); }
 .deck__layer { position: absolute; left: 0; top: 0; width: var(--card-w); z-index: 1; }
 /* Variant Б from the lab: the trump lies across under the deck and peeks out with its rank and suit corner. */
 .deck__trump-card { position: absolute; left: calc(var(--card-w) * 0.2); top: calc(var(--card-w) * 0.2); rotate: 90deg; }
 .deck__trump { display: inline-flex; align-items: center; gap: 4px; }
-.deck__info { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+/* The count and the trump suit stand under the pile, in a strip of their own (`--foot`); the joker column keeps the same strip
+   empty, so the two piles stay level. The strip may reach 8 px past the column, into the gap to the table. */
+.deck__info { position: absolute; left: -8px; right: -8px; top: calc(var(--card-w) * 1.4 + 3px); z-index: 3; display: flex; flex-wrap: nowrap; justify-content: center; gap: 3px; }
+.deck__info .chip { padding: 0 4px; font-size: 0.7rem; background: rgb(0 0 0 / 55%); }
+.deck__hole { position: absolute; left: 0; top: 0; width: var(--card-w); aspect-ratio: 5 / 7; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
+.deck__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
 .deck__suit--red { color: #ff5a4a; }
 
-/* ---------- fight layout ---------- */
-.fight__header { display: flex; justify-content: space-between; align-items: center; }
-.fight__status { margin: 0; min-height: 1.4em; padding: 6px 10px; text-align: center; }
-.actions { display: flex; justify-content: center; gap: 12px; min-height: 52px; }
+/* The side panel's wrappers: invisible on portrait phones (the grid places the HP bar and the tiles directly). */
+.enemy-block, .fight__stats { display: contents; }
+.enemy-title, .enemy-line { display: none; }
 
+/* ---------- enemy badge: its sprite starts the enemy HP bar; the tip tells who it is ---------- */
+.enemy-badge-wrap { display: contents; }
+.enemy-badge { position: relative; display: grid; place-items: center; min-width: 48px; min-height: 48px; padding: 0; border: 2px solid #000000; border-radius: 8px; background: #2a4a8c; cursor: pointer; box-shadow: 0 3px 0 rgb(0 0 0 / 55%); }
+.enemy-badge .icon { width: 36px; height: auto; image-rendering: pixelated; }
+.enemy-badge--strong { background: #a8611a; }
+.enemy-badge--boss { background: #9c2a2a; }
+.enemy-badge__anchor { position: absolute; inset: 0; pointer-events: none; }
+.hp--enemy .hp__label { display: none; }
+.hp.hp--enemy { grid-template-columns: auto 1fr 3.2em; }
 
 /* ---------- HP ---------- */
 .hp { position: relative; display: grid; grid-template-columns: 6.9em 1fr 3.2em; align-items: center; gap: 8px; padding: 6px 10px; font-size: 0.9rem; }
@@ -103,132 +117,21 @@
 .overlay__panel p { margin: 0; }
 .overlay__title { margin: 0; font-size: 1.1rem; color: var(--gold); text-shadow: 3px 3px 0 #000000; }
 
-/* ---------- run banner, stats, jokers ---------- */
-.run-header { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
-.run-header--normal { background: #2a4a8c; }
-.run-header--strong { background: #a8611a; }
-.run-header--boss { background: #9c2a2a; }
-.run-header__name { margin: 0; font-size: 0.85rem; color: #ffffff; text-shadow: 2px 2px 0 #000000; }
-.run-header__stage { font-size: 0.85rem; }
-.run-header__boss { font-size: 0.8rem; color: #ffd9d2; }
-
-.stats { display: flex; justify-content: flex-end; gap: 6px; }
-.stats__tile { display: flex; align-items: baseline; gap: 6px; padding: 4px 10px; }
+/* ---------- top bar: three equal boxes (owner, 2026-10-12) ---------- */
+.stats__tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  background: rgb(20 14 30 / 88%);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 55%);
+}
 .stats__label { font-size: 0.75rem; opacity: 0.85; }
 .stats__value { font-family: var(--font-head); font-size: 0.8rem; white-space: nowrap; }
 .stats__value--gold { color: var(--gold); }
-
-.jokers { grid-area: jokers; display: flex; flex-direction: column; gap: 0.5em; min-height: 0; }
-.jokers--empty { display: none; }
-.jokers__head { position: relative; display: flex; justify-content: center; align-items: baseline; }
-.jokers__title { margin: 0; font-size: 0.8rem; }
-.jokers__count { position: absolute; right: 0; bottom: 0; font-size: 0.85em; opacity: 0.85; }
-/* Five equal slots, empty ones drawn as dashed card outlines — symmetric at any count. */
-.jokers__list { --jface-w: 2.6em; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-items: center; gap: 0.4em; margin: 0; padding: 0; list-style: none; }
-.jslot { display: flex; }
-.jslot__button { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; -webkit-touch-callout: none; }
-.hand__count { position: absolute; right: 0; top: 50%; translate: 0 -50%; font-family: var(--font-head); font-size: 0.7em; opacity: 0.8; }
-
-/* ---------- screen layout ----------
-   Portrait: side and board are `display: contents`, so one grid places every piece in reading order.
-   Wide screens and landscape (owner-picked, Balatro-like): a sidebar of big tiles and a board; sizes follow the
-   viewport height so everything stays large and readable. Grid-area names are shared by both containers. */
-.fight {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto auto auto auto auto 1fr auto auto auto auto auto;
-  grid-template-areas:
-    'menu stats'
-    'run run'
-    'ehp ehp'
-    'jokers jokers'
-    'focus focus'
-    'ehand ehand'
-    'deck table'
-    'status status'
-    'actions actions'
-    'hand hand'
-    'charges charges'
-    'php php';
-  gap: 8px 12px;
-}
-.fight__side, .fight__board { display: contents; }
-.fight__menu { grid-area: menu; justify-self: start; padding: 6px 12px; font-size: 0.9rem; }
-.fight .stats { grid-area: stats; }
-.fight .run-header { grid-area: run; }
-.hp--enemy { grid-area: ehp; }
-.hp--player { grid-area: php; }
-.hand--enemy { grid-area: ehand; }
-.fight .deck { grid-area: deck; align-self: center; }
-.fight .table { grid-area: table; }
-.fight__status { grid-area: status; }
-.fight .actions { grid-area: actions; }
-.hand--player { grid-area: hand; }
-/* In portrait the player's HP sits under the hand, so the hit pops upwards. */
-
-@media (min-aspect-ratio: 5/4) {
-  .fight {
-    --card-fit: clamp(44px, min(13vh, 8.5vw), 150px);
-    --card-w: var(--card-fit);
-    font-size: clamp(13px, 2.3vh, 28px);
-    max-width: none;
-    padding: 0 max(1.2em, env(safe-area-inset-right)) 0 0;
-    grid-template-columns: minmax(15em, 26%) minmax(0, 1fr);
-    grid-template-rows: 100%;
-    grid-template-areas: 'side board';
-    gap: 1.2em;
-  }
-  .fight__side {
-    grid-area: side;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas: 'run run' 'ehp ehp' 'php php' 'charges charges' 'stats stats' 'jokers jokers' 'focus focus' 'menu actions';
-    gap: 0.5em;
-    padding: max(0.6em, env(safe-area-inset-top)) 0.6em max(0.6em, env(safe-area-inset-bottom)) max(0.6em, env(safe-area-inset-left));
-    background: rgb(20 14 30 / 82%);
-    border-right: 4px solid #000000;
-    box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
-  }
-  .fight__board {
-    grid-area: board;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    /* The enemy hand spans the top row, so it never widens the deck column. */
-    grid-template-areas: 'top top' 'table table' 'status status' 'hand deck';
-    gap: 0.5em 1em;
-    min-height: 0;
-    padding-block: max(0.6em, env(safe-area-inset-top)) max(0.4em, env(safe-area-inset-bottom));
-  }
-  .fight .run-header { padding: 0.5em; }
-  .run-header__name { font-size: 1.1em; }
-  .run-header__stage, .run-header__boss { font-size: 0.8em; }
-  /* Label and value on top, a full-width bar below: readable in a narrow sidebar. */
-  .fight .hp { grid-template-columns: 1fr auto; grid-template-areas: 'label value' 'track track'; row-gap: 0.35em; font-size: 1em; padding: 0.5em 0.7em; }
-  .fight .hp__label { grid-area: label; }
-  .fight .hp__value { grid-area: value; font-family: var(--font-head); font-size: 0.8em; }
-  .fight .hp__track { grid-area: track; height: 0.9em; }
-  /* The sidebar is narrow: the focus chips show their picture only (the name is in the tooltip). */
-  .focus-chip__name { display: none; }
-  .fight .stats { justify-content: stretch; }
-  .fight .stats__tile { flex: 1; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.4em; }
-  .fight .stats__label { font-size: 0.8em; }
-  .fight .stats__value { font-size: 1.3em; }
-  .fight__menu, .fight .actions .pbtn { width: 100%; padding: 0.7em 0.4em; font-size: 1em; }
-  .fight__menu { justify-self: stretch; align-self: end; }
-  .fight .actions { min-height: 0; align-items: flex-end; }
-  /* Sidebar joker slot list (owner sketch): always framed, empty when there are no jokers. */
-  .jokers, .jokers--empty { display: flex; }
-  .jokers { overflow-y: auto; }
-  .jokers__list { --jface-w: 4.2em; grid-template-columns: repeat(auto-fill, minmax(4.4em, 1fr)); }
-  .jokers__title { font-size: 1em; }
-  .hand--enemy { grid-area: top; justify-self: stretch; min-height: 0; }
-  .fight .table { min-height: 0; grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
-  .fight__status { align-self: end; justify-self: center; min-width: 60%; font-size: 1em; }
-  .hand--player { min-height: calc(var(--card-w) * 1.45); padding: 4px 0 10px; }
-  .fight .deck { align-self: end; display: flex; flex-direction: column; font-size: 0.85em; }
-}
 
 /* ---------- enhancement tooltip ---------- */
 .card { -webkit-touch-callout: none; }
@@ -257,79 +160,255 @@
 .card-tip__owner { font-weight: 600; opacity: 0.7; }
 .card-tip__text { line-height: 1.3; }
 
-.run-header__jokers { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 
 /* ---------- hit pop: big damage, small chips × mult board (Balatro-like) ---------- */
 
-/* ---------- focuses ---------- */
-.focus-bar { grid-area: focus; display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; }
-.focus-bar__list { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.focus-chip { flex: 1; }
-.focus-chip--empty { min-height: 2.4em; border: 2px dashed rgb(255 255 255 / 25%); border-radius: 6px; }
-.focus-chip__face { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 8px; border: 2px solid #000000; border-radius: 6px; background: linear-gradient(180deg, #2b6b8f, #12324a); color: #ffffff; font: inherit; cursor: pointer; }
-.focus-chip--selected .focus-chip__face { outline: 3px solid #ffffff; outline-offset: 2px; }
+/* ---------- focuses: picture chips next to the joker stack; Сыграть / Отмена live in the action row ---------- */
+.focus-chip { display: flex; }
+.focus-bar__list { display: flex; flex-direction: row; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.focus-chip--empty { width: 44px; height: 44px; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
+.focus-chip__face { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 2px; border: 2px solid #000000; border-radius: 6px; background: linear-gradient(180deg, #2b6b8f, #12324a); color: #ffffff; font: inherit; cursor: pointer; }
+.focus-chip--selected .focus-chip__face { translate: 0 -4px; box-shadow: 0 0 0 2px var(--gold), 0 0 10px var(--gold); }
 .focus-chip__glyph { font-size: 1.2em; }
-.focus-chip__face .fface { --fface-w: 2.1em; flex: none; }
-.focus-chip__name { font-size: 0.8em; font-weight: 800; }
-.focus-bar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.focus-bar__hint { flex-basis: 100%; margin: 0; font-size: 0.8em; }
-.charges { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; }
+.focus-chip__face .fface { --fface-w: 32px; flex: none; }
+.focus-chip__name { display: none; }
+.charges { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 0; }
 .hand__slot--picked { translate: 0 -16px; }
 .hand__slot--picked .card { outline: 3px solid var(--gold); outline-offset: 2px; }
-.deck__peek { display: flex; gap: 4px; }
-.charges { grid-area: charges; }
+.deck__peek { position: absolute; bottom: 100%; left: 0; display: flex; gap: 4px; }
 
-/* ---------- short portrait screens (iPhone SE class): everything must fit without scrolling ---------- */
-@media (max-aspect-ratio: 5/4) and (max-height: 700px) {
-  .fight { --card-w: min(11.8vw, 52px); gap: 4px 8px; }
-  .jokers { gap: 0; }
-  .jokers__head { display: none; }
-  .jokers__list { --jface-w: 2.3em; }
-  .focus-bar { padding: 4px 6px; gap: 4px; }
-  .focus-chip__name { display: none; }
-  .focus-chip__face { padding: 3px 6px; }
-  .focus-chip__face .fface { --fface-w: 1.7em; }
-  /* Chips and the play buttons share one row, so selecting a focus does not make the screen taller. */
-  .focus-bar { flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .focus-bar__list { flex: none; }
-  .focus-chip { flex: none; }
-  .focus-bar__actions { flex: 1; justify-content: flex-end; }
-  .fight .run-header { padding: 4px 10px; gap: 2px; }
-  .fight .stats__tile { padding-block: 2px; }
-  .fight .table { min-height: 0; }
-  .fight { gap: 2px 8px; }
-  .jokers__list { --jface-w: 2em; }
-  .focus-chip__face .fface { --fface-w: 1.4em; }
+/* The enemy hand: whole backs, as big as the player's cards (owner, 2026-10-12). */
+.hand--enemy { height: calc(var(--card-w) * 1.4); }
+
+
+/* ---------- fight layout (owner, 2026-10-12) ----------
+   Phones in portrait and narrow windows: one column — top bar, enemy HP, enemy hand, deck | table | jokers, hand,
+   player HP, actions (the focus chips at the left end of that row). `.fight__side` and `.fight__board` are
+   `display: contents` there, so one grid places every piece.
+   Wide screens (phone on its side, desktop window): a narrow Balatro-like sidebar and the board next to it. */
+.fight {
+  /* The hand and the enemy hand: as big as the screen allows (they overlap in a fan, so width is no limit). */
+  --card-w: clamp(44px, min(13.5vw, calc(11.5 * var(--vh))), 74px);
+  /* The table (3 columns of pairs, a defending card overhangs by 30 %), its panel padding and the two 1.4-card side
+     columns (deck, jokers) must fit the width: 6.5 cards plus 84 px. Table, deck and jokers use this size. */
+  --pile-w: max(34px, min(var(--card-w), calc((100vw - 84px) / 6.5)));
+  --foot: 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto auto;
+  grid-template-areas: 'top' 'ehp' 'ehand' 'mid' 'hand' 'charges' 'php' 'actions';
+  gap: 6px;
+}
+.fight__side, .fight__board { display: contents; }
+.fight__top { grid-area: top; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.fight__top > * { min-height: 44px; }
+.fight__menu { padding: 4px 8px; font-size: 0.9rem; }
+.hp--enemy { grid-area: ehp; }
+.hand--enemy { grid-area: ehand; }
+/* Deck and jokers: equally wide columns, level with each other, at the middle of the table's height. */
+.fight__mid { grid-area: mid; display: grid; grid-template-columns: calc(var(--pile-w) * 1.4) minmax(0, 1fr) calc(var(--pile-w) * 1.4); align-items: center; gap: 8px; min-height: 0; }
+.fight__mid .table { align-self: stretch; min-height: 0; }
+.fight__mid .deck { justify-self: start; }
+.fight__side-stack { justify-self: end; height: calc(var(--card-w) * 1.4 + var(--foot)); display: flex; align-items: flex-start; }
+/* What stands in the middle row is drawn at the table size, not at the hand's. */
+.table, .deck, .fight__side-stack { --card-w: var(--pile-w); }
+/* The hand keeps the room its raised playable cards (10% of a card) and the fan's corners need above them, so
+   they never rest on the table's edge. */
+.hand--player { grid-area: hand; height: calc(var(--card-w) * 1.6 + 2px); }
+.charges { grid-area: charges; }
+.hp--player { grid-area: php; }
+.actions { grid-area: actions; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; min-height: 52px; margin-top: 2px; }
+.actions__chips { justify-self: start; }
+.actions__buttons { grid-column: 2; display: flex; justify-content: center; gap: 12px; }
+.actions .pbtn { min-width: 0; min-height: 44px; padding-inline: 10px; white-space: nowrap; }
+@media (min-width: 480px) {
+  .actions .pbtn { min-width: 6.5em; }
 }
 
-/* Portrait phones tall enough: the 74×104 card art at exactly ×1 (a whole-number scale). */
+/* Short portrait screens (iPhone SE class, or any phone with Safari's bars): tighter gaps. */
+@media (max-aspect-ratio: 5/4) and (max-height: 600px) {
+  .fight { gap: 4px; }
+}
+
+/* Exactly the 74 px art in the hand on phones tall and wide enough for it. */
 @media (max-aspect-ratio: 5/4) and (min-height: 780px) and (min-width: 396px) {
   .fight { --card-w: 74px; }
 }
 
-/* Portrait phones from 701 px up: tighter gaps and no «Джокеры» header, so the rows keep their height instead of squeezing. */
-@media (max-aspect-ratio: 5/4) and (min-height: 701px) {
-  .fight { gap: 6px 8px; }
-  .jokers__head { display: none; }
+@media (min-aspect-ratio: 5/4) {
+  .fight {
+    /* The hands take the card size the height allows. The table, the deck and the jokers share what is left of the
+       width: six table columns (+ a 30 % overhang) and two 1.4-card columns are 9.1 cards, plus five column gaps
+       (0.8em each), the table panel's padding and the gaps of the middle row. `--fit-w` is the card width that fits.
+       No `em` in these widths: a card has its own font-size, which depends on its width — that would be a cycle. */
+    --fs: clamp(13px, calc(2.1 * var(--vh)), 24px);
+    --fit-w: calc((100vw - max(13 * var(--fs), 24vw) - 8.2 * var(--fs) - 56px - var(--safe-left) - var(--safe-right) * 0.4) / 9.1);
+    --card-fit: clamp(36px, min(calc(14 * var(--vh)), 9vw), 222px);
+    --pile-fit: min(var(--card-fit), var(--fit-w));
+    --card-step: 74px;
+    --card-w: var(--card-fit);
+    --pile-w: var(--pile-fit);
+    max-width: none;
+    font-size: var(--fs);
+    /* A narrow sidebar holds the menu, coins, deal and both HP bars, one under the other; the board is the rest.
+       The sidebar reaches under the notch, so its width adds the notch inset. */
+    grid-template-columns: minmax(calc(13em + var(--safe-left)), calc(24% + var(--safe-left))) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'side board';
+    /* Only part of the right notch inset stays: the corner needs little, and the notch sits on the other side. */
+    padding: 0 max(0.6em, calc(var(--safe-right) * 0.4)) 0 0;
+    column-gap: 1.2em;
+  }
+  .fight .table { grid-template-columns: repeat(6, var(--card-w)); gap: 1.2em 0.8em; }
+
+  .fight__side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    min-height: 0;
+    overflow: hidden;
+    padding: max(0.6em, var(--safe-top)) 0.6em max(0.6em, var(--safe-bottom)) max(0.6em, var(--safe-left));
+    background: rgb(20 14 30 / 82%);
+    border-right: 4px solid #000000;
+    box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
+  }
+  /* The panel, top to bottom (owner, 2026-10-13, after Balatro): the enemy block, the chips × mult counter, my HP, my focus
+     charges, coins and deal, and the Menu at the very bottom. The top bar's wrapper dissolves so its parts can be ordered. */
+  .fight__side { font-size: 1.08em; }
+  .fight__top { display: contents; }
+  .enemy-block { order: 1; }
+  .counter { order: 2; }
+  .hp--player { order: 3; }
+  .charges { order: 4; }
+  .fight__stats { order: 5; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em; }
+  .fight__menu { order: 6; margin-top: auto; min-height: 44px; font-size: 1em; }
+  .fight .hp { grid-template-columns: auto 1fr auto; row-gap: 0.35em; }
+  /* The sidebar is narrow: the bar takes a row of its own under the name and the numbers. */
+  .fight .hp__track { grid-column: 1 / -1; grid-row: 2; }
+  .fight .hp--player .hp__value { font-size: 1em; }
+
+  /* The enemy block: a title in the colour of its tier, then the portrait left of the HP, then a short line. */
+  .enemy-block {
+    flex-shrink: 0; /* a block that shrinks clips its own HP bar: the panel must make room elsewhere */
+    --tier: #2f7fe0;
+    --tier-dark: #1a3a73;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid #000000;
+    border-radius: 10px;
+    background: var(--tier-dark);
+    box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+  }
+  .enemy-block--strong { --tier: #e0912f; --tier-dark: #6e4513; }
+  .enemy-block--boss { --tier: #d0453a; --tier-dark: #651c1c; }
+  .enemy-title {
+    display: block;
+    margin: 0;
+    padding: 0.4em 0.5em;
+    border-bottom: 3px solid rgb(0 0 0 / 45%);
+    background: var(--tier);
+    font-size: 1em;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 2px 2px 0 #000000;
+    overflow-wrap: anywhere;
+  }
+  .enemy-block .hp--enemy {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.6em;
+    row-gap: 0.3em;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .enemy-block .enemy-badge { grid-column: 1; grid-row: 1 / span 2; width: 4.2em; height: 4.2em; border-radius: 50%; }
+  .enemy-block .enemy-badge .icon { width: 54px; height: auto; }
+  .enemy-block .hp--enemy .hp__value { grid-column: 2; grid-row: 1; align-self: end; text-align: left; font-family: var(--font-head); font-size: 1em; }
+  .enemy-block .hp--enemy .hp__track { grid-column: 2; grid-row: 2; align-self: start; }
+  .enemy-line {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    margin: 0;
+    padding: 0.35em 0.6em 0.6em;
+    font-size: 0.8em;
+    line-height: 1.25;
+  }
+  .enemy-line__rule { opacity: 0.85; }
+
+  /* The board: the focus chips stand left of the player's hand and the action buttons right of it (owner,
+     2026-10-13), so the table gets the height a button row would take. */
+  .fight__board {
+    grid-area: board;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'ehand ehand ehand' 'mid mid mid' 'chips hand buttons';
+    gap: 0.4em;
+    min-height: 0;
+    padding-block: max(0.5em, var(--safe-top)) max(0.5em, var(--safe-bottom));
+    /* The fan drops its outer cards a few px below the hand, into the board's padding: that must not count as page
+       overflow. Only the bottom edge clips; sideways nothing is cut (the deck's back cards reach out to the left). */
+    overflow-x: visible;
+    overflow-y: clip;
+  }
+  /* The deck and the jokers stand 8 px in from the board's edges: the deck's back cards reach 4 px to the left and must
+     not touch the sidebar. */
+  .fight__mid { grid-template-columns: calc(var(--pile-w) * 1.4 + 8px) minmax(0, 1fr) calc(var(--pile-w) * 1.4 + 8px); }
+  .fight__mid .deck { margin-left: 8px; }
+  .fight__side-stack { margin-right: 8px; }
+  .actions { display: contents; }
+  .actions__chips { grid-area: chips; align-self: center; justify-self: start; }
+  .actions__buttons { grid-area: buttons; align-self: center; flex-direction: column; gap: 6px; }
+}
+/* A short panel (a phone on its side) is compact: no title, no counter label, a smaller portrait. */
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
+  .enemy-title, .enemy-line, .counter__label { display: none; }
+  .enemy-block .enemy-badge { grid-row: 1; width: 3em; height: 3em; }
+  .enemy-block .enemy-badge .icon { width: 36px; }
+  /* Portrait and number share a row, the bar takes the full width below them (segments must stay readable). */
+  .enemy-block .hp--enemy .hp__value { align-self: center; }
+  .enemy-block .hp--enemy .hp__track { grid-column: 1 / -1; align-self: center; }
+  .fight__side { font-size: 1em; gap: 4px; }
+  .counter { padding: 0.25em; gap: 0.1em; }
+  .counter__damage { font-size: 1.2em; }
+  .counter__chips, .counter__mult { font-size: 1.05em; padding-block: 0.1em; }
+  .fight__side .hp--player { padding-block: 0.25em; row-gap: 0.15em; }
+  .fight__stats .stats__tile { padding-block: 0.1em; min-height: 0; }
+  .fight__side .charges { gap: 2px; }
+  .fight__side .charges .chip { padding-block: 0; }
 }
 
-/* The enemy hand shows the top of the backs only (their corners are what matters), so ×1 costs little height. */
-.hand--enemy { --slot-w: var(--card-w); height: calc(var(--card-w) * 0.55); }
-.hand--enemy .hand__slot { top: 0; bottom: auto; transform-origin: 50% 0; }
-.hand--enemy .card { width: var(--card-w); clip-path: inset(0 0 45% 0); }
+/* The lowest phones on their side (an iPhone with Safari's bars: ≤ 340 px tall): every px counts in the panel. */
+@media (min-aspect-ratio: 5/4) and (max-height: 340px) {
+  .fight__side { gap: 2px; padding-top: max(0.3em, var(--safe-top)); padding-bottom: max(0.3em, var(--safe-bottom)); }
+  .counter { padding: 0.15em 0.25em; }
+  .counter__damage { font-size: 1.1em; line-height: 1; }
+  .fight__side .hp--player { padding-block: 0.15em; }
+  .enemy-block .hp--enemy { padding-block: 0.2em; row-gap: 0.1em; }
+  .counter__chips, .counter__mult { padding-block: 0; }
+}
 
-/* A whole multiple of the 74 px card where the browser can compute it; engines without round() keep the plain fit above. */
+/* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */
+@media (min-aspect-ratio: 5/4) and (max-height: 420px) {
+  .fight { --card-fit: clamp(36px, min(calc(12.5 * var(--vh)), 9vw), 74px); }
+  .fight, .fight__side, .fight__board { gap: 4px; }
+  .fight .stats__label { display: none; }
+  /* The two buttons of a picked focus stand side by side: stacked they would make the hand row taller than the hand. */
+  .actions__buttons { flex-direction: row; }
+}
+/* On screens with 2+ device pixels per CSS px, 37 CSS px is still 74 device px: a whole scale of the art. */
+@media (min-aspect-ratio: 5/4) and (min-resolution: 2dppx) {
+  .fight { --card-step: 37px; }
+}
 @supports (width: round(down, 1px, 1px)) {
   @media (min-aspect-ratio: 5/4) {
-    .fight { --card-w: max(round(down, var(--card-fit), 74px), min(var(--card-fit), 73px)); }
+    .fight {
+      --card-w: max(round(down, var(--card-fit), var(--card-step)), min(var(--card-fit), 73px));
+      --pile-w: max(round(down, var(--pile-fit), var(--card-step)), min(var(--pile-fit), 73px));
+    }
   }
-}
-
-/* Portrait: the deck chips share one row and their words become visually hidden (still read aloud), so the narrow deck
-   column does not wrap them into a tall block that dictates the height of the screen. */
-@media (max-aspect-ratio: 5/4) {
-  .deck { gap: 2px; }
-  .deck__info { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px 3px; }
-  .deck__info .chip { position: relative; padding: 0 5px; font-size: 0.75rem; }
-  .deck__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }

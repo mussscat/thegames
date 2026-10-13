@@ -5,7 +5,7 @@ test.use({ viewport: { width: 915, height: 412 } });
 test('landscape fight puts the run panel left of the table and keeps the hand on screen', async ({ page }) => {
   await page.goto('/?seed=42');
   await page.getByRole('button', { name: 'Новый забег' }).click();
-  const header = await page.getByTestId('run-header').boundingBox();
+  const header = await page.getByTestId('enemy-badge').boundingBox();
   const table = await page.getByTestId('table').boundingBox();
   const hand = page.getByTestId('player-hand').getByRole('button');
   await expect(hand).toHaveCount(6);

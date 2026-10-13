@@ -5,35 +5,29 @@ import { useMotionEnabled } from './useMotion';
 
 export type Feel = {
   readonly tilt: number;
-  readonly sway: number;
   readonly stiffness: number;
   readonly damping: number;
   readonly pixel: number;
 };
 
 /** Tuned by the owner in the card lab, 2026-10-08. */
-export const FEEL: Feel = { tilt: 16, sway: 2, stiffness: 490, damping: 9, pixel: 4 };
+export const FEEL: Feel = { tilt: 16, stiffness: 490, damping: 9, pixel: 4 };
 
-export const SWAY_SECONDS = 3.4;
 const SQUASH = { scaleX: [1, 1.14, 0.94, 1.03, 1], scaleY: [1, 0.86, 1.07, 0.98, 1] };
 
 type FeelBoxProps = {
   readonly children: ReactNode;
-  /** Idle sway; off for table, deck and enemy cards to keep the screen calm and cheap. */
-  readonly idle?: boolean;
-  readonly swayDelay?: number;
   readonly feel?: Feel;
   readonly onHover?: () => void;
 };
 
-export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, onHover }: FeelBoxProps) {
+export function FeelBox({ children, feel = FEEL, onHover }: FeelBoxProps) {
   const ref = useRef<HTMLDivElement>(null);
   const spring = { stiffness: feel.stiffness, damping: feel.damping };
   const rotateX = useSpring(0, spring);
   const rotateY = useSpring(0, spring);
   const [squashScope, animate] = useAnimate<HTMLDivElement>();
   const motionOn = useMotionEnabled();
-  const idleOn = idle && motionOn;
 
   const onMove = (event: PointerEvent<HTMLDivElement>): void => {
     if (!motionOn) return;
@@ -49,12 +43,7 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
   };
 
   return (
-    <motion.div
-      className="feel"
-      style={{ ['--px' as string]: `${feel.pixel}px` }}
-      animate={idleOn ? { rotate: [-feel.sway, feel.sway, -feel.sway], y: [0, -feel.sway, 0] } : { rotate: 0, y: 0 }}
-      transition={idleOn ? { duration: SWAY_SECONDS, repeat: Infinity, ease: 'easeInOut', delay: swayDelay } : { duration: 0.2 }}
-    >
+    <div className="feel" style={{ ['--px' as string]: `${feel.pixel}px` }}>
       <motion.div
         ref={ref}
         className="feel__tilt"
@@ -73,6 +62,6 @@ export function FeelBox({ children, idle = false, swayDelay = 0, feel = FEEL, on
           {children}
         </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

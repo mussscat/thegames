@@ -15,4 +15,20 @@ describe('fight.css', () => {
       expect(closedAfter).toBeGreaterThan(at);
     }
   });
+
+  it('sizes nothing with the plain vh unit: on iPhone Safari vh ignores the toolbars, so cards come out too big for the visible screen', () => {
+    const plain = [...css.matchAll(/[\d.]+vh\b/g)].map((m) => m[0]);
+    expect(plain).toEqual([]);
+  });
+
+  it('never uses em inside the card-size variables: a card has its own font-size that depends on its width, a cycle that froze the page', () => {
+    const sizing = [...css.matchAll(/--(?:fit-w|card-fit|card-w)\s*:([^;]+);/g)].map((m) => m[1] ?? '');
+    expect(sizing.length).toBeGreaterThan(0);
+    for (const value of sizing) expect(value).not.toMatch(/[\d.]em\b/);
+  });
+
+  it('reads the notch and home-bar insets through the --safe-* variables, never env() directly', () => {
+    expect(css).not.toMatch(/env\(/);
+    expect(css).toMatch(/var\(--safe-left\)/);
+  });
 });

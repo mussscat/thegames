@@ -59,7 +59,7 @@ test('Пересдача needs chosen cards before it can be played', async ({ p
   await page.getByTestId('focus-bar').getByRole('button', { name: 'Пересдача' }).click();
   const play = page.getByRole('button', { name: 'Сыграть' });
   await expect(play).toBeDisabled();
-  await page.getByTestId('player-hand').locator('.hand__slot').first().click();
+  await page.getByTestId('player-hand').locator('.hand__slot .card').first().click();
   await expect(play).toBeEnabled();
   await play.click();
   await expect(page.getByTestId('focus-bar').getByRole('button', { name: 'Пересдача' })).toHaveCount(0);
@@ -71,9 +71,35 @@ test('«Сыграть» is enabled on the player turn and goes disabled as soon
   await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
   const play = page.getByRole('button', { name: 'Сыграть' });
   await expect(play).toBeEnabled();
-  await page.getByTestId('player-hand').locator('.hand__slot').first().click();
-  // Playwright polls, so the enemy turn only has to last one poll for this to be seen.
-  await expect(play).toBeDisabled();
+  // The enemy's turn can be shorter than one poll, so record every moment the button is disabled instead of racing it.
+  await page.evaluate(() => {
+    const w = window as unknown as { sawDisabled: boolean };
+    w.sawDisabled = false;
+    new MutationObserver(() => {
+      const button = [...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Сыграть'));
+      if (button?.disabled) w.sawDisabled = true;
+    }).observe(document.body, { subtree: true, attributes: true, childList: true });
+  });
+  await page.getByTestId('player-hand').locator('.hand__slot .card').first().click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { sawDisabled: boolean }).sawDisabled)).toBe(true);
+});
+
+test('picking a focus puts Сыграть and Отмена in the bottom row and moves nothing', async ({ page }) => {
+  await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'] }));
+  await toMyTurn(page);
+  const handBefore = await page.getByTestId('player-hand').boundingBox();
+  await page.getByTestId('focus-bar').getByRole('button', { name: 'Разгон' }).click();
+  const row = page.getByTestId('actions');
+  await expect(row.getByRole('button', { name: /Сыграть/ })).toBeVisible();
+  await expect(row.getByRole('button', { name: 'Отмена' })).toBeVisible();
+  await expect(page.getByTestId('focus-bar').getByRole('button', { name: /Сыграть|Отмена/ })).toHaveCount(0);
+  const handAfter = await page.getByTestId('player-hand').boundingBox();
+  expect(Math.abs(handAfter!.y - handBefore!.y)).toBeLessThanOrEqual(1);
+  const rowBox = await row.boundingBox();
+  const hp = await page.getByRole('meter', { name: 'Ты' }).boundingBox();
+  expect(rowBox!.y).toBeGreaterThanOrEqual(hp!.y + hp!.height - 1);
+  await row.getByRole('button', { name: 'Отмена' }).click();
+  await expect(row.getByRole('button', { name: 'Отмена' })).toHaveCount(0);
 });
 
 test.describe('two focuses on a small portrait screen', () => {
@@ -95,18 +121,21 @@ test.describe('two focuses on a small portrait screen', () => {
 test.describe('two focuses in landscape', () => {
   test.use({ viewport: { width: 915, height: 412 } });
 
-  test('the focus bar sits inside the sidebar and on screen, with both chips tappable', async ({ page }) => {
+  test('the focus chips sit beside the joker stack, on screen and tappable', async ({ page }) => {
     await open(page, shopRun(EMPTY_SHOP, { focuses: ['boost', 'peek'], jokers: ['looter', 'small'] }));
     await page.getByRole('button', { name: /Следующий бой/ }).click();
     const bar = await page.getByTestId('focus-bar').boundingBox();
-    const side = await page.locator('.fight__side').boundingBox();
     const view = page.viewportSize();
     expect(bar).not.toBeNull();
-    expect(bar!.x + bar!.width).toBeLessThanOrEqual((side?.x ?? 0) + (side?.width ?? 0) + 1);
+    expect(bar!.x + bar!.width).toBeLessThanOrEqual((view?.width ?? 0) + 1);
     expect(bar!.y + bar!.height).toBeLessThanOrEqual((view?.height ?? 0) + 1);
     for (const name of ['Разгон', 'Подглядывание']) {
-      const chip = await page.getByTestId('focus-bar').getByRole('button', { name }).boundingBox();
-      expect(chip?.width ?? 0).toBeGreaterThan(60);
+      const chip = page.getByTestId('focus-bar').getByRole('button', { name });
+      const box = await chip.boundingBox();
+      expect(Math.min(box?.width ?? 0, box?.height ?? 0)).toBeGreaterThanOrEqual(44);
+      await chip.click();
+      await expect(chip).toHaveAttribute('aria-pressed', 'true');
+      await chip.click();
     }
   });
 });

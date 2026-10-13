@@ -12,7 +12,7 @@ function Stack() {
     <div className="tr__stack">
       {[0, 1, 2].map((i) => (
         <div key={i} className="tr__layer" style={{ transform: `translate(${-i * 2}px, ${-i * 2}px)` }}>
-          <PixelCard card={back} width={W} faceDown idle={false} />
+          <PixelCard card={back} width={W} faceDown />
         </div>
       ))}
     </div>
@@ -39,7 +39,7 @@ export function TrumpTab() {
           <div className="tr__deck tr__deck--a">
             <Stack />
             <div className="tr__open">
-              <PixelCard card={trump} width={W} idle={false} />
+              <PixelCard card={trump} width={W} />
             </div>
           </div>
           <span className="chip">Колода: 23</span>
@@ -48,7 +48,7 @@ export function TrumpTab() {
           <h3>Б · угол + плашка</h3>
           <div className="tr__deck tr__deck--b">
             <div className="tr__peek">
-              <PixelCard card={trump} width={W} idle={false} />
+              <PixelCard card={trump} width={W} />
             </div>
             <Stack />
           </div>
@@ -60,7 +60,7 @@ export function TrumpTab() {
           <h3>В · знак над колодой</h3>
           <div className="tr__deck tr__deck--c">
             <div className="tr__peek">
-              <PixelCard card={trump} width={W} idle={false} />
+              <PixelCard card={trump} width={W} />
             </div>
             <Stack />
             <div className="tr__float">

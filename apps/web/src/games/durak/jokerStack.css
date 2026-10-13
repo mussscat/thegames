@@ -1,0 +1,19 @@
+/* ---------- the joker stack in the fight ---------- */
+.jstack { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.jstack:disabled { cursor: default; }
+.jstack__pile { --jface-w: var(--card-w); position: relative; display: block; width: var(--card-w); aspect-ratio: 5 / 7; }
+.jstack__card { position: absolute; inset: 0; display: block; }
+.jstack__anchor { display: block; }
+.jstack__hole { position: absolute; inset: 0; border-radius: 6px; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
+.jstack__count { position: absolute; right: -6px; bottom: -6px; z-index: 7; padding: 0 5px; border: 2px solid #000000; border-radius: 4px; background: rgb(20 14 30 / 92%); font-size: 0.75rem; }
+
+/* ---------- the sheet: the stack fanned out ---------- */
+.jsheet-backdrop { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(0 0 0 / 65%); }
+.jsheet { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(100%, 560px); padding: 14px; }
+.jsheet__fan { --jface-w: clamp(56px, 16vw, 120px); display: flex; justify-content: center; gap: 8px; margin: 0; padding: 12px 0 0; list-style: none; touch-action: none; }
+.jsheet__card { cursor: grab; transition: translate 0.15s ease-out; }
+.jsheet__card--selected { translate: 0 -10px; filter: drop-shadow(0 0 6px var(--gold)); }
+.jsheet__info { display: flex; flex-direction: column; gap: 4px; min-height: 3.6em; text-align: center; }
+.jsheet__name { font-family: var(--font-head); font-size: 0.85rem; }
+.jsheet__text { font-size: 0.9rem; line-height: 1.3; }
+.jsheet__hint { margin: 0; font-size: 0.8rem; opacity: 0.75; }

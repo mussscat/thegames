@@ -18,11 +18,11 @@ export function ConfirmReplace({ changes, onConfirm, onCancel }: ConfirmReplaceP
           return (
             card && (
               <div key={change.cardId} className="confirm__row">
-                <PixelCard card={card} width={56} enhancement={change.from} idle={false} />
+                <PixelCard card={card} width={56} enhancement={change.from} />
                 <span className="confirm__text">
                   {ENHANCEMENTS[change.from].name} → {ENHANCEMENTS[change.to].name}
                 </span>
-                <PixelCard card={card} width={56} enhancement={change.to} idle={false} />
+                <PixelCard card={card} width={56} enhancement={change.to} />
               </div>
             )
           );

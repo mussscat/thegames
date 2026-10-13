@@ -20,9 +20,6 @@ type CardViewProps = {
   readonly onTapOption?: (use: EnhancementSource) => void;
   /** Halves that are a legal move right now; the others are disabled and dimmed. */
   readonly legalUses?: readonly EnhancementSource[];
-  /** Idle sway — only for the player's hand. */
-  readonly idle?: boolean;
-  readonly swayDelay?: number;
 };
 
 function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''): string {
@@ -31,7 +28,7 @@ function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''):
     .join(' ');
 }
 
-export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses, idle = false, swayDelay = 0 }: CardViewProps) {
+export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses }: CardViewProps) {
   const label = `${rankLabel(card.rank)} ${SUIT_NAMES[card.suit]}`;
   const own = enhancements?.own;
   const foreign = enhancements?.foreign;
@@ -60,7 +57,7 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
         aria-label={label}
         {...tip.handlers}
       >
-        <FeelBox idle={idle} swayDelay={swayDelay}>
+        <FeelBox>
           <CardFace card={card} split={{ own, foreign }} />
           {half('own', own)}
           {half('foreign', foreign)}
@@ -82,7 +79,7 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
       aria-label={single ? `${label}: ${ENHANCEMENTS[single].name}` : label}
       {...tip.handlers}
     >
-      <FeelBox idle={idle} swayDelay={swayDelay}>
+      <FeelBox>
         <CardFace card={card} enhancement={single} />
       </FeelBox>
       {bubble}
