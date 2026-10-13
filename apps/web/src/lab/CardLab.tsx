@@ -15,6 +15,7 @@ import { FocusesTab } from './FocusesTab';
 import { HighlightTab } from './HighlightTab';
 import { JokersTab } from './JokersTab';
 import { PacksTab } from './PacksTab';
+import { PixelPilotTab } from './pixel/PixelPilotTab';
 import { SpritesTab } from './SpritesTab';
 import { TarotsTab } from './TarotsTab';
 import { UiTab } from './UiTab';
@@ -36,6 +37,7 @@ const TABS = [
   { id: 'feel', name: 'Ощущение' },
   { id: 'packs', name: 'Паки' },
   { id: 'sprites', name: 'Спрайты' },
+  { id: 'pixels', name: 'Пиксели' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
@@ -110,6 +112,7 @@ export function CardLab() {
         {tab === 'feel' && <FeelTab />}
         {tab === 'packs' && <PacksTab />}
         {tab === 'sprites' && <SpritesTab />}
+        {tab === 'pixels' && <PixelPilotTab />}
         {tab === 'card' && (
           <>
         <div className="lab__hero">

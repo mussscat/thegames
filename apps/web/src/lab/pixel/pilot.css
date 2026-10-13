@@ -1,0 +1,115 @@
+@font-face { font-family: 'm6x11'; src: url('./kit/m6x11cyrillic.ttf') format('truetype'); font-display: block; }
+
+/* Pilot of the pixel UI: every size below is `calc(var(--u) * k)`, k being a whole number of art pixels.
+   --u is 1px inside a zoomed/scaled stage, or the CSS size of one art pixel in «var» mode. */
+.pp-wrap { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.pp-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: center; max-width: 560px; font-size: 14px; }
+.pp-controls label { display: flex; gap: 6px; align-items: center; }
+.pp-readout { margin: 0; font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; text-align: center; max-width: 560px; }
+.pp-readout--bad { color: #ff8a8a; }
+
+.pp-full { position: fixed; inset: 0; z-index: 50; background: #140f1e; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.pp-sizer { position: relative; flex: none; }
+.pp-stage {
+  position: relative;
+  overflow: hidden;
+  background: #2a2140;
+  color: #f4ecff;
+  image-rendering: pixelated;
+  font-family: var(--pp-font);
+  font-size: calc(var(--u) * var(--pp-font-size));
+  line-height: calc(var(--u) * var(--pp-lh));
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  text-rendering: optimizeSpeed;
+  user-select: none;
+  text-shadow: var(--u) var(--u) 0 #1b1426;
+}
+.pp-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 22%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 22%) 1px, transparent 1px);
+  background-size: var(--pp-grid) var(--pp-grid);
+}
+
+.pp-panel {
+  position: absolute;
+  left: calc(var(--u) * 10);
+  top: calc(var(--u) * 12);
+  width: calc(var(--u) * 160);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 6);
+  border: solid transparent;
+  border-width: calc(var(--u) * 6);
+  border-image: url('./kit/panel.png') 6 fill / calc(var(--u) * 6) stretch;
+  image-rendering: pixelated;
+}
+.pp-title { margin: 0; font-weight: 400; font-size: inherit; line-height: inherit; }
+.pp-text { margin: 0; }
+
+.pp-btn {
+  box-sizing: border-box;
+  align-self: stretch;
+  min-height: calc(var(--u) * 24);
+  padding: 0 calc(var(--u) * 2);
+  border: solid transparent;
+  border-width: calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 5);
+  border-image: url('./kit/button.png') 4 4 5 fill / calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 5) stretch;
+  background: none;
+  color: inherit;
+  font: inherit;
+  image-rendering: pixelated;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp-btn > span { display: block; }
+.pp-btn:active { border-image-source: url('./kit/button-pressed.png'); }
+.pp-btn:active > span { transform: translateY(var(--u)); }
+.pp-btn:disabled { border-image-source: url('./kit/button-disabled.png'); color: #b8b8c8; cursor: default; }
+.pp-btn:disabled > span { transform: none; }
+
+.pp-hp {
+  box-sizing: border-box;
+  height: calc(var(--u) * 15);
+  border: solid transparent;
+  border-width: calc(var(--u) * 3);
+  border-image: url('./kit/hp-frame.png') 3 fill / calc(var(--u) * 3) stretch;
+  image-rendering: pixelated;
+}
+.pp-hp__fill { height: 100%; background: #d9393f; }
+
+.pp-card {
+  position: absolute;
+  right: calc(var(--u) * 12);
+  bottom: calc(var(--u) * 10);
+  width: calc(var(--u) * 40);
+  height: calc(var(--u) * 56);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: solid transparent;
+  border-width: calc(var(--u) * 6);
+  border-image: url('./kit/panel.png') 6 fill / calc(var(--u) * 6) stretch;
+  image-rendering: pixelated;
+}
+
+.pp-full__gear { position: absolute; top: 8px; right: 8px; z-index: 60; }
+.pp-full__sheet { position: absolute; inset: 44px 8px auto 8px; z-index: 60; max-height: calc(100% - 56px); overflow: auto; padding: 8px; background: rgb(20 15 30 / 94%); }
+
+.pp-crt {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, var(--crt-vignette) 100%),
+    linear-gradient(var(--crt-tint), var(--crt-tint)),
+    linear-gradient(to bottom, transparent 50%, var(--crt-scan) 50%);
+  background-size: 100% 100%, 100% 100%, 100% var(--crt-period);
+}
