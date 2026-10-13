@@ -39,4 +39,4 @@ installShellGuards(document);
 const root = rootElement;
 /** A sheet that never arrives (a stalled request on a weak connection) must not keep the app blank. */
 const PRELOAD_TIMEOUT_MS = 2000;
-void settleWithin(Promise.all([preloadCardArt(), preloadUiArt()]), PRELOAD_TIMEOUT_MS).then(() => render(root));
+void settleWithin(Promise.all([preloadCardArt(), preloadUiArt(), document.fonts.load('11px m6x11')]), PRELOAD_TIMEOUT_MS).then(() => render(root));

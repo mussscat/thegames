@@ -75,7 +75,8 @@
 - [ ] Remove Nunito, Rubik and Press Start 2P imports from `main.tsx` **only if** no screen outside the fight still uses them; otherwise leave until stage 3 and note it.
 - [ ] Settings screen: credits line «Шрифт m6x11: Daniel Linssen, кириллица Natto Games».
 - [ ] Test: `theme.css` has the `@font-face` and the credits string is rendered.
-- [ ] Commit: `feat: m6x11 Cyrillic font and credits`.
+- [x] As built: the font applies inside `.stage` only (the old screens keep Nunito until they are migrated; the global switch comes with the cleanup), `ttf` added to the PWA precache, credits line in the settings, e2e for it.
+- [x] Commit: `feat: m6x11 Cyrillic font and credits`.
 
 ### Task 5: UI kit generator and generated CSS
 

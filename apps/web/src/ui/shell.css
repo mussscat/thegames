@@ -65,6 +65,15 @@ button:disabled, input:disabled { cursor: default; }
   transform-origin: 0 0;
   container-type: size;
   image-rendering: pixelated;
+  --font-text: 'm6x11', monospace;
+  --font-head: 'm6x11', monospace;
+  font-family: 'm6x11', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 13px;
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  text-rendering: optimizeSpeed;
   --safe-top: calc(env(safe-area-inset-top, 0px) / var(--k));
   --safe-right: calc(env(safe-area-inset-right, 0px) / var(--k));
   --safe-bottom: calc(env(safe-area-inset-bottom, 0px) / var(--k));

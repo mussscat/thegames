@@ -49,3 +49,4 @@
 .settings__speeds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .settings__speed { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border: 2px solid rgb(255 255 255 / 20%); border-radius: 6px; }
 .settings__speed:has(input:checked) { border-color: var(--gold); }
+.settings__credits { margin: 8px 0 0; font-size: 0.75rem; opacity: 0.7; }

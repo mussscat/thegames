@@ -1,3 +1,11 @@
+/* The pixel UI font: m6x11 by Daniel Linssen with the Cyrillic extension by Natto Games. Drawn on an 11 px grid, so it is
+   only ever shown at 11 px (22 px for heads). `block` keeps text invisible until it arrives instead of flashing a fallback. */
+@font-face {
+  font-family: 'm6x11';
+  src: url('../assets/fonts/m6x11cyrillic.ttf') format('truetype');
+  font-display: block;
+}
+
 :root {
   --ink: #1b1426;
   --gold: #f2c94c;

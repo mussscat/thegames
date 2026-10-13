@@ -126,6 +126,7 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
           </label>
           <SortPreview sort={settings.sort} />
         </fieldset>
+        <p className="settings__credits">Шрифт m6x11: Daniel Linssen, кириллица: Natto Games.</p>
       </section>
       <PixelButton tone="blue" onClick={onBack}>
         Назад

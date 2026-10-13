@@ -75,3 +75,9 @@ test('effects and vibration can be switched and stay after a reload', async ({ p
   await page.getByRole('button', { name: 'Настройки' }).click();
   await expect(page.getByLabel('Эффекты')).not.toBeChecked();
 });
+
+test('the settings credit the pixel font authors', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await expect(page.getByText('Шрифт m6x11: Daniel Linssen, кириллица: Natto Games.')).toBeVisible();
+});
