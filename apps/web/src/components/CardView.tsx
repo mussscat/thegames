@@ -8,6 +8,7 @@ import { FeelBox } from '../ui/FeelBox';
 import { backUrl } from '../ui/pixel/cardSprite';
 import { backArtUrl } from '../ui/pixel/cardArt';
 import { useCardSize } from '../ui/CardSizeContext';
+import { layoutIdFor, useSharedLayout } from '../ui/SharedLayoutContext';
 
 const CARD_SPRING = { type: 'spring', stiffness: 500, damping: 35 } as const;
 
@@ -30,6 +31,7 @@ function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''):
 }
 
 export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses }: CardViewProps) {
+  const shared = useSharedLayout();
   const label = `${rankLabel(card.rank)} ${SUIT_NAMES[card.suit]}`;
   const own = enhancements?.own;
   const foreign = enhancements?.foreign;
@@ -52,7 +54,7 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
     );
     return (
       <motion.div
-        layoutId={card.id}
+        layoutId={layoutIdFor(shared, card.id)}
         transition={CARD_SPRING}
         className={cardClasses(card, playable, trump, 'card--split')}
         aria-label={label}
@@ -72,7 +74,7 @@ export function CardView({ card, playable = false, trump = false, enhancements, 
   return (
     <motion.button
       type="button"
-      layoutId={card.id}
+      layoutId={layoutIdFor(shared, card.id)}
       transition={CARD_SPRING}
       className={cardClasses(card, playable, trump)}
       onClick={onTap}
@@ -92,8 +94,9 @@ type CardBackProps = { readonly layoutId?: string };
 
 export function CardBack({ layoutId }: CardBackProps) {
   const size = useCardSize();
+  const shared = useSharedLayout();
   return (
-    <motion.div layoutId={layoutId} transition={CARD_SPRING} className="card card--back" aria-hidden="true">
+    <motion.div layoutId={layoutIdFor(shared, layoutId)} transition={CARD_SPRING} className="card card--back" aria-hidden="true">
       <img className="sprite" src={backArtUrl(size) ?? backUrl()} alt="" draggable={false} />
     </motion.div>
   );

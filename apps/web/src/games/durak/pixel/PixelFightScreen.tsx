@@ -15,6 +15,7 @@ import { statusText } from '../status';
 import type { FightViewInput } from '../useFightView';
 import { useFightView } from '../useFightView';
 import { CardSizeContext } from '../../../ui/CardSizeContext';
+import { SharedLayoutContext } from '../../../ui/SharedLayoutContext';
 import { PixelDeckView } from './PixelDeckView';
 import { PixelEnemyBadge } from './PixelEnemyBadge';
 import { PixelHpRow } from './PixelHpRow';
@@ -40,6 +41,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
   const hit = (target: 'enemy' | 'player'): number => (fight.hits.some((h) => h.target === target) ? fight.hitSeq : 0);
   return (
     <LayoutGroup>
+      <SharedLayoutContext.Provider value={false}>
       <main className="pfight" data-testid="pixel-fight">
         <PixelStats coins={run.coins} roundNumber={fight.roundNumber} onExit={onExit} />
         <PixelHpRow label="Соперник" hp={fight.hp.enemy} maxHp={fight.maxHp.enemy} shakeKey={hit('enemy')} scoreTarget="enemy" lead={<PixelEnemyBadge run={run} />} />
@@ -72,6 +74,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
           <JokerSheet jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} onMove={onMoveJoker} onClose={() => setSheetOpen(false)} />
         )}
       </main>
+      </SharedLayoutContext.Provider>
       <FightOverlay state={fight} onNextRound={() => onFightAction({ type: 'nextRound' })} onLeaveFight={onLeaveFight} />
       <ScorePops playback={playback} />
     </LayoutGroup>

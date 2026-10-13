@@ -33,14 +33,15 @@
 .pfight .face { aspect-ratio: auto; height: 100%; }
 .pfight .face::before { display: none; }
 /* The index of a card: m6x11 at its grid size (11), in the corner column (x = 12 on the big card, 8 on the small one). */
-.pfight .face__rank { font-family: 'm6x11', monospace; font-weight: 400; font-size: 11px; line-height: 11px; letter-spacing: 0; text-shadow: none; }
+.pfight .face__rank { font-family: 'm6x11', monospace; font-weight: 400; font-size: 11px; line-height: 11px; letter-spacing: 0; text-shadow: 1px 0 0 currentColor; }
 .pfight .face--art .face__rank { top: 6px; left: 12px; }
 .pfight .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
 .pfight .face--s.face--art .face__rank { top: 3px; left: 8px; }
 .pfight .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 8px; }
-/* Playable cards lift a whole 10 px; the glow is a hard outline that follows the sprite, not a blur. */
-.pfight .card--playable { translate: 0 -10px; filter: drop-shadow(1px 0 0 var(--glow-playable)) drop-shadow(-1px 0 0 var(--glow-playable)) drop-shadow(0 1px 0 var(--glow-playable)) drop-shadow(0 -1px 0 var(--glow-playable)); }
-.pfight .card--trump.card--playable .feel { filter: drop-shadow(2px 0 0 var(--glow-trump)) drop-shadow(-2px 0 0 var(--glow-trump)) drop-shadow(0 2px 0 var(--glow-trump)) drop-shadow(0 -2px 0 var(--glow-trump)); }
+/* Playable cards lift a whole 10 px (the others are dimmed by the old rule); no glow, no outline. A playable trump gets a gold star in its corner. */
+.pfight .card--playable { translate: 0 -10px; filter: none; }
+.pfight .card--trump.card--playable .feel { filter: none; }
+.pfight .card--trump.card--playable::after { content: ''; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; background: url('../../../assets/ui-kit/icon-star.png') 0 0 / 7px 7px no-repeat; image-rendering: pixelated; pointer-events: none; z-index: 2; }
 
 /* ---------- hands ---------- */
 .pfight .hand--player { height: 136px; }

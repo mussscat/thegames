@@ -489,5 +489,11 @@
     "w": 21,
     "h": 17,
     "slice": null
+  },
+  {
+    "name": "icon-star",
+    "w": 7,
+    "h": 7,
+    "slice": null
   }
 ]

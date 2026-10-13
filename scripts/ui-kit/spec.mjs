@@ -129,6 +129,8 @@ const SKULL = [
   '.....###########.....',
 ];
 
+const STAR = ['...#...', '..#y#..', '###y###', '#yyyyy#', '.#yyy#.', '.#y#y#.', '.##.##.'];
+
 function bitmap(rows, colors) {
   return rows.flatMap((row) => [...row].map((ch) => colors[ch] ?? [0, 0, 0, 0]));
 }
@@ -151,7 +153,8 @@ function icons() {
   let deckPixels = Array.from({ length: 14 * 18 }, () => [0, 0, 0, 0]);
   for (const [dx, dy] of [[0, 2], [1, 1], [2, 0]]) deckPixels = paste(deckPixels, 14, card, 12, dx, dy);
   const skull = el('icon-skull', 21, 17, bitmap(SKULL, { '#': P.ink, w: P.white }));
-  return [el('icon-deck', 14, 18, deckPixels), chip, mult, heart, coin, skull];
+  const star = el('icon-star', 7, 7, bitmap(STAR, { '#': P.ink, y: P.gold }));
+  return [el('icon-deck', 14, 18, deckPixels), chip, mult, heart, coin, skull, star];
 }
 
 /** Every element of the temporary UI kit: `{ name, w, h, slice: [top, right, bottom, left] | null, pixels }`. */

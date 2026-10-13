@@ -339,6 +339,14 @@
   background: url('../assets/ui-kit/icon-skull.png') 0 0 / 21px 17px no-repeat;
   image-rendering: pixelated;
 }
+.px-icon-star {
+  display: inline-block;
+  vertical-align: middle;
+  width: 7px;
+  height: 7px;
+  background: url('../assets/ui-kit/icon-star.png') 0 0 / 7px 7px no-repeat;
+  image-rendering: pixelated;
+}
 .px-tip-arrow-up {
   display: block;
   width: 7px;
