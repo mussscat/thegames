@@ -1,0 +1,33 @@
+/* The chips × mult counter lives in the side panel only: portrait phones do not show it. */
+.counter { display: none; }
+
+@media (min-aspect-ratio: 5/4) {
+  .counter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35em;
+    padding: 0.5em;
+    border: 2px solid #000000;
+    border-radius: 8px;
+    background: rgb(12 9 20 / 82%);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 55%);
+    text-align: center;
+  }
+  .counter__label { margin: 0; font-size: 0.8em; opacity: 0.85; }
+  .counter--player .counter__label { color: #ff8a73; }
+  .counter--enemy .counter__label { color: #8cc4ff; }
+  .counter__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.3em; }
+  .counter__chips, .counter__mult {
+    padding: 0.2em 0.3em;
+    border-radius: 6px;
+    font-family: var(--font-head);
+    font-size: 1.3em;
+    line-height: 1.1;
+    text-shadow: 2px 2px 0 rgb(0 0 0 / 60%);
+    box-shadow: inset 0 -3px 0 rgb(0 0 0 / 30%);
+  }
+  .counter__chips { background: #2f7fe0; text-align: right; }
+  .counter__mult { background: #e2503f; text-align: left; }
+  .counter__times { font-family: var(--font-head); font-size: 1.1em; color: #e2503f; text-shadow: 2px 2px 0 rgb(0 0 0 / 60%); }
+  .counter__damage { margin: 0; font-family: var(--font-head); font-size: 1em; color: var(--gold); text-shadow: 2px 2px 0 rgb(0 0 0 / 60%); }
+}

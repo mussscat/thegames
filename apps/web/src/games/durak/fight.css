@@ -78,6 +78,10 @@
 .deck__suit { font: 800 1.25rem 'Rubik', sans-serif; color: #ffffff; line-height: 1; }
 .deck__suit--red { color: #ff5a4a; }
 
+/* The side panel's wrappers: invisible on portrait phones (the grid places the HP bar and the tiles directly). */
+.enemy-block, .fight__stats { display: contents; }
+.enemy-title, .enemy-line { display: none; }
+
 /* ---------- enemy badge: its sprite starts the enemy HP bar; the tip tells who it is ---------- */
 .enemy-badge-wrap { display: contents; }
 .enemy-badge { position: relative; display: grid; place-items: center; min-width: 48px; min-height: 48px; padding: 0; border: 2px solid #000000; border-radius: 8px; background: #2a4a8c; cursor: pointer; box-shadow: 0 3px 0 rgb(0 0 0 / 55%); }
@@ -237,7 +241,7 @@
        (0.8em each), the table panel's padding and the gaps of the middle row. `--fit-w` is the card width that fits.
        No `em` in these widths: a card has its own font-size, which depends on its width — that would be a cycle. */
     --fs: clamp(13px, calc(2.1 * var(--vh)), 24px);
-    --fit-w: calc((100vw - max(11 * var(--fs), 19vw) - 8.2 * var(--fs) - 40px - var(--safe-left) - var(--safe-right)) / 9.1);
+    --fit-w: calc((100vw - max(13 * var(--fs), 24vw) - 8.2 * var(--fs) - 40px - var(--safe-left) - var(--safe-right)) / 9.1);
     --card-fit: clamp(36px, min(calc(14 * var(--vh)), 9vw), 222px);
     --pile-fit: min(var(--card-fit), var(--fit-w));
     --card-step: 74px;
@@ -247,7 +251,7 @@
     font-size: var(--fs);
     /* A narrow sidebar holds the menu, coins, deal and both HP bars, one under the other; the board is the rest.
        The sidebar reaches under the notch, so its width adds the notch inset. */
-    grid-template-columns: minmax(calc(11em + var(--safe-left)), calc(19% + var(--safe-left))) minmax(0, 1fr);
+    grid-template-columns: minmax(calc(13em + var(--safe-left)), calc(24% + var(--safe-left))) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'side board';
     padding: 0 max(1em, var(--safe-right)) 0 0;
@@ -267,11 +271,70 @@
     border-right: 4px solid #000000;
     box-shadow: 4px 0 0 rgb(0 0 0 / 35%);
   }
-  .fight__top { grid-template-columns: 1fr 1fr; }
-  .fight__menu { grid-column: 1 / -1; }
+  /* The panel, top to bottom (owner, 2026-10-13, after Balatro): the enemy block, the chips × mult counter, my HP, my focus
+     charges, coins and deal, and the Menu at the very bottom. The top bar's wrapper dissolves so its parts can be ordered. */
+  .fight__side { font-size: 1.08em; }
+  .fight__top { display: contents; }
+  .enemy-block { order: 1; }
+  .counter { order: 2; }
+  .hp--player { order: 3; }
+  .charges { order: 4; }
+  .fight__stats { order: 5; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em; }
+  .fight__menu { order: 6; margin-top: auto; min-height: 44px; font-size: 1em; }
   .fight .hp { grid-template-columns: auto 1fr auto; row-gap: 0.35em; }
   /* The sidebar is narrow: the bar takes a row of its own under the name and the numbers. */
   .fight .hp__track { grid-column: 1 / -1; grid-row: 2; }
+  .fight .hp--player .hp__value { font-size: 1em; }
+
+  /* The enemy block: a title in the colour of its tier, then the portrait left of the HP, then a short line. */
+  .enemy-block {
+    --tier: #2f7fe0;
+    --tier-dark: #1a3a73;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid #000000;
+    border-radius: 10px;
+    background: var(--tier-dark);
+    box-shadow: 0 4px 0 rgb(0 0 0 / 55%);
+  }
+  .enemy-block--strong { --tier: #e0912f; --tier-dark: #6e4513; }
+  .enemy-block--boss { --tier: #d0453a; --tier-dark: #651c1c; }
+  .enemy-title {
+    display: block;
+    margin: 0;
+    padding: 0.4em 0.5em;
+    border-bottom: 3px solid rgb(0 0 0 / 45%);
+    background: var(--tier);
+    font-size: 1em;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 2px 2px 0 #000000;
+    overflow-wrap: anywhere;
+  }
+  .enemy-block .hp--enemy {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.6em;
+    row-gap: 0.3em;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .enemy-block .enemy-badge { grid-column: 1; grid-row: 1 / span 2; width: 4.2em; height: 4.2em; border-radius: 50%; }
+  .enemy-block .enemy-badge .icon { width: 54px; height: auto; }
+  .enemy-block .hp--enemy .hp__value { grid-column: 2; grid-row: 1; align-self: end; text-align: left; font-family: var(--font-head); font-size: 1em; }
+  .enemy-block .hp--enemy .hp__track { grid-column: 2; grid-row: 2; align-self: start; }
+  .enemy-line {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    margin: 0;
+    padding: 0.35em 0.6em 0.6em;
+    font-size: 0.8em;
+    line-height: 1.25;
+  }
+  .enemy-line__rule { opacity: 0.85; }
 
   /* The board: the focus chips stand left of the player's hand and the action buttons right of it (owner,
      2026-10-13), so the table gets the height a button row would take. */
@@ -292,6 +355,19 @@
   .actions__chips { grid-area: chips; align-self: center; justify-self: start; }
   .actions__buttons { grid-area: buttons; align-self: center; flex-direction: column; gap: 6px; }
 }
+/* A short panel (a phone on its side) is compact: no title, no counter label, a smaller portrait. */
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
+  .enemy-title, .enemy-line, .counter__label { display: none; }
+  .enemy-block .enemy-badge { grid-row: 1; width: 3em; height: 3em; }
+  .enemy-block .enemy-badge .icon { width: 36px; }
+  /* Portrait and number share a row, the bar takes the full width below them (segments must stay readable). */
+  .enemy-block .hp--enemy .hp__value { align-self: center; }
+  .enemy-block .hp--enemy .hp__track { grid-column: 1 / -1; align-self: center; }
+  .fight__side { font-size: 1em; gap: 4px; }
+  .counter { padding: 0.3em; gap: 0.2em; }
+  .counter__chips, .counter__mult { font-size: 1.1em; }
+}
+
 /* Phones on their side (≤ 420 px tall): smaller cards and gaps, so the board fits under the browser bars. */
 @media (min-aspect-ratio: 5/4) and (max-height: 420px) {
   .fight { --card-fit: clamp(36px, min(calc(12.5 * var(--vh)), 9vw), 74px); }

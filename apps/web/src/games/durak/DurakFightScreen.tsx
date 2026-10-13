@@ -4,6 +4,7 @@ import {
   currentActor,
   FOCUSES,
   focusReady,
+  previewTake,
   revealsTopCard,
   type EnhancementSource,
   type FightAction,
@@ -29,7 +30,9 @@ import { firingJoker } from './firingJoker';
 import { JokerSheet } from './JokerSheet';
 import { JokerStack } from './JokerStack';
 import { EnemyBadge } from './EnemyBadge';
+import { EnemyBlock } from './EnemyBlock';
 import { ScoreBoard } from './ScoreBoard';
+import { ScoreCounter } from './ScoreCounter';
 import { ScorePops } from './ScorePops';
 import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
@@ -109,15 +112,18 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
             </PixelButton>
             <FightStats coins={run.coins} roundNumber={fight.roundNumber} />
           </div>
-          <HpBar
-            label="Соперник"
-            lead={<EnemyBadge run={run} />}
-            className="hp--enemy"
-            hp={fight.hp.enemy}
-            maxHp={fight.maxHp.enemy}
-            shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
-            scoreTarget="enemy"
-          />
+          <EnemyBlock run={run}>
+            <HpBar
+              label="Соперник"
+              lead={<EnemyBadge run={run} />}
+              className="hp--enemy"
+              hp={fight.hp.enemy}
+              maxHp={fight.maxHp.enemy}
+              shakeKey={fight.hits.some((h) => h.target === 'enemy') ? fight.hitSeq : 0}
+              scoreTarget="enemy"
+            />
+          </EnemyBlock>
+          <ScoreCounter preview={previewTake(fight)} />
           <HpBar
             label="Ты"
             className="hp--player"

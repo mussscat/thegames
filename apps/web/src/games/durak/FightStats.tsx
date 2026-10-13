@@ -5,7 +5,7 @@ type FightStatsProps = { readonly coins: number; readonly roundNumber: number };
 /** Two equal boxes of the top bar: coins and the current deal. */
 export function FightStats({ coins, roundNumber }: FightStatsProps) {
   return (
-    <>
+    <div className="fight__stats">
       <div className="stats__tile" aria-label={`Монеты: ${coins}`}>
         <Coin />
         <span className="stats__value stats__value--gold">{coins}</span>
@@ -14,6 +14,6 @@ export function FightStats({ coins, roundNumber }: FightStatsProps) {
         <span className="stats__label">Раздача</span>
         <span className="stats__value">{roundNumber}</span>
       </div>
-    </>
+    </div>
   );
 }

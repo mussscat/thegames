@@ -6,6 +6,13 @@ export type EnemyView = { readonly name: string; readonly tier: EnemyTier; reado
 
 const TIER_LABELS: Readonly<Record<EnemyTier, string>> = { normal: 'соперник', strong: 'сильный соперник', boss: 'босс' };
 
+/** The short line in the side panel's enemy block (owner, 2026-10-13): its kind with the hit multiplier, and the boss rule. */
+export function enemyLine(enemy: EnemyView): { readonly kind: string; readonly rule: string | null } {
+  const mult = TIER_MULT[enemy.tier];
+  const name = enemy.tier === 'boss' ? 'Босс' : enemy.tier === 'strong' ? 'Сильный соперник' : 'Обычный соперник';
+  return { kind: mult > 1 ? `${name} · урон ×${mult}` : name, rule: enemy.boss ? BOSSES[enemy.boss].description : null };
+}
+
 /** What the enemy badge tells: who it is, what makes it dangerous, its jokers. The badge itself shows no counters. */
 export function enemyTipLines(enemy: EnemyView): readonly TipLine[] {
   const mult = TIER_MULT[enemy.tier];

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { screenOverflow } from './helpers/fit';
+import { fullFight } from './helpers/fullFight';
 
 async function startFight(page: Page): Promise<void> {
   await page.goto('/?seed=42');
@@ -25,21 +26,6 @@ test('enemy backs are whole, as big as the player cards, with no count', async (
   expect(sizes.count).toBe(0);
 });
 
-const FULL_RUN = {
-  seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter', 'small', 'rage', 'mirror', 'hearts'], collected: 0, profile: {}, focuses: ['boost', 'peek'],
-  bosses: ['general', 'witch'],
-  phase: { kind: 'shop', shop: { items: [null, null], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
-};
-
-/** A fight with five jokers and two focuses. */
-async function fullFight(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate((run) => localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run })), FULL_RUN);
-  await page.reload();
-  await page.getByRole('button', { name: 'Продолжить забег' }).click();
-  await page.getByRole('button', { name: /Следующий бой/ }).click();
-  await expect(page.getByTestId('player-hand')).toBeVisible();
-}
 
 const tooSmall = (page: Page) =>
   page.evaluate(() =>
@@ -92,8 +78,9 @@ test('portrait order: top bar, enemy HP, enemy hand, table, hand, player HP, act
 });
 
 test('top-bar boxes are all the same size', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await fullFight(page);
-  const boxes = await page.locator('.fight__top > *').evaluateAll((els) => els.map((e) => [Math.round(e.getBoundingClientRect().width), Math.round(e.getBoundingClientRect().height)]));
+  const boxes = await page.locator('.fight__menu, .fight__top .stats__tile').evaluateAll((els) => els.map((e) => [Math.round(e.getBoundingClientRect().width), Math.round(e.getBoundingClientRect().height)]));
   expect(boxes).toHaveLength(3);
   expect(new Set(boxes.map((b) => b[0])).size).toBe(1);
   expect(new Set(boxes.map((b) => b[1])).size).toBe(1);
@@ -153,7 +140,7 @@ test.describe('the round button is always there (Balatro): disabled until it can
 });
 
 for (const [width, height] of [[915, 412], [667, 375], [844, 390], [1280, 800]] as const) {
-  test(`sidebar ${width}×${height}: menu on its own row, coins and deal side by side, nothing sticks out`, async ({ page }) => {
+  test(`sidebar ${width}×${height}: coins and deal side by side above the menu, nothing sticks out`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await fullFight(page);
     const g = await page.evaluate(() => {
@@ -163,11 +150,12 @@ for (const [width, height] of [[915, 412], [667, 375], [844, 390], [1280, 800]] 
       const menu = r(document.querySelector('.fight__side .fight__menu')!);
       const inside = [...document.querySelectorAll('.fight__side *')].map(r).filter((b) => b.width > 0);
       return {
-        menuBottom: menu.bottom, tilesTop: Math.min(...tiles.map((t) => t.top)), tilesTopSpread: Math.max(...tiles.map((t) => t.top)) - Math.min(...tiles.map((t) => t.top)),
+        // The menu is the last block of the panel (owner, 2026-10-13): under the coins and the deal.
+        menuTop: menu.top, tilesBottom: Math.max(...tiles.map((t) => t.bottom)), tilesTopSpread: Math.max(...tiles.map((t) => t.top)) - Math.min(...tiles.map((t) => t.top)),
         overRight: Math.max(...inside.map((b) => b.right)) - side.right, overBottom: Math.max(...inside.map((b) => b.bottom)) - innerHeight,
       };
     });
-    expect(g.tilesTop).toBeGreaterThanOrEqual(g.menuBottom);
+    expect(g.menuTop).toBeGreaterThanOrEqual(g.tilesBottom);
     expect(g.tilesTopSpread).toBeLessThanOrEqual(1);
     expect(g.overRight).toBeLessThanOrEqual(0.5);
     expect(g.overBottom).toBeLessThanOrEqual(0);
