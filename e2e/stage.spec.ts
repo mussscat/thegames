@@ -94,3 +94,22 @@ test('inside the stage a bought tarot opens its sheet as a child of the stage', 
   await page.getByRole('button', { name: /^Купить .* за 3$/ }).click();
   await expect(page.locator('.stage').getByTestId('detail-sheet')).toBeVisible();
 });
+
+test('the pixel fight screen shows the kit top bar, both HP bars and the enemy badge, and the menu button leaves the fight', async ({ page }) => {
+  await page.goto('/?pixel&seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  await expect(page.getByTestId('pixel-fight')).toBeVisible();
+  await expect(page.getByRole('meter', { name: 'Соперник' })).toBeVisible();
+  await expect(page.getByRole('meter', { name: 'Ты' })).toBeVisible();
+  await expect(page.getByTestId('enemy-badge')).toHaveAccessibleName(/^Соперник: /);
+  await expect(page.getByTestId('player-hand')).toBeVisible();
+  await page.getByRole('button', { name: 'Меню' }).click();
+  await expect(page.getByRole('button', { name: 'Новый забег' })).toBeVisible();
+});
+
+test('the pixel fight bar fill is a whole number of art pixels at every HP', async ({ page }) => {
+  await page.goto('/?pixel&seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  const widths = await page.getByRole('meter').evaluateAll((meters) => meters.map((m) => (m.firstElementChild as HTMLElement).offsetWidth));
+  for (const w of widths) expect(Number.isInteger(w)).toBe(true);
+});

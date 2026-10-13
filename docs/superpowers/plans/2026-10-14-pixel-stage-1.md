@@ -110,13 +110,19 @@
 - **The words «множитель» и «фишки» leave the interface**: the counter is two plates (blue chips, red mult) and a × between them, nothing else.
 - The old, un-migrated screens inside `?pixel` look wrong by design (rem/vw sizes); only migrated parts are judged.
 
+### Rulings of 2026-10-14 (owner: «согласен») — card sizes and how the fight is rebuilt
+
+- **Playing cards are drawn at 74×104 art px (already so: `ART_W × ART_H`), not 112×148.** The hand shows them 1:1 (74, as today). Table, deck pile and the enemy's backs show a **second, separate sprite of 52×73** (the 74×104 card re-rendered at that native size by the existing `downscale`; the hand-drawn version replaces it in stage 4). Jokers (106×144) in the stack are shown from a 53×72 re-render. No sprite is ever stretched by CSS. A small version being a different native size is allowed by the spec rule («small version = its own sprite»); only CSS scaling is forbidden.
+- **The fight is rebuilt as a new `PixelFightScreen`** next to the old `DurakFightScreen`. It renders when the stage is on (`?pixel`); the old screen stays for everything else (no flag, landscape/desktop until `feat/pixel-stage-wide`). Shared logic (state, sounds, scoring playback) is reused; markup and CSS are new (`pixelFight.css`, plain px). Not-yet-migrated pieces (hands, table, action bar) are reused as they are inside it while the blocks are done one by one, so it is playable from the first commit.
+- Rank/suit index of a card is drawn with m6x11 at 11 px (the only on-grid size that fits the 18 px corner); the owner judges its readability on the device.
+
 ### Task 7: Fight screen in portrait (one commit per block, owner check after the first and the last)
 
 **Files:** `games/durak/fight.css` (portrait part), `DurakFightScreen.tsx`, `EnemyBlock.tsx`, `EnemyBadge.tsx`, `FightStats.tsx`, `HpBar.tsx`, `ScoreCounter.tsx`, `scoreCounter.css`, `ScoreBoard.tsx`, `JokerStack.tsx`, `jokerStack.css`, `DeckView.tsx`, `TableView.tsx`, `FightHands.tsx`, `ActionBar.tsx`, `FocusBar.tsx`, `FightOverlay.tsx`, `components/CardTip.tsx`, matching tests.
 
 Order (each block: RED layout test or e2e assertion → rebuild → GREEN → commit):
 
-- [ ] a. Top bar: enemy badge, name, HP (`PixelBar`), intent line.
+- [x] a. Top bar (menu, coins, deal), enemy badge (kit button, tier = colour) with its HP bar, player HP row: `games/durak/pixel/*`; shared logic extracted to `useFightView` (the old screen uses it too). `PixelFightScreen` renders when the stage is on; hands, table, deck, jokers, actions are still the old pieces.
 - [ ] b. Score counter (`chips × mult`), pops (`ScorePops`) and the score board.
 - [ ] c. Joker row/stack, joker sheet, focus bar.
 - [ ] d. Table and deck pile (card sprites unchanged, shown at natural size on the grid; cards of different natural widths are placed on whole pixels).

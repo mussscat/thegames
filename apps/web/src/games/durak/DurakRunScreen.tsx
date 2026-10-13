@@ -1,5 +1,7 @@
 import type { RunState } from '@game/durak';
+import { useStage } from '../../ui/StageContext';
 import { DurakFightScreen } from './DurakFightScreen';
+import { PixelFightScreen } from './pixel/PixelFightScreen';
 import { RunOverScreen } from './RunOverScreen';
 import { ShopScreen } from './ShopScreen';
 import { useDurakRun } from './useDurakRun';
@@ -13,10 +15,12 @@ type DurakRunScreenProps = {
 export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenProps) {
   const { run, error, errorSeq, scoring, finishScoring, act } = useDurakRun(initialRun);
   const { phase } = run;
+  const onStage = useStage().root !== null;
   switch (phase.kind) {
-    case 'fight':
+    case 'fight': {
+      const Screen = onStage ? PixelFightScreen : DurakFightScreen;
       return (
-        <DurakFightScreen
+        <Screen
           fight={phase.fight}
           error={error}
           errorSeq={errorSeq}
@@ -30,6 +34,7 @@ export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenP
           onMoveJoker={(from, to) => act({ type: 'moveJoker', from, to })}
         />
       );
+    }
     case 'shop':
       return (
         <ShopScreen run={run} shop={phase.shop} reward={phase.reward} error={error} errorSeq={errorSeq} onAct={act} onExit={onExit} />

@@ -1,7 +1,7 @@
 export type ButtonTone = 'blue' | 'red' | 'orange' | 'green';
 export type PanelKind = 'panel' | 'window' | 'tip';
 export type TextSize = 's' | 'm' | 'l';
-export type IconName = 'deck' | 'chip' | 'mult' | 'heart' | 'coin';
+export type IconName = 'deck' | 'chip' | 'mult' | 'heart' | 'coin' | 'skull';
 
 /** Kit class of a button: large (44 art px) by default, small (36) with `small`. */
 export function buttonClass(tone: ButtonTone, small: boolean, extra = ''): string {

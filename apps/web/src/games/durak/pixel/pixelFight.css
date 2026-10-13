@@ -1,0 +1,28 @@
+/* The fight on the pixel stage: every size is a whole number of art pixels (1 css px inside the stage). */
+.pfight {
+  --card-w: 74px;
+  --pile-w: 52px;
+  --foot: 26px;
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: max(8px, var(--safe-top)) 8px max(8px, var(--safe-bottom));
+}
+
+.pfight__top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pfight__menu { height: 36px; }
+.pfight__tile { height: 36px; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0 2px; }
+.pfight__gold { color: #f2c94c; }
+
+.pfight__hp { display: flex; align-items: center; gap: 6px; }
+.pfight__bar { flex: 1; min-width: 0; }
+.pfight__bar .pixel-bar { height: 21px; }
+.pfight__hp-value { min-width: 56px; text-align: right; }
+
+.pfight__badge-wrap { position: relative; flex: none; }
+.pfight__badge { width: 44px; padding: 0; }
+.pfight__badge > span { display: flex; align-items: center; justify-content: center; }
+.pfight__anchor { position: absolute; inset: 0; pointer-events: none; }

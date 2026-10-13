@@ -1,30 +1,14 @@
-import type { Card } from '@game/core';
-import {
-  applyFocus,
-  currentActor,
-  FOCUSES,
-  focusReady,
-  previewTake,
-  revealsTopCard,
-  type EnhancementSource,
-  type FightAction,
-  type FightState,
-  type RunState,
-  type ScoredHit,
-} from '@game/durak';
+import { previewTake, revealsTopCard, type FightAction, type FightState, type RunState, type ScoredHit } from '@game/durak';
 import { LayoutGroup } from 'motion/react';
-import { useEffect, useState } from 'react';
 import { HpBar } from '../../components/HpBar';
 import { PixelButton } from '../../ui/PixelButton';
-import { useSettings } from '../../ui/SettingsContext';
-import { usePrevious } from '../../ui/usePrevious';
-import { ActionBar, type FocusAction } from './ActionBar';
+import { ActionBar } from './ActionBar';
 import { DeckView } from './DeckView';
 import { EnemyHand, PlayerHand } from './FightHands';
 import { FightOverlay } from './FightOverlay';
 import { FightStats } from './FightStats';
-import { FocusBar, type FocusPick } from './FocusBar';
-import { chargeChips, playLabel, toggleTarget } from './focusView';
+import { FocusBar } from './FocusBar';
+import { chargeChips } from './focusView';
 import { Icon } from '../../ui/Icon';
 import { firingJoker } from './firingJoker';
 import { JokerSheet } from './JokerSheet';
@@ -34,10 +18,9 @@ import { EnemyBlock } from './EnemyBlock';
 import { ScoreBoard } from './ScoreBoard';
 import { ScoreCounter } from './ScoreCounter';
 import { ScorePops } from './ScorePops';
-import { fightSound, isNewError } from './sounds';
 import { statusText } from './status';
 import { TableView } from './TableView';
-import { useScorePlayback } from './useScorePlayback';
+import { useFightView } from './useFightView';
 import './fight.css';
 import './score.css';
 
@@ -57,50 +40,15 @@ type DurakFightScreenProps = {
 };
 
 export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
-  const { settings, play: playSfx } = useSettings();
-  const { round } = fight;
-  const previous = usePrevious(fight);
-  useEffect(() => {
-    if (!previous || previous === fight) return;
-    const sound = fightSound(previous, fight);
-    if (sound) playSfx(sound);
-  }, [fight, previous, playSfx]);
-  const previousErrorSeq = usePrevious(errorSeq);
-  useEffect(() => {
-    if (isNewError(previousErrorSeq, errorSeq)) playSfx('deny');
-  }, [errorSeq, previousErrorSeq, playSfx]);
-  const playback = useScorePlayback(scoring, settings.animSpeed, onScoringDone);
-  const myTurn = !playback.active && !fight.winner && currentActor(round) === 'player';
-  const defending = myTurn && round.attacker === 'enemy';
-  const focuses = run.focuses;
-  const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  // The scoring show needs the stack on screen: it closes the sheet.
-  useEffect(() => {
-    if (playback.active) setSheetOpen(false);
-  }, [playback.active]);
-  useEffect(() => setFocusPick(null), [fight.roundNumber]);
-  const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
-  const targeting =
-    focusPick && pickedId && FOCUSES[pickedId].maxTargets > 0
-      ? { picked: focusPick.targets, onPick: (card: Card) => setFocusPick({ ...focusPick, targets: toggleTarget(focusPick.targets, card.id, FOCUSES[pickedId].maxTargets) }) }
-      : null;
-  const focusAction: FocusAction | null =
-    focusPick && pickedId
-      ? {
-          label: playLabel(pickedId, focusPick.targets.length),
-          ready: myTurn && focusReady(fight, pickedId) && applyFocus(fight, pickedId, focusPick.targets).ok,
-          onPlay: () => {
-            onUseFocus(focusPick.slot, focusPick.targets);
-            setFocusPick(null);
-          },
-          onCancel: () => setFocusPick(null),
-        }
-      : null;
-  const play = (card: Card, use?: EnhancementSource): void => {
-    const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
-    onFightAction(use ? { ...base, use } : base);
-  };
+  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, targeting, focusAction, play } = useFightView({
+    fight,
+    errorSeq,
+    run,
+    scoring,
+    onScoringDone,
+    onFightAction,
+    onUseFocus,
+  });
 
   return (
     <LayoutGroup>

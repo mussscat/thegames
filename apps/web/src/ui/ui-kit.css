@@ -331,6 +331,14 @@
   background: url('../assets/ui-kit/icon-coin.png') 0 0 / 12px 12px no-repeat;
   image-rendering: pixelated;
 }
+.px-icon-skull {
+  display: inline-block;
+  vertical-align: middle;
+  width: 11px;
+  height: 10px;
+  background: url('../assets/ui-kit/icon-skull.png') 0 0 / 11px 10px no-repeat;
+  image-rendering: pixelated;
+}
 .px-tip-arrow-up {
   display: block;
   width: 7px;
