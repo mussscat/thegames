@@ -55,3 +55,18 @@ button:disabled, input:disabled { cursor: default; }
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+/* The pixel stage (opt-in with ?pixel during the migration): its children are laid out in art pixels, so the notch
+   insets, which the browser reports in screen px, are divided by the stage scale (--k, css px per art pixel). */
+.stage {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  transform-origin: 0 0;
+  container-type: size;
+  image-rendering: pixelated;
+  --safe-top: calc(env(safe-area-inset-top, 0px) / var(--k));
+  --safe-right: calc(env(safe-area-inset-right, 0px) / var(--k));
+  --safe-bottom: calc(env(safe-area-inset-bottom, 0px) / var(--k));
+  --safe-left: calc(env(safe-area-inset-left, 0px) / var(--k));
+}

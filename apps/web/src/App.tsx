@@ -7,6 +7,8 @@ import { MenuScreen } from './screens/MenuScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { randomSeed, seedFromUrl } from './seed';
 import { Backdrop } from './ui/Backdrop';
+import { PixelStage } from './ui/PixelStage';
+import { readStageFlag } from './ui/stageFlag';
 import { SettingsProvider } from './ui/SettingsContext';
 
 type Screen =
@@ -23,6 +25,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'menu' });
   const [saved, setSaved] = useState<LoadResult>(loadSaved);
   const runKey = useRef(0);
+  const [onStage] = useState(readStageFlag);
 
   const openRun = (run: RunState): void => {
     runKey.current += 1;
@@ -59,7 +62,13 @@ export function App() {
   return (
     <SettingsProvider>
       <Backdrop />
-      <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+      {onStage ? (
+        <PixelStage>
+          <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+        </PixelStage>
+      ) : (
+        <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+      )}
     </SettingsProvider>
   );
 }

@@ -52,7 +52,7 @@
 - [ ] `shell.css`: `--safe-*` inside the stage = `calc(env(safe-area-inset-*) / var(--k))` rounded up to whole art pixels; the stage fills `html/body/#root` (still fixed, no scroll). Remove `--vh` use from the stage tree.
 - [ ] `App.tsx`: `Backdrop` stays full-screen outside the stage (it is a background, not UI); screens render inside the stage.
 - [ ] e2e: `stage.spec.ts` on Pixel 7 + iPhone + 1920×1080: the stage's width/height are whole numbers of art pixels, `n` is an integer, the stage is centred, no scrollbars. `shell.spec.ts` stays green.
-- [ ] Owner check: menu opens on the iPhone and looks as before (only scaled).
+- [ ] Migration switch (found while building): screens not yet on the kit are sized in `vw`/`vh`/`rem`, which the stage would scale twice, so the stage is opt-in with `?pixel` (remembered; `?pixel=0` turns it off) until task 9 removes the switch. Owner check at this step is only «`?pixel` shows a centred, scrollless stage»; old screens look wrong inside it by design.
 - [ ] Commit: `feat: PixelStage — a whole-number art-pixel stage scaled by transform`.
 
 ### Task 3: Coordinates audit

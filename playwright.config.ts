@@ -10,8 +10,8 @@ export default defineConfig({
   projects: [
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
     // The Safari engine: the owner plays on iPhone Safari and desktop Safari-like browsers.
-    { name: 'iphone', use: { ...devices['iPhone 14'] }, testMatch: /shell\.spec\.ts/ },
-    { name: 'desktop-safari', use: { ...devices['Desktop Safari'] }, testMatch: /shell\.spec\.ts/ },
+    { name: 'iphone', use: { ...devices['iPhone 14'] }, testMatch: /(shell|stage)\.spec\.ts/ },
+    { name: 'desktop-safari', use: { ...devices['Desktop Safari'] }, testMatch: /(shell|stage)\.spec\.ts/ },
   ],
   webServer: {
     command: `npm run build && npm run preview -w @game/web -- --port ${PORT} --strictPort`,
