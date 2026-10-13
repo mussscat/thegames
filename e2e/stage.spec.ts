@@ -61,3 +61,36 @@ test('?pixel is remembered for the next visit', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.stage')).toBeVisible();
 });
+
+test('inside the stage a tip is rendered in the stage and stays on screen next to its anchor', async ({ page }) => {
+  await page.goto('/?pixel&seed=42');
+  await page.getByRole('button', { name: 'Новый забег' }).click();
+  const badge = page.getByTestId('enemy-badge');
+  await badge.click();
+  const tip = page.getByRole('tooltip');
+  await expect(tip).toBeVisible();
+  await expect(page.locator('.stage').getByRole('tooltip')).toHaveCount(1);
+  const [stage, tipBox, badgeBox] = await Promise.all([page.locator('.stage').boundingBox(), tip.boundingBox(), badge.boundingBox()]);
+  if (!stage || !tipBox || !badgeBox) throw new Error('missing boxes');
+  expect(tipBox.x).toBeGreaterThanOrEqual(stage.x - 1);
+  expect(tipBox.x + tipBox.width).toBeLessThanOrEqual(stage.x + stage.width + 1);
+  // Beside the badge, not stranded at a screen coordinate left over from another scale.
+  const gap = Math.min(Math.abs(tipBox.y + tipBox.height - badgeBox.y), Math.abs(tipBox.y - (badgeBox.y + badgeBox.height)));
+  expect(gap).toBeLessThan(stage.height * 0.25);
+});
+
+test('inside the stage a bought tarot opens its sheet as a child of the stage', async ({ page }) => {
+  await page.goto('/?pixel');
+  await page.evaluate(() => {
+    const run = {
+      seed: 3, rng: { seed: 1696107122 }, stage: 0, coins: 30, jokers: ['looter'], collected: 0, profile: {}, focuses: ['boost'], bosses: ['general', 'witch'],
+      phase: { kind: 'shop', shop: { items: [{ card: { kind: 'joker', jokerId: 'gloat' }, price: 5 }, { card: { kind: 'tarot', tarotId: 'sun' }, price: 3 }], packs: [null, null], rerollCost: 2, opened: null, casting: null }, reward: { base: 3, hpBonus: 5, interest: 2, jokerBonus: 0, cardBonus: 0, total: 10 } },
+    };
+    localStorage.setItem('thegame.durak.run', JSON.stringify({ version: 9, run }));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить забег' }).click();
+  await page.getByTestId('shop-item-1').getByRole('button').click();
+  await page.getByRole('button', { name: /^Купить .* за 3$/ }).click();
+  await expect(page.locator('.stage').getByTestId('detail-sheet')).toBeVisible();
+});

@@ -63,7 +63,8 @@
 - [ ] Rules: sizes from layout (`offsetWidth/Height`, `ResizeObserver` `contentRect`, never `getBoundingClientRect` for sizing); pointer positions and rect origins converted by `toArt`; a `StageContext` provides `cssPerArt` and the stage origin (default `1` and zero outside a stage, so tests and the lab keep working).
 - [ ] `canvasSize.ts` (swirl) takes the pixel size in art pixels from the stage: swirl cell = 2 art pixels (lab-tunable constant).
 - [ ] e2e: `hand.spec.ts`, `cardTip.spec.ts`, `score.spec.ts` updated to read the stage scale; a card tip opens next to its card inside the stage.
-- [ ] Commit per file group; last: `fix: read layout, not screen, coordinates under the stage transform`.
+- [x] Done as built: `toArtLength`/`toArtRect`, `StageContext` now carries `root` and `frame()`, `StagePortal` replaces every `createPortal(…, document.body)` (CardTip, ScorePops, ConfirmReplace, DetailSheet), `tipPlacement.ts` (pure, tested), `FeelBox` proven scale-invariant by a test. The swirl block is `8 × cssPerArt` (same look as before; spec said 2 art px, the owner tunes it in the lab).
+- [x] Commit: `fix: read layout, not screen, coordinates under the stage transform`.
 
 ### Task 4: Font and credits
 

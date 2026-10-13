@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { createPortal } from 'react-dom';
 import { PixelButton } from '../../../ui/PixelButton';
+import { StagePortal } from '../../../ui/StagePortal';
 
 type DetailSheetProps = {
   readonly title: string;
@@ -17,7 +17,8 @@ type DetailSheetProps = {
 
 /** A bottom sheet on phones (a centred card on wide screens): big art, text, and the actions in thumb reach. */
 export function DetailSheet({ title, subtitle, text, warning = null, art, actions, children, onClose }: DetailSheetProps) {
-  return createPortal(
+  return (
+    <StagePortal>
     <div className="sheet-backdrop" data-testid="detail-sheet" onClick={onClose ?? undefined}>
       <div className="sheet panel" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
         <div className="sheet__art">{art}</div>
@@ -39,7 +40,7 @@ export function DetailSheet({ title, subtitle, text, warning = null, art, action
           )}
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
+    </StagePortal>
   );
 }

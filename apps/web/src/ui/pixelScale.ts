@@ -44,3 +44,18 @@ export function toArt(point: ScreenPoint, stage: StageFrame): ScreenPoint {
   const k = Number.isFinite(stage.cssPerArt) && stage.cssPerArt > 0 ? stage.cssPerArt : 1;
   return { x: (point.x - stage.left) / k, y: (point.y - stage.top) / k };
 }
+
+const validScale = (cssPerArt: number): number => (Number.isFinite(cssPerArt) && cssPerArt > 0 ? cssPerArt : 1);
+
+/** A length measured on screen (`getBoundingClientRect().width`) in art pixels. */
+export function toArtLength(length: number, cssPerArt: number): number {
+  return length / validScale(cssPerArt);
+}
+
+export type ArtRect = { readonly left: number; readonly top: number; readonly width: number; readonly height: number };
+
+/** A screen rect (from `getBoundingClientRect`) re-expressed in stage coordinates: relative to the stage, in art pixels. */
+export function toArtRect(rect: ArtRect, stage: StageFrame): ArtRect {
+  const k = validScale(stage.cssPerArt);
+  return { left: (rect.left - stage.left) / k, top: (rect.top - stage.top) / k, width: rect.width / k, height: rect.height / k };
+}

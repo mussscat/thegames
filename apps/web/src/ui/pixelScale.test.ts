@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeScale, PILOT_TARGET, SCREEN_TARGET, toArt } from './pixelScale';
+import { computeScale, PILOT_TARGET, SCREEN_TARGET, toArt, toArtLength, toArtRect } from './pixelScale';
 
 describe('computeScale', () => {
   it('Pixel 7 portrait: whole device pixels per art pixel, CSS size is n / dpr', () => {
@@ -81,5 +81,29 @@ describe('toArt', () => {
     for (const cssPerArt of [0, -2, Number.NaN]) {
       expect(toArt({ x: 12, y: 7 }, { left: 2, top: 1, cssPerArt })).toEqual({ x: 10, y: 6 });
     }
+  });
+});
+
+describe('toArtLength', () => {
+  it('turns a measured screen length into art pixels', () => {
+    expect(toArtLength(300, 3)).toBe(100);
+    expect(toArtLength(338.2857, 2.2857)).toBeCloseTo(148, 2);
+  });
+
+  it('is the identity for a bad scale', () => {
+    expect(toArtLength(42, 0)).toBe(42);
+    expect(toArtLength(42, Number.NaN)).toBe(42);
+  });
+});
+
+describe('toArtRect', () => {
+  it('re-expresses a screen rect relative to the stage, in art pixels', () => {
+    const rect = toArtRect({ left: 130, top: 70, width: 60, height: 90 }, { left: 10, top: 10, cssPerArt: 2 });
+    expect(rect).toEqual({ left: 60, top: 30, width: 30, height: 45 });
+  });
+
+  it('with no stage (scale 1, origin 0) leaves the rect alone', () => {
+    const rect = { left: 5, top: 6, width: 7, height: 8 };
+    expect(toArtRect(rect, { left: 0, top: 0, cssPerArt: 1 })).toEqual(rect);
   });
 });

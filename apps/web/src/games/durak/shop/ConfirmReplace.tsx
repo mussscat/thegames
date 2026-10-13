@@ -1,6 +1,6 @@
 import { ENHANCEMENTS } from '@game/durak';
-import { createPortal } from 'react-dom';
 import { PixelButton } from '../../../ui/PixelButton';
+import { StagePortal } from '../../../ui/StagePortal';
 import { PixelCard } from '../../../ui/PixelCard';
 import type { Replacement } from './opening';
 import { deckCard } from './shopCopy';
@@ -9,7 +9,8 @@ type ConfirmReplaceProps = { readonly changes: readonly Replacement[]; readonly 
 
 /** «Острая → Золотая»: the card as it is in the deck and as it will be, side by side. Portalled so it sits above the detail sheet. */
 export function ConfirmReplace({ changes, onConfirm, onCancel }: ConfirmReplaceProps) {
-  return createPortal(
+  return (
+    <StagePortal>
     <div className="confirm-backdrop" onClick={(event) => event.stopPropagation()}>
       <div className="confirm panel" role="alertdialog" aria-modal="true" aria-label="Замена усиления">
         <h3 className="confirm__title">Заменить усиление?</h3>
@@ -36,7 +37,7 @@ export function ConfirmReplace({ changes, onConfirm, onCancel }: ConfirmReplaceP
           </PixelButton>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
+    </StagePortal>
   );
 }

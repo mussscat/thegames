@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import { createPortal } from 'react-dom';
+import { StagePortal } from '../ui/StagePortal';
+import { useStage } from '../ui/StageContext';
+import { anchorIn, tipShift, type Anchor } from './tipPlacement';
 import type { TipLine } from './tipLines';
 
 const HOVER_MS = 200;
@@ -8,13 +10,6 @@ const TAP_TIP_MS = 2500;
 const MOVE_TOLERANCE_PX = 10;
 const ROOM_ABOVE_PX = 140;
 const EDGE_PX = 8;
-
-type Anchor = { readonly x: number; readonly top: number; readonly bottom: number };
-
-function anchorOf(element: Element): Anchor {
-  const rect = element.getBoundingClientRect();
-  return { x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom };
-}
 
 export type CardTipHandlers = {
   readonly onPointerEnter?: (event: PointerEvent<HTMLElement>) => void;
@@ -32,7 +27,9 @@ export type CardTipHandlers = {
  * a plain tap toggles it on cards that cannot be played (`tapToggles`).
  */
 export function useCardTip(enabled: boolean, tapToggles: boolean): { readonly anchor: Anchor | null; readonly handlers: CardTipHandlers } {
+  const { frame } = useStage();
   const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const anchorOf = (element: Element): Anchor => anchorIn(element.getBoundingClientRect(), frame());
   const timer = useRef<number | null>(null);
   const longPressed = useRef(false);
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -107,19 +104,19 @@ export function useCardTip(enabled: boolean, tapToggles: boolean): { readonly an
 export function CardTip({ anchor, lines }: { readonly anchor: Anchor; readonly lines: readonly TipLine[] }) {
   const ref = useRef<HTMLDivElement>(null);
   // Centred on the anchor, then pushed back inside the screen when it would stick out (a badge at the screen edge).
+  const { artW } = useStage();
   const [shift, setShift] = useState(0);
   useLayoutEffect(() => {
     const width = ref.current?.offsetWidth ?? 0;
-    const left = anchor.x - width / 2;
-    const right = anchor.x + width / 2;
-    setShift(left < EDGE_PX ? EDGE_PX - left : right > window.innerWidth - EDGE_PX ? window.innerWidth - EDGE_PX - right : 0);
-  }, [anchor.x, lines]);
+    setShift(tipShift(anchor.x, width, artW > 0 ? artW : window.innerWidth, EDGE_PX));
+  }, [anchor.x, lines, artW]);
   const above = anchor.top > ROOM_ABOVE_PX;
   const x = anchor.x + shift;
   const style = above
     ? { left: x, top: anchor.top - 8, translate: '-50% -100%' }
     : { left: x, top: anchor.bottom + 8, translate: '-50% 0' };
-  return createPortal(
+  return (
+    <StagePortal>
     <div ref={ref} className="card-tip" role="tooltip" style={style}>
       {lines.map((line) => (
         <p key={line.name} className="card-tip__line">
@@ -130,7 +127,7 @@ export function CardTip({ anchor, lines }: { readonly anchor: Anchor; readonly l
           <span className="card-tip__text">{line.description}</span>
         </p>
       ))}
-    </div>,
-    document.body,
+    </div>
+    </StagePortal>
   );
 }

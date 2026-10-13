@@ -52,10 +52,23 @@ function useStageViewport(): Viewport {
  * of device pixels. Everything inside is laid out in plain px; `container-type: size` lets screens use `@container`
  * queries in art pixels instead of viewport media queries.
  */
-export function PixelStage({ children }: { readonly children: ReactNode }) {
+export function PixelStage({ children, background }: { readonly children: ReactNode; readonly background?: ReactNode }) {
   const viewport = useStageViewport();
   const layout = useMemo(() => stageLayout(viewport, SCREEN_TARGET), [viewport]);
-  const info = useMemo<StageInfo>(() => ({ cssPerArt: layout.cssPerArt, artW: layout.artW, artH: layout.artH }), [layout]);
+  const [root, setRoot] = useState<HTMLDivElement | null>(null);
+  const info = useMemo<StageInfo>(
+    () => ({
+      cssPerArt: layout.cssPerArt,
+      artW: layout.artW,
+      artH: layout.artH,
+      root,
+      frame: () => {
+        const rect = root?.getBoundingClientRect();
+        return { left: rect?.left ?? 0, top: rect?.top ?? 0, cssPerArt: layout.cssPerArt };
+      },
+    }),
+    [layout, root],
+  );
   const style = {
     left: layout.offsetX,
     top: layout.offsetY,
@@ -66,7 +79,8 @@ export function PixelStage({ children }: { readonly children: ReactNode }) {
   } as CSSProperties;
   return (
     <StageContext.Provider value={info}>
-      <div className="stage" style={style} data-art-w={layout.artW} data-art-h={layout.artH} data-n={layout.n}>
+      {background}
+      <div className="stage" ref={setRoot} style={style} data-art-w={layout.artW} data-art-h={layout.artH} data-n={layout.n}>
         {children}
       </div>
     </StageContext.Provider>

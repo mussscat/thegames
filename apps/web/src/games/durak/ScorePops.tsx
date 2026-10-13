@@ -1,6 +1,8 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { StagePortal } from '../../ui/StagePortal';
+import { toArtRect } from '../../ui/pixelScale';
+import { useStage } from '../../ui/StageContext';
 import { useSettings } from '../../ui/SettingsContext';
 import { playScoreTick } from '../../ui/sound';
 import { anchorFor, targetSelector, type ScoreTarget } from './scoreTimeline';
@@ -21,6 +23,7 @@ export function ScorePops({ playback }: { readonly playback: Playback }) {
   const { settings } = useSettings();
   const reduced = useReducedMotion() ?? false;
   const { active, index, current, skip } = playback;
+  const { frame } = useStage();
 
   useEffect(() => {
     if (!current) return;
@@ -29,14 +32,19 @@ export function ScorePops({ playback }: { readonly playback: Playback }) {
   }, [current, index, reduced, settings.sound]);
 
   const rect = useMemo(
-    () => (current ? (anchorFor(current.pop, (selector) => document.querySelector(selector))?.getBoundingClientRect() ?? null) : null),
+    () => {
+      const screenRect = current ? anchorFor(current.pop, (selector) => document.querySelector(selector))?.getBoundingClientRect() : null;
+      return screenRect ? toArtRect(screenRect, frame()) : null;
+    },
+    // `frame` reads the stage's position when the pop starts; the pop lives a fraction of a second.
     [current],
   );
 
   if (!active) return null;
   // The final sits on its HP bar, not above it, so it never covers the neighbouring bar.
   const centred = current?.pop.kind === 'hp';
-  return createPortal(
+  return (
+    <StagePortal>
     <>
       <button type="button" className="score-skip" data-testid="score-skip" aria-label="Пропустить подсчёт" onClick={skip} />
       <AnimatePresence>
@@ -59,7 +67,7 @@ export function ScorePops({ playback }: { readonly playback: Playback }) {
           </span>
         )}
       </AnimatePresence>
-    </>,
-    document.body,
+    </>
+    </StagePortal>
   );
 }

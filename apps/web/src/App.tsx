@@ -61,13 +61,15 @@ export function App() {
 
   return (
     <SettingsProvider>
-      <Backdrop />
       {onStage ? (
-        <PixelStage>
+        <PixelStage background={<Backdrop />}>
           <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
         </PixelStage>
       ) : (
-        <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+        <>
+          <Backdrop />
+          <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
+        </>
       )}
     </SettingsProvider>
   );
