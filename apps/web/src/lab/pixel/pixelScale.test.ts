@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeScale, PILOT_TARGET } from './pixelScale';
+import { computeScale, PILOT_TARGET, SCREEN_TARGET } from './pixelScale';
 
 describe('computeScale', () => {
   it('Pixel 7 portrait: whole device pixels per art pixel, CSS size is n / dpr', () => {
@@ -39,5 +39,29 @@ describe('computeScale', () => {
 
   it('survives a zero or missing devicePixelRatio', () => {
     expect(computeScale({ cssW: 360, cssH: 640, dpr: 0 }, PILOT_TARGET).n).toBe(2);
+  });
+});
+
+describe('SCREEN_TARGET (owner pick 2026-10-14: 360 art pixels across)', () => {
+  it('iPhone Pro Max: 1 art pixel = 3 device px = 1 css px, screen 430 art px wide', () => {
+    const s = computeScale({ cssW: 430, cssH: 932, dpr: 3 }, SCREEN_TARGET);
+    expect(s).toMatchObject({ n: 3, cssPerArt: 1, artW: 430, artH: 932 });
+  });
+
+  it('Pixel 7: fractional css size per art pixel, still whole device pixels', () => {
+    const s = computeScale({ cssW: 412, cssH: 915, dpr: 2.625 }, SCREEN_TARGET);
+    expect(s.n).toBe(3);
+    expect(s.cssPerArt).toBeCloseTo(3 / 2.625, 10);
+    expect(s.artW).toBe(360);
+  });
+
+  it('a 7-card hand of 106 px cards with an 18 px index strip fits every phone', () => {
+    for (const [cssW, cssH, dpr] of [[375, 667, 2], [390, 844, 3], [412, 915, 2.625], [430, 932, 3]] as const) {
+      expect(computeScale({ cssW, cssH, dpr }, SCREEN_TARGET).artW).toBeGreaterThanOrEqual(106 + 6 * 18 + 12);
+    }
+  });
+
+  it('desktop keeps whole device pixels per art pixel', () => {
+    expect(computeScale({ cssW: 1920, cssH: 1080, dpr: 1 }, SCREEN_TARGET)).toMatchObject({ n: 3, artW: 640, artH: 360 });
   });
 });

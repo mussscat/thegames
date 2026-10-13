@@ -3,6 +3,9 @@ export type ScaleTarget = { readonly w: number; readonly h: number };
 /** Minimum screen size in art pixels; the scale is the largest whole n that still fits both. */
 export const PILOT_TARGET: ScaleTarget = { w: 180, h: 320 };
 
+/** The screen size the game is built for: 360 art pixels across (owner pick on iPhone Pro Max, 2026-10-14). */
+export const SCREEN_TARGET: ScaleTarget = { w: 360, h: 320 };
+
 export type Viewport = { readonly cssW: number; readonly cssH: number; readonly dpr: number };
 
 export type PixelScale = {

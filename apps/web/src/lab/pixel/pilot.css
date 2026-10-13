@@ -113,3 +113,6 @@
     linear-gradient(to bottom, transparent 50%, var(--crt-scan) 50%);
   background-size: 100% 100%, 100% 100%, 100% var(--crt-period);
 }
+
+.pp-hand-card { position: absolute; image-rendering: pixelated; }
+.pp-hand-note { position: absolute; left: calc(var(--u) * 6); top: calc(var(--u) * 6); margin: 0; }
