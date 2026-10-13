@@ -110,16 +110,23 @@ const HEART = [
 ];
 
 const SKULL = [
-  '..#######..',
-  '.#wwwwwww#.',
-  '#wwwwwwwww#',
-  '#wwwwwwwww#',
-  '#w###w###w#',
-  '#w###w###w#',
-  '#wwwwwwwww#',
-  '.#wwwwwww#.',
-  '..#w#w#w#..',
-  '..#######..',
+  '......#########......',
+  '....##wwwwwwwww##....',
+  '...#wwwwwwwwwwwww#...',
+  '..#wwwwwwwwwwwwwww#..',
+  '.#wwwwwwwwwwwwwwwww#.',
+  '.#wwwwwwwwwwwwwwwww#.',
+  '.#ww#####www#####ww#.',
+  '.#ww#####www#####ww#.',
+  '.#ww#####www#####ww#.',
+  '.#www###wwwww###www#.',
+  '.#wwwwwww###wwwwwww#.',
+  '.#wwwwwwwwwwwwwwwww#.',
+  '...#wwwwwwwwwwwww#...',
+  '....#w#w#w#w#w#w#....',
+  '....#w#w#w#w#w#w#....',
+  '....#wwwwwwwwwww#....',
+  '.....###########.....',
 ];
 
 function bitmap(rows, colors) {
@@ -143,7 +150,7 @@ function icons() {
   const card = plate(12, 16, { insets: [1], outline: P.ink, fill: P.blueFace, edge: P.blueDark, lip: 0, lipColor: P.blueDark, top: P.blueLight });
   let deckPixels = Array.from({ length: 14 * 18 }, () => [0, 0, 0, 0]);
   for (const [dx, dy] of [[0, 2], [1, 1], [2, 0]]) deckPixels = paste(deckPixels, 14, card, 12, dx, dy);
-  const skull = el('icon-skull', 11, 10, bitmap(SKULL, { '#': P.ink, w: P.white }));
+  const skull = el('icon-skull', 21, 17, bitmap(SKULL, { '#': P.ink, w: P.white }));
   return [el('icon-deck', 14, 18, deckPixels), chip, mult, heart, coin, skull];
 }
 

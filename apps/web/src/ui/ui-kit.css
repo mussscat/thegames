@@ -334,9 +334,9 @@
 .px-icon-skull {
   display: inline-block;
   vertical-align: middle;
-  width: 11px;
-  height: 10px;
-  background: url('../assets/ui-kit/icon-skull.png') 0 0 / 11px 10px no-repeat;
+  width: 21px;
+  height: 17px;
+  background: url('../assets/ui-kit/icon-skull.png') 0 0 / 21px 17px no-repeat;
   image-rendering: pixelated;
 }
 .px-tip-arrow-up {
