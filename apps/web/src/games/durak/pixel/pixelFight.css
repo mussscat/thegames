@@ -48,10 +48,11 @@
 .pfight .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
 .pfight .face--s.face--art .face__rank { top: 3px; left: 8px; }
 .pfight .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 8px; }
-/* Playable cards lift a whole 10 px (the others are dimmed by the old rule); no glow, no outline. A playable trump gets a gold star in its corner. */
+/* Playable cards lift a whole 10 px (the others are dimmed by the old rule). A playable trump gets a crisp 1 px gold frame drawn
+   inside the card (inset, so fan neighbours never cover it), with a faint gold wash of the same shape. */
 .pfight .card--playable { translate: 0 -10px; filter: none; }
 .pfight .card--trump.card--playable .feel { filter: none; }
-.pfight .card--trump.card--playable::after { content: ''; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; background: url('../../../assets/ui-kit/icon-star.png') 0 0 / 7px 7px no-repeat; image-rendering: pixelated; pointer-events: none; z-index: 2; }
+.pfight .card--trump.card--playable::after { content: ''; position: absolute; inset: 4px 6px 4px 4px; border: 1px solid var(--glow-trump); box-shadow: inset 0 0 0 1px rgba(242, 201, 76, 0.35), inset 0 0 6px rgba(242, 201, 76, 0.45); pointer-events: none; z-index: 2; }
 
 /* ---------- hands ---------- */
 .pfight .hand--player { height: 136px; margin-top: -22px; } /* the box has ~28px of room above the fan (lift + tilt); pull it up so the gap to the table matches the enemy side */
