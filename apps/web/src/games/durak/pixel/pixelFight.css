@@ -59,7 +59,20 @@
   flex: 1;
   min-height: 0;
 }
-.pfight .table { gap: 26px 6px; padding: 4px 4px 28px; background: none; }
+/* The panel is a pseudo-element, not the table's own border-image: on iOS an empty table lost its frame until a card
+   came. A flat fill under it keeps the panel even if the frame image is slow to paint. */
+.pfight .table { gap: 26px 6px; padding: 8px 8px 32px; background: #140f1e; background-clip: padding-box; }
+.pfight .table--panel { position: relative; }
+.pfight .table--panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 4px solid transparent;
+  border-image: url('../../../assets/ui-kit/slot-empty.png') 4 4 4 4 fill / 4px 4px 4px 4px stretch;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
 .pfight .table__defense { top: 25px; left: 16px; }
 .pfight .deck { width: 72px; height: 99px; font-size: 11px; }
 .pfight .deck__pile { height: 73px; }

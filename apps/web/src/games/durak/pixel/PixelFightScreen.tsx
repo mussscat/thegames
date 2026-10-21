@@ -49,7 +49,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
         <CardSizeContext.Provider value="s">
           <div className="fight__mid">
             <PixelDeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-            <TableView table={round.table} attacker={round.attacker} frame="px-slot-empty">
+            <TableView table={round.table} attacker={round.attacker} frame="table--panel">
               {playback.board && <ScoreBoard board={playback.board} />}
             </TableView>
             <div className="fight__side-stack">

@@ -1,12 +1,25 @@
 import type { Card } from '@game/core';
 import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
 import { useAnimate } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { usePrevious } from '../../ui/usePrevious';
 import { isNewError } from './sounds';
 import { CardBack, CardView } from '../../components/CardView';
 import { useFan } from '../../ui/useFan';
+import { useHandSlot } from '../../ui/useFlightIn';
+import { useSharedLayout } from '../../ui/SharedLayoutContext';
+import { useMotionEnabled } from '../../ui/useMotion';
 import { sortHand, type HandSort } from '../../ui/handSort';
+
+/** A hand slot; remembers where its card stood so the table can fly the card from there. */
+function HandSlot({ id, index, className, style, children }: { readonly id: string; readonly index: number; readonly className: string; readonly style: CSSProperties; readonly children: ReactNode }) {
+  const ref = useHandSlot<HTMLDivElement>(id, index, !useSharedLayout() && useMotionEnabled(), style.visibility !== 'hidden');
+  return (
+    <div ref={ref} className={className} style={style}>
+      {children}
+    </div>
+  );
+}
 
 /** The enemy's hand: card backs, or the faces while Подглядывание is on. */
 export function EnemyHand({ cards, revealed = false }: { readonly cards: readonly Card[]; readonly revealed?: boolean }) {
@@ -15,9 +28,9 @@ export function EnemyHand({ cards, revealed = false }: { readonly cards: readonl
     <div ref={fan.containerRef} className="hand hand--enemy" data-testid="enemy-hand" data-motion={fan.motion ? 'on' : 'off'} data-revealed={revealed ? 'true' : undefined}>
       <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
       {cards.map((card, index) => (
-        <div key={card.id} className="hand__slot" style={fan.slotStyle(index)}>
+        <HandSlot key={card.id} id={card.id} index={index} className="hand__slot" style={fan.slotStyle(index)}>
           {revealed ? <CardView card={card} /> : <CardBack layoutId={card.id} />}
-        </div>
+        </HandSlot>
       ))}
     </div>
   );
@@ -64,7 +77,7 @@ export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targetin
         const enhancements = cardEnhancements(round, 'player', card);
         const split = Boolean(enhancements.own && enhancements.foreign);
         return (
-          <div key={card.id} className={targeting?.picked.includes(card.id) ? 'hand__slot hand__slot--picked' : 'hand__slot'} style={fan.slotStyle(index)}>
+          <HandSlot key={card.id} id={card.id} index={index} className={targeting?.picked.includes(card.id) ? 'hand__slot hand__slot--picked' : 'hand__slot'} style={fan.slotStyle(index)}>
             <CardView
               card={card}
               enhancements={enhancements}
@@ -74,7 +87,7 @@ export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targetin
               onTapOption={!targeting && myTurn && split ? (use) => onPlay(card, use) : undefined}
               legalUses={!targeting && myTurn && split ? legalUses(card.id) : undefined}
             />
-          </div>
+          </HandSlot>
         );
       })}
       </div>
