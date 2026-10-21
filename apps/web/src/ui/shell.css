@@ -85,3 +85,9 @@ button:disabled, input:disabled { cursor: default; }
 /* The HP bar's fill; its width is set in whole art pixels by PixelBar. The frame (.px-hp-frame) is generated. */
 .pixel-bar { height: 15px; }
 .pixel-bar__fill { height: 100%; background: #d9393f; }
+
+/* Phones are portrait-only: Safari cannot lock the orientation, so a landscape phone gets a cover asking to turn it back. */
+.rotate-lock { display: none; }
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 500px) {
+  .rotate-lock { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; background: #1d2b53; color: #fff; font: 700 20px/1.3 'm6x11', system-ui, sans-serif; text-align: center; }
+}

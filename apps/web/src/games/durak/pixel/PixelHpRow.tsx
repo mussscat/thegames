@@ -20,7 +20,7 @@ type PixelHpRowProps = {
 /** One HP row: a lead (badge or heart), the bar and the numbers; shakes on a hit. */
 export function PixelHpRow({ label, hp, maxHp, shakeKey = 0, scoreTarget, lead }: PixelHpRowProps) {
   return (
-    <div className="pfight__hp" data-score-hp={scoreTarget}>
+    <div className={`pfight__hp pfight__hp--${scoreTarget}`} data-score-hp={scoreTarget}>
       {lead}
       <motion.div key={shakeKey} className="pfight__bar" animate={shakeKey ? SHAKE : {}} transition={{ duration: 0.35 }}>
         <PixelBar label={label} hp={hp} maxHp={maxHp} />

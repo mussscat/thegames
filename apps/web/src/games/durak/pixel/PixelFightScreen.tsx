@@ -32,7 +32,7 @@ type PixelFightScreenProps = FightViewInput & {
 };
 
 /**
- * The fight on the pixel stage (portrait). Built block by block: the top, the HP rows and the badge are on the kit;
+ * The fight on the pixel stage: portrait is one column, landscape (container aspect ≥ 5:4) a sidebar beside the board. Built block by block: the top, the HP rows and the badge are on the kit;
  * the hands, the table, the deck and the action row still use the old pieces until their turn.
  */
 export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...input }: PixelFightScreenProps) {
@@ -43,30 +43,34 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
     <LayoutGroup>
       <SharedLayoutContext.Provider value={false}>
       <main className="pfight" data-testid="pixel-fight">
-        <PixelStats coins={run.coins} roundNumber={fight.roundNumber} onExit={onExit} />
-        <PixelHpRow label="Соперник" hp={fight.hp.enemy} maxHp={fight.maxHp.enemy} shakeKey={hit('enemy')} scoreTarget="enemy" lead={<PixelEnemyBadge run={run} />} />
-        <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
-        <CardSizeContext.Provider value="s">
-          <div className="fight__mid">
-            <PixelDeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-            <TableView table={round.table} attacker={round.attacker} frame="table--panel">
-              {playback.board && <ScoreBoard board={playback.board} />}
-            </TableView>
-            <div className="fight__side-stack">
-              <JokerStack
-                jokers={fight.jokers.player}
-                state={fight.jokerState.player}
-                enemyTakes={fight.fightTakes.enemy}
-                firing={firingJoker(playback.current)}
-                disabled={playback.active}
-                onOpen={() => setSheetOpen(true)}
-              />
+        <div className="pfight__side">
+          <PixelStats coins={run.coins} roundNumber={fight.roundNumber} onExit={onExit} />
+          <PixelHpRow label="Соперник" hp={fight.hp.enemy} maxHp={fight.maxHp.enemy} shakeKey={hit('enemy')} scoreTarget="enemy" lead={<PixelEnemyBadge run={run} />} />
+          <PixelHpRow label="Ты" hp={fight.hp.player} maxHp={fight.maxHp.player} shakeKey={hit('player')} scoreTarget="player" lead={<PixelIcon name="heart" />} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
+        </div>
+        <div className="pfight__board">
+          <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
+          <CardSizeContext.Provider value="s">
+            <div className="fight__mid">
+              <PixelDeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
+              <TableView table={round.table} attacker={round.attacker} frame="table--panel">
+                {playback.board && <ScoreBoard board={playback.board} />}
+              </TableView>
+              <div className="fight__side-stack">
+                <JokerStack
+                  jokers={fight.jokers.player}
+                  state={fight.jokerState.player}
+                  enemyTakes={fight.fightTakes.enemy}
+                  firing={firingJoker(playback.current)}
+                  disabled={playback.active}
+                  onOpen={() => setSheetOpen(true)}
+                />
+              </div>
             </div>
-          </div>
-        </CardSizeContext.Provider>
-        <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
-        <PixelHpRow label="Ты" hp={fight.hp.player} maxHp={fight.maxHp.player} shakeKey={hit('player')} scoreTarget="player" lead={<PixelIcon name="heart" />} />
-        <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
+          </CardSizeContext.Provider>
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
+        </div>
         <p className="sr-only" role="status">
           {error ?? statusText(fight)}
         </p>

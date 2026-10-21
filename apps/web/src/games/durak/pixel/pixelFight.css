@@ -13,6 +13,16 @@
   padding: max(8px, var(--safe-top)) 8px max(8px, var(--safe-bottom));
 }
 
+/* Portrait: the side and the board dissolve into the column; `order` restores the top-to-bottom sequence. */
+.pfight__side, .pfight__board { display: contents; }
+.pfight__top { order: 1; }
+.pfight__hp--enemy { order: 2; }
+.pfight .hand--enemy { order: 3; }
+.pfight .fight__mid { order: 4; }
+.pfight .hand--player { order: 5; }
+.pfight__hp--player { order: 6; }
+.pfight .actions { order: 7; display: grid; }
+
 .pfight__top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .pfight__menu { height: 36px; }
 .pfight__tile { height: 36px; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0 2px; }

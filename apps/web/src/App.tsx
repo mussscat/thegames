@@ -61,6 +61,7 @@ export function App() {
 
   return (
     <SettingsProvider>
+      <div className="rotate-lock" role="alert">Поверни телефон вертикально</div>
       {onStage ? (
         <PixelStage background={<Backdrop />}>
           <ErrorBoundary onReset={toMenu}>{renderScreen()}</ErrorBoundary>
