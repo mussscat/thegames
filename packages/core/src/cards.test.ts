@@ -18,13 +18,13 @@ describe('cards', () => {
     expect(deck.every((card) => card.rank >= 6 && card.rank <= 14)).toBe(true);
   });
 
-  it('rankLabel uses Russian face labels', () => {
+  it('rankLabel uses Latin face labels', () => {
     expect(rankLabel(6)).toBe('6');
     expect(rankLabel(10)).toBe('10');
-    expect(rankLabel(11)).toBe('В');
-    expect(rankLabel(12)).toBe('Д');
-    expect(rankLabel(13)).toBe('К');
-    expect(rankLabel(14)).toBe('Т');
+    expect(rankLabel(11)).toBe('J');
+    expect(rankLabel(12)).toBe('Q');
+    expect(rankLabel(13)).toBe('K');
+    expect(rankLabel(14)).toBe('A');
   });
 
   it('suit helpers', () => {

@@ -20,7 +20,7 @@ export const SUIT_NAMES: Readonly<Record<Suit, string>> = {
   spades: 'пики',
 };
 
-const FACE_LABELS: Readonly<Partial<Record<Rank, string>>> = { 11: 'В', 12: 'Д', 13: 'К', 14: 'Т' };
+const FACE_LABELS: Readonly<Partial<Record<Rank, string>>> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
 
 export function makeCard(suit: Suit, rank: Rank): Card {
   return { id: `${suit}-${rank}`, suit, rank };

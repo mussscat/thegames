@@ -43,11 +43,16 @@
 .pfight .face { aspect-ratio: auto; height: 100%; }
 .pfight .face::before { display: none; }
 /* The index of a card: m6x11 at its grid size (11), in the corner column (x = 12 on the big card, 8 on the small one). */
-.pfight .face__rank { font-family: 'm6x11', monospace; font-weight: 400; font-size: 11px; line-height: 11px; letter-spacing: 0; text-shadow: 1px 0 0 currentColor; }
+.pfight .face__rank { font-family: 'm6x11', monospace; font-weight: 400; font-size: 22px; line-height: 22px; letter-spacing: 0; text-shadow: 1px 0 0 currentColor; }
 .pfight .face--art .face__rank { top: 6px; left: 12px; }
 .pfight .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
-.pfight .face--s.face--art .face__rank { top: 3px; left: 8px; }
-.pfight .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 8px; }
+.pfight .face--s.face--art .face__rank { font-size: 18px; line-height: 18px; letter-spacing: 0; top: 4px; left: 9px; }
+.pfight .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 4px; right: 9px; }
+/* "10" is two glyphs wide: tighter and nudged inward so it clears the card's edge. */
+.pfight .face--art .face__rank--long { letter-spacing: -1px; left: 15px; }
+.pfight .face--art .face__rank--long.face__rank--bottom { left: auto; right: 15px; }
+.pfight .face--s.face--art .face__rank--long { letter-spacing: -1px; left: 12px; }
+.pfight .face--s.face--art .face__rank--long.face__rank--bottom { left: auto; right: 12px; }
 /* Playable cards lift a whole 10 px (the others are dimmed by the old rule). A playable trump gets a crisp 1 px gold frame drawn
    inside the face (inset, so fan neighbours never cover it, and it tilts and squashes with the card), with a faint gold wash of the same shape. */
 .pfight .card--playable { translate: 0 -10px; filter: none; }
@@ -87,7 +92,7 @@
 .pfight .table__defense { top: 25px; left: 16px; }
 .pfight .deck { width: 72px; height: 99px; font-size: 11px; }
 .pfight .deck__pile { height: 73px; }
-.pfight .deck__trump-card { left: 10px; top: 10px; }
+.pfight .deck__trump-card { left: 12px; top: 10px; } /* turned 90°: the strip that peeks out right of the pile is the card's top 22 px, so the whole rank shows */
 .pfight .deck__hole { width: 52px; height: 73px; aspect-ratio: auto; border-radius: 0; box-shadow: none; background: none; }
 .pdeck__info { position: absolute; left: -4px; right: -4px; top: 77px; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 4px; }
 .pdeck__count, .pdeck__trump { display: inline-flex; align-items: center; gap: 2px; }

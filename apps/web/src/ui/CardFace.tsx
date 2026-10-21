@@ -25,8 +25,8 @@ function artLayers(enhancement: EnhancementId | undefined, split: CardFaceProps[
 }
 
 export function CardFace({ card, enhancement, split }: CardFaceProps) {
-  const rankClass = isRedSuit(card.suit) ? 'face__rank face__rank--red' : 'face__rank';
   const rank = rankLabel(card.rank);
+  const rankClass = ['face__rank', isRedSuit(card.suit) && 'face__rank--red', rank.length > 1 && 'face__rank--long'].filter(Boolean).join(' ');
   const size = useCardSize();
   const art = artLayers(enhancement, split, size);
   const ranks = (

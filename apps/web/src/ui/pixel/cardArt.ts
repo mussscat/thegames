@@ -22,6 +22,7 @@ import taroSheet1Url from '../../assets/taro_1.png';
 import taroSheet2Url from '../../assets/taro_2.png';
 import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
+import { composeIndexLayer } from './cornerIndex';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
 import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, padToBox, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
 
@@ -315,18 +316,14 @@ export function jokerArtUrl(id: JokerId, size: CardSize = 'l'): string | undefin
   return size === 's' ? smallUrl(`joker:${id}`, jokerPixels[id], toSmallJoker) : jokerUrls[id];
 }
 
-/** The suit layer of a card face; `plain` adds the big suit. Without the sprites the drawn pips stand in. */
+/** The suit layer of a card face; `plain` adds the big suit. The rank and the corner pips are drawn by hand (cornerIndex.ts); a plain card waits for the big-suit sprite. */
 export function suitLayerUrl(card: Card, plain: boolean, size: CardSize = 'l'): string {
-  const key = `${card.suit}:${plain}:${size}`;
+  const key = `${card.suit}:${card.rank}:${plain}:${size}`;
   const hit = suitUrls.get(key);
   if (hit) return hit;
-  let url: string;
-  if (!suitSprites) url = toDataUrl(suitLayer(card));
-  else {
-    const layer = composeSuitLayer(card.suit, suitSprites, plain);
-    url = pixelsToUrl(size === 's' ? toSmallCard(layer) : layer);
-  }
-  suitUrls.set(key, url);
+  const [w, h] = size === 's' ? [CARD_S_W, CARD_S_H] : [ART_W, ART_H];
+  const url = pixelsToUrl(composeIndexLayer(card, size, w, h, plain ? suitSprites?.big[card.suit] : undefined));
+  if (suitSprites || !plain) suitUrls.set(key, url);
   return url;
 }
 

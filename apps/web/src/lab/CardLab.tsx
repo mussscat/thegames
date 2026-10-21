@@ -15,6 +15,7 @@ import { FocusesTab } from './FocusesTab';
 import { HighlightTab } from './HighlightTab';
 import { JokersTab } from './JokersTab';
 import { PacksTab } from './PacksTab';
+import { RankFontTab } from './RankFontTab';
 import { PixelPilotTab } from './pixel/PixelPilotTab';
 import { SpritesTab } from './SpritesTab';
 import { TarotsTab } from './TarotsTab';
@@ -27,6 +28,7 @@ import { TrumpTab } from './TrumpTab';
 const TABS = [
   { id: 'card', name: 'Карта' },
   { id: 'font', name: 'Шрифт' },
+  { id: 'rankfont', name: 'Индекс' },
   { id: 'highlight', name: 'Подсветка' },
   { id: 'trump', name: 'Козырь' },
   { id: 'gallery', name: 'Галерея' },
@@ -102,6 +104,7 @@ export function CardLab() {
           ))}
         </nav>
         {tab === 'font' && <FontTab />}
+        {tab === 'rankfont' && <RankFontTab />}
         {tab === 'highlight' && <HighlightTab />}
         {tab === 'trump' && <TrumpTab />}
         {tab === 'gallery' && <GalleryTab />}

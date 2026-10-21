@@ -195,3 +195,19 @@
 .feellab__hand { --card-w: 64px; width: 100%; }
 .feellab__jokers { display: flex; flex-wrap: wrap; gap: 14px; margin: 0; padding: 0; list-style: none; }
 .feellab__fps { margin: 0; font-family: var(--font-head); font-size: 1.1rem; }
+
+/* ---------- rank font candidates ---------- */
+.ranklab { display: grid; gap: 14px; width: 100%; }
+.ranklab__row { background: rgba(10, 14, 40, 0.55); padding: 8px; display: grid; gap: 6px; }
+.ranklab__row h3 { margin: 0; font-size: 0.9rem; color: #fff; }
+.ranklab__sliders { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; color: #fff; }
+.ranklab__sliders input { width: 90px; }
+.ranklab__cards { display: flex; flex-wrap: wrap; gap: 6px; }
+.ranklab__card { position: relative; flex: none; }
+.ranklab .face { height: 100%; aspect-ratio: auto; }
+.ranklab .face::before { display: none; }
+.ranklab .face__rank { font-family: var(--rf); font-weight: var(--rw); letter-spacing: var(--rsp); text-shadow: none; }
+.ranklab .face--art .face__rank { font-size: var(--rl); line-height: var(--rl); top: 6px; left: 12px; }
+.ranklab .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
+.ranklab .face--s.face--art .face__rank { font-size: var(--rs); line-height: var(--rs); top: 3px; left: 9px; }
+.ranklab .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 9px; }
