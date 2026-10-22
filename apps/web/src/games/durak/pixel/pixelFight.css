@@ -27,6 +27,7 @@
 .pfight__menu { height: 36px; }
 .pfight__tile { height: 36px; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0 2px; }
 .pfight__gold { color: #f2c94c; }
+.pfight__gold--bump { display: inline-block; animation: score-value-bump 0.25s ease-out; }
 
 .pfight__hp { display: flex; align-items: center; gap: 6px; }
 .pfight__bar { flex: 1; min-width: 0; }
