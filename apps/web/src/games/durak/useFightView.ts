@@ -30,7 +30,8 @@ export type FightViewInput = {
 };
 
 /** Everything a fight screen needs besides markup: sounds, the scoring playback, whose turn it is, focus picking, the joker sheet. */
-export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onFightAction, onUseFocus }: FightViewInput) {
+/** `replay` off: the board already follows the table, so a take shows only its final instead of counting the cards and jokers again. */
+export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onFightAction, onUseFocus }: FightViewInput, { replay = true }: { readonly replay?: boolean } = {}) {
   const { settings, play: playSfx } = useSettings();
   const { round } = fight;
   const previous = usePrevious(fight);
@@ -43,7 +44,7 @@ export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onF
   useEffect(() => {
     if (isNewError(previousErrorSeq, errorSeq)) playSfx('deny');
   }, [errorSeq, previousErrorSeq, playSfx]);
-  const playback = useScorePlayback(scoring, settings.animSpeed, onScoringDone);
+  const playback = useScorePlayback(scoring, settings.animSpeed, onScoringDone, replay);
   const myTurn = !playback.active && !fight.winner && currentActor(round) === 'player';
   const defending = myTurn && round.attacker === 'enemy';
   const focuses = run.focuses;

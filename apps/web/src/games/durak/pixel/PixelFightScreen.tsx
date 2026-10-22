@@ -45,7 +45,7 @@ type PixelFightScreenProps = FightViewInput & {
  */
 export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...input }: PixelFightScreenProps) {
   const { fight, run, onFightAction, onUseFocus, errorSeq } = input;
-  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play } = useFightView(input);
+  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play } = useFightView(input, { replay: false });
   const hit = (target: 'enemy' | 'player'): number => (fight.hits.some((h) => h.target === target) ? fight.hitSeq : 0);
   return (
     <LayoutGroup>

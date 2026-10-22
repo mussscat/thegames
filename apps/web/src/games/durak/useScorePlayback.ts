@@ -14,9 +14,9 @@ export type Playback = {
 
 type Shown = { readonly timeline: Timeline; readonly index: number };
 
-/** Plays a scored take: one event per cue, then `onDone`. A skip restarts the cues from the final. */
-export function useScorePlayback(score: ScoredHit | null, speed: AnimSpeed, onDone: () => void): Playback {
-  const timeline = useMemo(() => (score ? scoreTimeline(score, speed) : null), [score, speed]);
+/** Plays a scored take: one event per cue, then `onDone`. A skip restarts the cues from the final. `replay` off plays the final only. */
+export function useScorePlayback(score: ScoredHit | null, speed: AnimSpeed, onDone: () => void, replay = true): Playback {
+  const timeline = useMemo(() => (score ? scoreTimeline(score, speed, replay) : null), [score, speed, replay]);
   const [shown, setShown] = useState<Shown | null>(null);
   const [skipped, setSkipped] = useState<Timeline | null>(null);
   const done = useRef(onDone);

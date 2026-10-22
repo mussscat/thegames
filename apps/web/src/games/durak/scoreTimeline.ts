@@ -83,11 +83,15 @@ function startBoard(steps: readonly ScoreStep[], score: ScoredHit): Board {
   return before ? { chips: before.chips, mult: before.mult, damage: null } : { chips: 0, mult: 1, damage: null };
 }
 
-/** Turns a scored take into timed events: board fade-in, one beat per shown step (plain cards are skipped), then the final. */
-export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
+/**
+ * Turns a scored take into timed events: board fade-in, one beat per shown step (plain cards are skipped), then the final.
+ * With `replay` off (the persistent board, which already shows the take's chips and mult) there is no replay: just the final.
+ */
+export function scoreTimeline(score: ScoredHit, speed: AnimSpeed, replay = true): Timeline {
   const step = STEP_MS / speed;
-  const fade = BOARD_FADE_MS / speed;
-  const beats = score.steps.reduce<{ readonly events: readonly TimelineEvent[]; readonly lastCard: string | null }>(
+  const fade = replay ? BOARD_FADE_MS / speed : 0;
+  const steps = replay ? score.steps : [];
+  const beats = steps.reduce<{ readonly events: readonly TimelineEvent[]; readonly lastCard: string | null }>(
     (acc, s) => {
       const lastCard = lastCardAfter(s, acc.lastCard);
       if (!isShown(s)) return { events: acc.events, lastCard };
@@ -116,7 +120,7 @@ export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
     mult: score.mult,
     damage: score.damage,
   };
-  return { events: [...beats.events, final], end: final.at + final.duration + fade, start: startBoard(score.steps, score) };
+  return { events: [...beats.events, final], end: final.at + final.duration + fade, start: replay ? startBoard(score.steps, score) : { chips: score.chips, mult: score.mult, damage: null } };
 }
 
 /** The board after event `index` (-1: before the first step). */
