@@ -105,7 +105,9 @@
 .pfight .fight__side-stack { height: 99px; align-items: center; justify-self: end; }
 .pfight .jstack { min-width: 0; min-height: 0; }
 .pfight .jstack__pile { --jface-w: 53px; width: 53px; height: 72px; aspect-ratio: auto; }
-.pfight .jface { aspect-ratio: auto; height: 72px; border-radius: 0; filter: none; }
+.pfight .jface { border-radius: 0; filter: none; }
+/* The pile shows the joker at the card size; the sheet's jokers keep their own 106:144 shape. */
+.pfight .jstack__pile .jface { aspect-ratio: auto; height: 72px; }
 .pfight .jface__badge { border-radius: 0; font: 400 11px/13px 'm6x11', monospace; bottom: -6px; padding: 0 3px; }
 .pfight .jstack__count { right: -4px; bottom: -6px; padding: 0 3px; border: 1px solid #1b1426; border-radius: 0; background: #1b1426; font: 400 11px/13px 'm6x11', monospace; }
 
