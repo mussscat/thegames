@@ -9,3 +9,4 @@
 .sandbox__pick--on { background: #e0a030; color: #1b1426; }
 .sandbox__row { display: flex; gap: 6px; align-items: center; }
 .sandbox__row select { flex: 1; min-width: 0; font: inherit; }
+.sandbox__row input { flex: 1; min-width: 0; font: inherit; }

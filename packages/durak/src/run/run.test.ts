@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RUN_SCHEDULE } from '../content/enemies';
 import { BOSSES } from '../content/bosses';
-import { applyRunAction, createRun, enemyAt, PLAYER_HP, stageEnemy, stageLabel, type RunState } from './run';
+import { applyRunAction, createRun, createShopRun, enemyAt, PLAYER_HP, stageEnemy, stageLabel, type RunState } from './run';
 import type { ShopState } from './shop';
 
 function expectOk(result: ReturnType<typeof applyRunAction>): RunState {
@@ -246,5 +246,32 @@ describe('focuses in the run', () => {
     const shop = { ...inShop(createRun(1)), focuses: ['shield' as const] };
     expect(expectOk(applyRunAction(shop, { type: 'sellFocus', slot: 0 })).focuses).toEqual([]);
     expect(expectOk(applyRunAction(shop, { type: 'leaveShop' })).focuses).toEqual(['shield']);
+  });
+});
+
+describe('createShopRun', () => {
+  it('opens the shop after the given fight with the given coins, jokers and focuses', () => {
+    const run = createShopRun(7, { stage: 2, coins: 40, jokers: ['small'], focuses: ['pad'] });
+    expect(run.phase.kind).toBe('shop');
+    expect(run.stage).toBe(2);
+    expect(run.coins).toBe(40);
+    expect(run.jokers).toEqual(['small']);
+    expect(run.focuses).toEqual(['pad']);
+    if (run.phase.kind === 'shop') expect(run.phase.shop.items.length).toBeGreaterThan(0);
+  });
+
+  it('is the same shop for the same seed and loadout', () => {
+    expect(createShopRun(3, { stage: 1 })).toEqual(createShopRun(3, { stage: 1 }));
+  });
+
+  it('leaves the shop for the next fight like a real run', () => {
+    const run = createShopRun(5, { stage: 0 });
+    const next = applyRunAction(run, { type: 'leaveShop' });
+    expect(next.ok && next.value.phase.kind).toBe('fight');
+    expect(next.ok && next.value.stage).toBe(1);
+  });
+
+  it('refuses the last fight: no shop follows it', () => {
+    expect(() => createShopRun(1, { stage: RUN_SCHEDULE.length - 1 })).toThrow(RangeError);
   });
 });

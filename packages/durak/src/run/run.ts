@@ -102,6 +102,23 @@ export function createRun(seed: number, loadout: RunLoadout = {}): RunState {
   return startFight({ seed: start.seed, rng, stage, coins, jokers, collected: 0, profile: {}, focuses, bosses, phase: { kind: 'over', won: false } });
 }
 
+/** A run opened straight in the shop that follows fight `stage` (the sandbox); the reward shown is that of a flawless win. */
+export function createShopRun(seed: number, loadout: RunLoadout = {}): RunState {
+  const run = createRun(seed, loadout);
+  if (run.stage >= RUN_SCHEDULE.length - 1) throw new RangeError(`No shop follows stage ${run.stage}`);
+  const [shop, rng] = createShop(run.rng, run.jokers, run.profile);
+  const reward = fightReward({
+    tier: enemyAt(run.stage).tier,
+    playerHp: PLAYER_HP,
+    playerMaxHp: PLAYER_HP,
+    coinsBefore: 0,
+    jokers: run.jokers,
+    enemyTakes: 0,
+    cardCoins: 0,
+  });
+  return { ...run, rng, phase: { kind: 'shop', shop, reward } };
+}
+
 export type StageEnemy = EnemySpec & { readonly boss: BossRule | null };
 
 export function stageEnemy(run: RunState, stage: number): StageEnemy {

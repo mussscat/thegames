@@ -1,4 +1,4 @@
-import { createRun, FOCUS_IDS, FOCUSES, JOKER_IDS, JOKERS, MAX_FOCUSES, MAX_JOKERS, RUN_SCHEDULE, type FocusId, type JokerId } from '@game/durak';
+import { createRun, createShopRun, FOCUS_IDS, FOCUSES, JOKER_IDS, JOKERS, MAX_FOCUSES, MAX_JOKERS, RUN_SCHEDULE, type FocusId, type JokerId } from '@game/durak';
 import { useMemo, useState } from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { DurakRunScreen } from '../games/durak/DurakRunScreen';
@@ -10,6 +10,9 @@ import { readStageFlag } from '../ui/stageFlag';
 import './sandbox.css';
 
 const SANDBOX_COINS = 50;
+const MAX_SANDBOX_COINS = 99;
+
+type Start = 'fight' | 'shop';
 
 /** Adds `id` to the picks; at the limit the oldest pick makes room, so a click always does something. */
 function toggle<T>(picks: readonly T[], id: T, limit: number): readonly T[] {
@@ -40,18 +43,27 @@ function Picker<T extends string>({ title, ids, picks, label, onToggle }: Picker
 
 /**
  * `?sandbox`: the real game with a side panel to pick which jokers and focuses the run starts with (a run holds
- * MAX_JOKERS and MAX_FOCUSES at once), the starting fight and a fresh deal. Nothing is saved.
+ * MAX_JOKERS and MAX_FOCUSES at once), the coins, where it starts (a fight, or the shop after one) and a fresh deal.
+ * Nothing is saved.
  */
 export function SandboxApp() {
   const [open, setOpen] = useState(true);
   const [jokers, setJokers] = useState<readonly JokerId[]>(() => JOKER_IDS.slice(0, MAX_JOKERS));
   const [focuses, setFocuses] = useState<readonly FocusId[]>(() => FOCUS_IDS.slice(0, MAX_FOCUSES));
   const [stage, setStage] = useState(0);
+  const [start, setStart] = useState<Start>('fight');
+  const [coins, setCoins] = useState(SANDBOX_COINS);
   const [seed, setSeed] = useState(randomSeed);
   const [onStage] = useState(readStageFlag);
 
-  const run = useMemo(() => createRun(seed, { jokers, focuses, stage, coins: SANDBOX_COINS }), [seed, jokers, focuses, stage]);
-  const runKey = `${seed}:${jokers.join()}:${focuses.join()}:${stage}`;
+  // No shop follows the last fight, so a shop start offers one fewer stage.
+  const lastStage = start === 'shop' ? RUN_SCHEDULE.length - 2 : RUN_SCHEDULE.length - 1;
+  const shownStage = Math.min(stage, lastStage);
+  const run = useMemo(() => {
+    const loadout = { jokers, focuses, stage: shownStage, coins };
+    return start === 'shop' ? createShopRun(seed, loadout) : createRun(seed, loadout);
+  }, [seed, jokers, focuses, shownStage, coins, start]);
+  const runKey = `${seed}:${jokers.join()}:${focuses.join()}:${shownStage}:${coins}:${start}`;
   const reset = (): void => setSeed(randomSeed());
 
   const game = (
@@ -80,16 +92,27 @@ export function SandboxApp() {
             <Picker title={`Джокеры (${jokers.length}/${MAX_JOKERS})`} ids={JOKER_IDS} picks={jokers} label={(id) => JOKERS[id].name} onToggle={(id) => setJokers((p) => toggle(p, id, MAX_JOKERS))} />
             <Picker title={`Фокусы (${focuses.length}/${MAX_FOCUSES})`} ids={FOCUS_IDS} picks={focuses} label={(id) => FOCUSES[id].name} onToggle={(id) => setFocuses((p) => toggle(p, id, MAX_FOCUSES))} />
             <label className="sandbox__row">
-              Бой
-              <select value={stage} onChange={(e) => setStage(Number(e.target.value))}>
-                {RUN_SCHEDULE.map((enemy, i) => (
+              Старт
+              <select value={start} onChange={(e) => setStart(e.target.value as Start)}>
+                <option value="fight">Бой</option>
+                <option value="shop">Магазин</option>
+              </select>
+            </label>
+            <label className="sandbox__row">
+              Монеты
+              <input type="number" min={0} max={MAX_SANDBOX_COINS} value={coins} onChange={(e) => setCoins(Math.min(MAX_SANDBOX_COINS, Math.max(0, Math.floor(Number(e.target.value)) || 0)))} />
+            </label>
+            <label className="sandbox__row">
+              {start === 'shop' ? 'После боя' : 'Бой'}
+              <select value={shownStage} onChange={(e) => setStage(Number(e.target.value))}>
+                {RUN_SCHEDULE.slice(0, lastStage + 1).map((enemy, i) => (
                   <option key={enemy.name + String(i)} value={i}>
                     {i + 1}. {enemy.name}
                   </option>
                 ))}
               </select>
             </label>
-            <button type="button" className="sandbox__pick" onClick={reset}>Новая раздача</button>
+            <button type="button" className="sandbox__pick" onClick={reset}>{start === 'shop' ? 'Новый магазин' : 'Новая раздача'}</button>
           </div>
         )}
       </aside>
