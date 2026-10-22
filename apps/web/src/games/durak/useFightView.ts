@@ -49,9 +49,13 @@ export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onF
   const focuses = run.focuses;
   const [focusPick, setFocusPick] = useState<FocusPick | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [focusSheetOpen, setFocusSheetOpen] = useState(false);
   // The scoring show needs the stack on screen: it closes the sheet.
   useEffect(() => {
-    if (playback.active) setSheetOpen(false);
+    if (playback.active) {
+      setSheetOpen(false);
+      setFocusSheetOpen(false);
+    }
   }, [playback.active]);
   useEffect(() => setFocusPick(null), [fight.roundNumber]);
   const pickedId = focusPick ? focuses[focusPick.slot] : undefined;
@@ -75,5 +79,5 @@ export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onF
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
     onFightAction(use ? { ...base, use } : base);
   };
-  return { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, targeting, focusAction, play };
+  return { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play };
 }

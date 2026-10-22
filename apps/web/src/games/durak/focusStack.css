@@ -1,0 +1,17 @@
+/* ---------- the focus pile under the joker stack ---------- */
+.fstack { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.fstack:disabled { cursor: default; }
+.fstack__pile { --fface-w: 51px; position: relative; display: block; width: 53px; height: 72px; }
+.fstack__card { position: absolute; inset: 0; display: grid; place-items: center; }
+.fstack__card--picked { translate: 0 -10px !important; }
+.fstack__card--picked::before { content: ''; position: absolute; inset: 2px; z-index: -1; border-radius: 10px; box-shadow: 0 0 8px 3px color-mix(in srgb, var(--glow-trump) 70%, transparent); pointer-events: none; }
+.fstack__glyph { font-size: 1.6em; }
+.fstack__hole { position: absolute; inset: 0; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
+.fstack__count { position: absolute; right: -6px; bottom: -6px; z-index: 7; padding: 0 5px; border: 2px solid #000000; border-radius: 4px; background: rgb(20 14 30 / 92%); font-size: 0.75rem; }
+.fstack .fface, .fsheet .fface { filter: none; }
+
+/* ---------- the focus sheet (the joker sheet's shell) ---------- */
+.fsheet .jsheet__fan { --fface-w: 96px; }
+.fsheet .jsheet__card { list-style: none; }
+.fsheet__card { display: block; padding: 0; border: 0; background: none; cursor: pointer; }
+.fsheet__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }

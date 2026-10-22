@@ -1,11 +1,12 @@
-import { previewTake, revealsTopCard, type FightState } from '@game/durak';
+import { focusReady, previewTake, revealsTopCard, type FightState } from '@game/durak';
 import type { Board } from '../scoreTimeline';
 import { LayoutGroup } from 'motion/react';
 import { PixelIcon } from '../../../components/pixel/PixelIcon';
 import { ActionBar } from '../ActionBar';
 import { EnemyHand, PlayerHand } from '../FightHands';
 import { FightOverlay } from '../FightOverlay';
-import { FocusBar } from '../FocusBar';
+import { FocusSheet } from '../FocusSheet';
+import { FocusStack } from '../FocusStack';
 import { JokerSheet } from '../JokerSheet';
 import { JokerStack } from '../JokerStack';
 import { IDLE_BOARD, ScoreBoard } from '../ScoreBoard';
@@ -44,7 +45,7 @@ type PixelFightScreenProps = FightViewInput & {
  */
 export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...input }: PixelFightScreenProps) {
   const { fight, run, onFightAction, errorSeq } = input;
-  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, targeting, focusAction, play } = useFightView(input);
+  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play } = useFightView(input);
   const hit = (target: 'enemy' | 'player'): number => (fight.hits.some((h) => h.target === target) ? fight.hitSeq : 0);
   return (
     <LayoutGroup>
@@ -54,7 +55,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
           <PixelStats coins={run.coins} roundNumber={fight.roundNumber} onExit={onExit} />
           <PixelHpRow label="Соперник" hp={fight.hp.enemy} maxHp={fight.maxHp.enemy} shakeKey={hit('enemy')} scoreTarget="enemy" lead={<PixelEnemyBadge run={run} />} />
           <PixelHpRow label="Ты" hp={fight.hp.player} maxHp={fight.maxHp.player} shakeKey={hit('player')} scoreTarget="player" lead={<PixelIcon name="heart" />} />
-          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
+          <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} />
         </div>
         <div className="pfight__board">
           <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
@@ -73,6 +74,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
                   disabled={playback.active}
                   onOpen={() => setSheetOpen(true)}
                 />
+                <FocusStack focuses={focuses} pickedSlot={focusPick?.slot ?? null} onOpen={() => setFocusSheetOpen(true)} />
               </div>
             </div>
           </CardSizeContext.Provider>
@@ -83,6 +85,18 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
         </p>
         {sheetOpen && (
           <JokerSheet jokers={fight.jokers.player} state={fight.jokerState.player} enemyTakes={fight.fightTakes.enemy} onMove={onMoveJoker} onClose={() => setSheetOpen(false)} />
+        )}
+        {focusSheetOpen && (
+          <FocusSheet
+            focuses={focuses}
+            pickedSlot={focusPick?.slot ?? null}
+            usable={(slot) => {
+              const id = focuses[slot];
+              return myTurn && id !== undefined && focusReady(fight, id);
+            }}
+            onPick={(slot) => setFocusPick({ slot, targets: [] })}
+            onClose={() => setFocusSheetOpen(false)}
+          />
         )}
       </main>
       </SharedLayoutContext.Provider>
