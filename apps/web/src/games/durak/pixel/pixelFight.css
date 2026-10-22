@@ -96,6 +96,13 @@
 .pfight .deck__pile { height: 73px; }
 .pfight .deck__trump-card { left: 12px; top: 10px; } /* turned 90°: the strip that peeks out right of the pile is the card's top 22 px, so the whole rank shows */
 .pfight .deck__hole { width: 52px; height: 73px; aspect-ratio: auto; border-radius: 0; box-shadow: none; background: none; }
+/* Прорицание: the top cards of the deck stand in a column above the pile (the row they make in the old layout runs under the table) —
+   the next card to be drawn in front, each deeper one showing a 26 px strip above it, enough for its rank. */
+.pfight .deck__peek { display: block; left: 0; bottom: calc(100% + 4px); width: 52px; height: 73px; }
+.pfight .deck__peek > .card { position: absolute; left: 0; bottom: 0; }
+.pfight .deck__peek > .card:nth-child(1) { z-index: 3; }
+.pfight .deck__peek > .card:nth-child(2) { z-index: 2; bottom: 26px; }
+.pfight .deck__peek > .card:nth-child(3) { z-index: 1; bottom: 52px; }
 .pdeck__info { position: absolute; left: -4px; right: -4px; top: 77px; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 4px; }
 .pdeck__count, .pdeck__trump { display: inline-flex; align-items: center; gap: 2px; }
 
