@@ -1,8 +1,11 @@
 import { FOCUSES, type FocusId } from '@game/durak';
+import { motion } from 'motion/react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
 import { focusArtUrl } from '../../ui/pixel/cardArt';
+import { useMotionEnabled } from '../../ui/useMotion';
 import { FocusFace } from './FocusFace';
+import { focusLayoutId } from './FocusStack';
 import { FOCUS_GLYPHS } from './shop/PackCardFace';
 import './jokerStack.css';
 import './focusStack.css';
@@ -21,6 +24,7 @@ type FocusSheetProps = {
 /** The focus pile fanned out over a dimmed screen: tap a focus to read it, «Сыграть» plays it (a focus that needs cards of the hand takes them from the action row). */
 export function FocusSheet({ focuses, pickedSlot, usable, onPlay, onClose }: FocusSheetProps) {
   const [selected, setSelected] = useState(pickedSlot ?? 0);
+  const motionOn = useMotionEnabled();
   const fanRef = useRef<HTMLUListElement>(null);
   const focus = focuses[selected];
 
@@ -48,8 +52,10 @@ export function FocusSheet({ focuses, pickedSlot, usable, onPlay, onClose }: Foc
       <section className="jsheet fsheet panel" role="dialog" aria-modal="true" aria-label="Фокусы" onClick={(event) => event.stopPropagation()} onKeyDown={onKeyDown}>
         <ul ref={fanRef} className="jsheet__fan" role="listbox" aria-label="Фокусы">
           {focuses.map((id, slot) => (
-            <li
+            <motion.li
               key={`${id}-${slot}`}
+              // The fly-out from the pile is motion: with Effects off or reduced motion the cards just appear.
+              layoutId={motionOn ? focusLayoutId(id, slot) : undefined}
               tabIndex={slot === selected ? 0 : -1}
               className={slot === selected ? 'jsheet__card jsheet__card--selected' : 'jsheet__card'}
               role="option"
@@ -58,7 +64,7 @@ export function FocusSheet({ focuses, pickedSlot, usable, onPlay, onClose }: Foc
               onClick={() => setSelected(slot)}
             >
               {focusArtUrl(id) ? <FocusFace id={id} /> : <span className="fstack__glyph">{FOCUS_GLYPHS[id]}</span>}
-            </li>
+            </motion.li>
           ))}
         </ul>
         {focus && (

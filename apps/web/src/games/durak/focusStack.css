@@ -3,7 +3,6 @@
 .fstack:disabled { cursor: default; }
 .fstack__pile { --fface-w: 51px; position: relative; display: block; width: 53px; height: 72px; }
 .fstack__card { position: absolute; inset: 0; display: grid; place-items: center; }
-.fstack__card--picked { translate: 0 -10px !important; }
 .fstack__card--picked::before { content: ''; position: absolute; inset: 2px; z-index: -1; border-radius: 10px; box-shadow: 0 0 8px 3px color-mix(in srgb, var(--glow-trump) 70%, transparent); pointer-events: none; }
 .fstack__glyph { font-size: 1.6em; }
 .fstack__hole { position: absolute; inset: 0; background: rgb(0 0 0 / 35%); box-shadow: inset 0 2px 6px rgb(0 0 0 / 55%); }
