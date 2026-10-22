@@ -37,7 +37,7 @@ export function CardFace({ card, enhancement, split }: CardFaceProps) {
   );
   if (art) {
     return (
-      <div className={size === 's' ? 'face face--art face--s' : 'face face--art'}>
+      <div className={['face', 'face--art', size === 's' && 'face--s', (enhancement || split) && 'face--enhanced', enhancement === 'golden' && 'face--golden'].filter(Boolean).join(' ')}>
         <img className={art.foreign ? 'sprite face__sprite face__sprite--own' : 'sprite face__sprite'} src={art.own} alt="" draggable={false} />
         {art.foreign && <img className="sprite face__sprite face__sprite--foreign" src={art.foreign} alt="" draggable={false} />}
         <img className="sprite face__sprite" src={suitLayerUrl(card, !enhancement && !split, size)} alt="" draggable={false} />

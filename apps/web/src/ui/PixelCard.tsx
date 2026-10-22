@@ -13,6 +13,8 @@ type PixelCardProps = {
   readonly enhancement?: EnhancementId;
   readonly faceDown?: boolean;
   readonly selected?: boolean;
+  /** Marks the card as a trump: the gold frame of the fight table. */
+  readonly trump?: boolean;
   readonly showLabel?: boolean;
   readonly feel?: Feel;
   readonly onTap?: () => void;
@@ -26,6 +28,7 @@ export function PixelCard({
   enhancement,
   faceDown = false,
   selected = false,
+  trump = false,
   showLabel = false,
   feel = FEEL,
   onTap,
@@ -34,7 +37,7 @@ export function PixelCard({
   const spring = { type: 'spring', stiffness: feel.stiffness, damping: feel.damping } as const;
   return (
     <motion.div
-      className="pcard"
+      className={trump ? 'pcard pcard--trump' : 'pcard'}
       style={{ width, fontSize: width * 0.2 }}
       animate={{ y: selected ? -width * 0.28 : 0 }}
       transition={spring}

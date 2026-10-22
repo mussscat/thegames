@@ -211,3 +211,28 @@
 .ranklab .face--art .face__rank--bottom { top: auto; left: auto; bottom: 6px; right: 12px; }
 .ranklab .face--s.face--art .face__rank { font-size: var(--rs); line-height: var(--rs); top: 3px; left: 9px; }
 .ranklab .face--s.face--art .face__rank--bottom { top: auto; left: auto; bottom: 3px; right: 9px; }
+
+/* Card tab: the index as in the game (pixelFight.css: m6x11 22/18 px on a 74/52 px sprite), scaled with the card width. */
+.lab__hand .face, .lab__gallery .face { container-type: inline-size; --u: calc(100cqw / 74); }
+.lab__hand .face--s, .lab__gallery .face--s { --u: calc(100cqw / 52); }
+.lab__hand .face__rank, .lab__gallery .face__rank { font-family: 'm6x11', monospace; font-weight: 400; letter-spacing: 0; }
+.lab__hand .face--art .face__rank, .lab__gallery .face--art .face__rank { font-size: calc(22 * var(--u)); line-height: calc(22 * var(--u)); top: calc(6 * var(--u)); left: calc(12 * var(--u)); transform: translateX(-50%); }
+.lab__hand .face--art .face__rank--bottom, .lab__gallery .face--art .face__rank--bottom { top: auto; left: auto; bottom: calc(6 * var(--u)); right: calc(12 * var(--u)); transform: translateX(50%) rotate(180deg); }
+.lab__hand .face--art .face__rank--long, .lab__gallery .face--art .face__rank--long { letter-spacing: calc(-1 * var(--u)); left: calc(15 * var(--u)); }
+.lab__hand .face--art .face__rank--long.face__rank--bottom, .lab__gallery .face--art .face__rank--long.face__rank--bottom { left: auto; right: calc(15 * var(--u)); }
+
+/* A trump on the card tab: the frame of the fight table (pixelFight.css) along the card's edge, 1 art px thick; the golden card gets a cool one. */
+.lab__gallery .pcard--trump .face::after {
+  content: '';
+  position: absolute;
+  inset: var(--u);
+  border: var(--u) solid var(--glow-trump);
+  box-shadow: inset 0 0 0 var(--u) color-mix(in srgb, var(--glow-trump) 35%, transparent), inset 0 0 calc(6 * var(--u)) color-mix(in srgb, var(--glow-trump) 45%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+.lab__gallery .face--golden { --glow-trump: #5fe6ff; }
+
+/* Same bold-plus-halo rank as the fight table (pixelFight.css), scaled with the card. */
+.lab__hand .face__rank, .lab__gallery .face__rank { text-shadow: var(--u) 0 0 currentColor; }
+.lab__hand .face--enhanced .face__rank, .lab__gallery .face--enhanced .face__rank { text-shadow: var(--u) 0 0 currentColor, calc(-1 * var(--u)) calc(-1 * var(--u)) 0 var(--rank-halo), calc(0 * var(--u)) calc(-1 * var(--u)) 0 var(--rank-halo), calc(1 * var(--u)) calc(-1 * var(--u)) 0 var(--rank-halo), calc(2 * var(--u)) calc(-1 * var(--u)) 0 var(--rank-halo), calc(-1 * var(--u)) calc(0 * var(--u)) 0 var(--rank-halo), calc(2 * var(--u)) calc(0 * var(--u)) 0 var(--rank-halo), calc(-1 * var(--u)) calc(1 * var(--u)) 0 var(--rank-halo), calc(0 * var(--u)) calc(1 * var(--u)) 0 var(--rank-halo), calc(1 * var(--u)) calc(1 * var(--u)) 0 var(--rank-halo), calc(2 * var(--u)) calc(1 * var(--u)) 0 var(--rank-halo); }

@@ -32,7 +32,29 @@ type Metrics = { readonly scale: number; readonly col: number; readonly left: nu
  * Big card 74×104: pip at 2×, column centred on x = 12; small card 52×73: 1×, centred on x = 9. `pipTop` leaves room above
  * the pip for the rank text (m6x11, drawn by CSS: 22 px on the big card, 18 px on the small one).
  */
-const METRICS = { l: { scale: 2, col: 18, left: 3, pipTop: 31, bigBox: { w: 38, h: 44 } }, s: { scale: 1, col: 10, left: 4, pipTop: 23, bigBox: { w: 24, h: 28 } } } as const satisfies Record<string, Metrics>;
+const METRICS = { l: { scale: 2, col: 18, left: 3, pipTop: 27, bigBox: { w: 38, h: 44 } }, s: { scale: 1, col: 10, left: 4, pipTop: 20, bigBox: { w: 24, h: 28 } } } as const satisfies Record<string, Metrics>;
+
+const HALO: readonly number[] = [0xf3, 0xec, 0xe0, 255];
+
+/** A copy of `src` grown by `ring` pixels all round, with a cream ring of that width drawn behind the opaque pixels. */
+export function withHalo(src: Pixels, ring: number): Pixels {
+  const out = blank(src.w + ring * 2, src.h + ring * 2);
+  for (let y = 0; y < src.h; y++) {
+    for (let x = 0; x < src.w; x++) {
+      if ((src.data[(y * src.w + x) * 4 + 3] ?? 0) === 0) continue;
+      for (let dy = -ring; dy <= ring; dy++) {
+        for (let dx = -ring; dx <= ring; dx++) out.data.set(HALO, ((y + ring + dy) * out.w + x + ring + dx) * 4);
+      }
+    }
+  }
+  for (let i = 0; i < src.w * src.h; i++) {
+    if ((src.data[i * 4 + 3] ?? 0) === 0) continue;
+    const x = i % src.w;
+    const y = Math.floor(i / src.w);
+    out.data.set(src.data.subarray(i * 4, i * 4 + 4), ((y + ring) * out.w + x + ring) * 4);
+  }
+  return out;
+}
 
 /** The corner suit pip, centred in the corner column. */
 export function cornerBlock(card: Card, size: 'l' | 's'): Pixels {
@@ -44,10 +66,14 @@ export function cornerBlock(card: Card, size: 'l' | 's'): Pixels {
 }
 
 /** The suit layer of a face: a pip under the top-left rank and (turned 180°) above the bottom-right one, plus the big suit on a plain card. */
-export function composeIndexLayer(card: Card, size: 'l' | 's', width: number, height: number, bigSuit: Pixels | undefined): Pixels {
+export function composeIndexLayer(card: Card, size: 'l' | 's', width: number, height: number, bigSuit: Pixels | undefined, haloed = false): Pixels {
   const m = METRICS[size];
-  const block = cornerBlock(card, size);
-  const corners = overlay(overlay(blank(width, height), block, m.left, m.pipTop), rotate180(block), width - m.left - block.w, height - m.pipTop - block.h);
+  const plainBlock = cornerBlock(card, size);
+  const ring = haloed ? 1 : 0;
+  const block = haloed ? withHalo(plainBlock, ring) : plainBlock;
+  const left = m.left - ring;
+  const top = m.pipTop - ring;
+  const corners = overlay(overlay(blank(width, height), block, left, top), rotate180(block), width - left - block.w, height - top - block.h);
   if (!bigSuit) return corners;
   const big = fitInside(bigSuit, m.bigBox.w, m.bigBox.h);
   return overlay(corners, big, Math.floor((width - big.w) / 2), Math.floor((height - big.h) / 2));

@@ -54,12 +54,33 @@ const range = (from: number, to: number): readonly number[] => Array.from({ leng
 /** Plain background columns either side of the emblem: doubling them widens the card without touching the emblem. */
 const WIDEN_COLUMNS = [...range(5, 11), ...range(52, 58)];
 
+const fitEmblem = (id: EnhancementId, art: Pixels): Pixels => {
+  const factor = EMBLEM_SHRINK[id];
+  return factor ? shrinkEmblem(art, factor) : art;
+};
+
 export function fitEnhancementFrame(raw: Pixels): Pixels {
   if (raw.h !== ART_H || (raw.w !== FRAME_W && raw.w !== FRAME_W + 1)) {
     throw new Error(`enhancement frame ${raw.w}×${raw.h}, expected ${FRAME_W}×${ART_H}`);
   }
   const even = raw.w > FRAME_W ? dropColumns(raw, [4]) : raw;
   return repeatColumns(even, WIDEN_COLUMNS);
+}
+
+/** Flat middle of the card where the emblem sits, clear of the border. */
+const EMBLEM_BOX: Rect = { x: 8, y: 22, w: 58, h: 60 };
+/** Emblems big enough to run into the corner suit pips (or the rank) are shrunk to this share of their size. */
+const EMBLEM_SHRINK: Readonly<Partial<Record<EnhancementId, number>>> = { heavy: 0.62, coin: 0.72, trump: 0.74 };
+
+/** The emblem of a card shrunk about the card's centre, over the flat background colour sampled from the top middle of the box (clear of the emblem). */
+export function shrinkEmblem(art: Pixels, factor: number, box: Rect = EMBLEM_BOX): Pixels {
+  const inner = crop(art, box);
+  const small = downscale(inner, Math.round(box.w * factor), Math.round(box.h * factor));
+  const flat: Pixels = { w: box.w, h: box.h, data: new Uint8ClampedArray(inner.data) };
+  const bg = inner.data.subarray(Math.floor(box.w / 2) * 4, Math.floor(box.w / 2) * 4 + 4);
+  for (let i = 0; i < box.w * box.h; i++) flat.data.set(bg, i * 4);
+  const cleared = overlay(art, flat, box.x, box.y);
+  return overlay(cleared, small, box.x + Math.floor((box.w - small.w) / 2), box.y + Math.floor((box.h - small.h) / 2));
 }
 
 /** The back and the plain card are drawn at a finer pixel; shrinking them keeps one pixel size across the hand. */
@@ -188,7 +209,7 @@ const SUITS: readonly Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 export async function preloadCardArt(): Promise<void> {
   await Promise.allSettled([
     loadPixels(enhancementSheetUrl).then((sheet) => {
-      artPixels = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id]))]));
+      artPixels = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, fitEmblem(id, fitEnhancementFrame(crop(sheet, ENHANCEMENT_FRAMES[id])))]));
       artUrls = Object.fromEntries(ENHANCEMENT_IDS.map((id) => [id, pixelsToUrl(artPixels[id] as Pixels)]));
     }),
     loadPixels(plainSheetUrl).then((sheet) => {
@@ -322,7 +343,7 @@ export function suitLayerUrl(card: Card, plain: boolean, size: CardSize = 'l'): 
   const hit = suitUrls.get(key);
   if (hit) return hit;
   const [w, h] = size === 's' ? [CARD_S_W, CARD_S_H] : [ART_W, ART_H];
-  const url = pixelsToUrl(composeIndexLayer(card, size, w, h, plain ? suitSprites?.big[card.suit] : undefined));
+  const url = pixelsToUrl(composeIndexLayer(card, size, w, h, plain ? suitSprites?.big[card.suit] : undefined, !plain));
   if (suitSprites || !plain) suitUrls.set(key, url);
   return url;
 }

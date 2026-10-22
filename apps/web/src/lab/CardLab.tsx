@@ -46,6 +46,10 @@ type Tab = (typeof TABS)[number]['id'];
 const HERO: Card = makeCard('hearts', 12);
 const HAND: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('diamonds', 14), makeCard('hearts', 9), makeCard('spades', 13)];
 
+/** One card per enhancement in each row: black suits, then red ones. */
+const BLACK_SAMPLES: readonly Card[] = [makeCard('spades', 7), makeCard('clubs', 10), makeCard('spades', 14), makeCard('clubs', 12), makeCard('spades', 13)];
+const RED_SAMPLES: readonly Card[] = [makeCard('hearts', 7), makeCard('diamonds', 10), makeCard('hearts', 14), makeCard('diamonds', 12), makeCard('hearts', 13)];
+
 type SliderProps = { readonly label: string; readonly value: number; readonly min: number; readonly max: number; readonly step?: number; readonly onChange: (v: number) => void };
 
 function Slider({ label, value, min, max, step = 1, onChange }: SliderProps) {
@@ -154,11 +158,13 @@ export function CardLab() {
             </div>
           ))}
         </div>
-        <div className="lab__gallery">
-          {ENHANCEMENT_IDS.map((id, i) => (
-            <PixelCard key={id} card={HAND[i] ?? HERO} feel={feel} width={66} enhancement={id} showLabel onTap={() => playSound('select', sound)} />
-          ))}
-        </div>
+        {([[BLACK_SAMPLES, false], [RED_SAMPLES, false], [BLACK_SAMPLES, true], [RED_SAMPLES, true]] as const).map(([samples, trump], row) => (
+          <div key={row} className="lab__gallery">
+            {ENHANCEMENT_IDS.map((id, i) => (
+              <PixelCard key={id} card={samples[i] ?? HERO} feel={feel} width={66} enhancement={id} trump={trump} showLabel onTap={() => playSound('select', sound)} />
+            ))}
+          </div>
+        ))}
           </>
         )}
       </main>

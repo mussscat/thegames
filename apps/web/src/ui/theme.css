@@ -167,6 +167,13 @@ body {
 .face--art .face__rank { font-size: 1.05em; top: 4.8%; left: 16.2%; transform: translateX(-50%); }
 .face--art .face__rank--bottom { top: auto; left: auto; right: 16.2%; bottom: 4.8%; transform: translateX(50%) rotate(180deg); }
 
+/* Enhanced cards have coloured, often dark, backgrounds: a cream outline keeps the rank readable (the pips get the same in cornerIndex.ts). */
+.face--enhanced .face__rank {
+  text-shadow: 0.05em 0 0 var(--rank-halo), -0.05em 0 0 var(--rank-halo), 0 0.05em 0 var(--rank-halo), 0 -0.05em 0 var(--rank-halo),
+    0.05em 0.05em 0 var(--rank-halo), -0.05em -0.05em 0 var(--rank-halo), 0.05em -0.05em 0 var(--rank-halo), -0.05em 0.05em 0 var(--rank-halo);
+}
+.face--enhanced { --rank-halo: #f3ece0; }
+
 /* ---------- coin and icons: pre-shrunk by a whole factor (coin 19 px, icon 18 px, suit sign 22 px), shown ×1 ---------- */
 .coin, .icon { display: inline-block; vertical-align: -4px; image-rendering: pixelated; }
 .coin { width: 19px; height: 19px; }
