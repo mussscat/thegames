@@ -124,3 +124,5 @@
 /* ---------- the action row: the button sits in the bottom-right corner, a bit wider ---------- */
 .pfight .actions__buttons { grid-column: 3; justify-content: flex-end; }
 .pfight .actions .pbtn { min-width: 132px; }
+/* A card picked as a focus target (Пересдача, Подмена, Смена масти) only lifts; no selection frame. */
+.pfight .hand__slot--picked .card { outline: none; }
