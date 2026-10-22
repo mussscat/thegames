@@ -13,12 +13,13 @@ type FocusSheetProps = {
   readonly pickedSlot: number | null;
   /** Whether the focus in this slot can be played right now (the player's turn, the rules allow it). */
   readonly usable: (slot: number) => boolean;
-  readonly onPick: (slot: number) => void;
+  /** Plays the focus; one that needs cards of the hand goes on to the action row, where they are picked. */
+  readonly onPlay: (slot: number) => void;
   readonly onClose: () => void;
 };
 
-/** The focus pile fanned out over a dimmed screen: tap a focus to read it, «Выбрать» takes it to the action row. */
-export function FocusSheet({ focuses, pickedSlot, usable, onPick, onClose }: FocusSheetProps) {
+/** The focus pile fanned out over a dimmed screen: tap a focus to read it, «Сыграть» plays it (a focus that needs cards of the hand takes them from the action row). */
+export function FocusSheet({ focuses, pickedSlot, usable, onPlay, onClose }: FocusSheetProps) {
   const [selected, setSelected] = useState(pickedSlot ?? 0);
   const fanRef = useRef<HTMLUListElement>(null);
   const focus = focuses[selected];
@@ -71,11 +72,11 @@ export function FocusSheet({ focuses, pickedSlot, usable, onPick, onClose }: Foc
             tone="orange"
             disabled={!focus || !usable(selected)}
             onClick={() => {
-              onPick(selected);
+              onPlay(selected);
               onClose();
             }}
           >
-            Выбрать
+            Сыграть
           </PixelButton>
           <PixelButton tone="green" onClick={onClose}>
             Закрыть

@@ -1,4 +1,4 @@
-import { focusReady, previewTake, revealsTopCard, type FightState } from '@game/durak';
+import { FOCUSES, focusReady, previewTake, revealsTopCard, type FightState } from '@game/durak';
 import type { Board } from '../scoreTimeline';
 import { LayoutGroup } from 'motion/react';
 import { PixelIcon } from '../../../components/pixel/PixelIcon';
@@ -44,7 +44,7 @@ type PixelFightScreenProps = FightViewInput & {
  * the hands, the table, the deck and the action row still use the old pieces until their turn.
  */
 export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...input }: PixelFightScreenProps) {
-  const { fight, run, onFightAction, errorSeq } = input;
+  const { fight, run, onFightAction, onUseFocus, errorSeq } = input;
   const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play } = useFightView(input);
   const hit = (target: 'enemy' | 'player'): number => (fight.hits.some((h) => h.target === target) ? fight.hitSeq : 0);
   return (
@@ -94,7 +94,12 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
               const id = focuses[slot];
               return myTurn && id !== undefined && focusReady(fight, id);
             }}
-            onPick={(slot) => setFocusPick({ slot, targets: [] })}
+            onPlay={(slot) => {
+              const id = focuses[slot];
+              if (id === undefined) return;
+              if (FOCUSES[id].maxTargets === 0) onUseFocus(slot, []);
+              else setFocusPick({ slot, targets: [] });
+            }}
             onClose={() => setFocusSheetOpen(false)}
           />
         )}
