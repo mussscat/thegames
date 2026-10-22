@@ -1,6 +1,6 @@
 import type { Card } from '@game/core';
 import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
-import { useAnimate } from 'motion/react';
+import { motion, useAnimate } from 'motion/react';
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { usePrevious } from '../../ui/usePrevious';
 import { isNewError } from './sounds';
@@ -21,7 +21,29 @@ function HandSlot({ id, index, className, style, children }: { readonly id: stri
   );
 }
 
-/** The enemy's hand: card backs, or the faces while Подглядывание is on. */
+const FLIP_STAGGER_S = 0.12;
+
+/** One enemy card: it turns on its vertical axis between the back and the face, each card a beat after the one to its left. */
+function EnemyCard({ card, index, revealed }: { readonly card: Card; readonly index: number; readonly revealed: boolean }) {
+  const motionOn = useMotionEnabled();
+  return (
+    <motion.div
+      className="hand__flip"
+      initial={{ rotateY: 180 }}
+      animate={{ rotateY: revealed ? 0 : 180 }}
+      transition={motionOn ? { type: 'spring', stiffness: 220, damping: 18, delay: index * FLIP_STAGGER_S } : { duration: 0 }}
+    >
+      <div className="hand__flip-face">
+        <CardView card={card} />
+      </div>
+      <div className="hand__flip-back">
+        <CardBack layoutId={revealed ? undefined : card.id} />
+      </div>
+    </motion.div>
+  );
+}
+
+/** The enemy's hand: card backs, which turn face up from left to right while Подглядывание is on. */
 export function EnemyHand({ cards, revealed = false }: { readonly cards: readonly Card[]; readonly revealed?: boolean }) {
   const fan = useFan(cards.length, false);
   return (
@@ -29,7 +51,7 @@ export function EnemyHand({ cards, revealed = false }: { readonly cards: readonl
       <span ref={fan.probeRef} className="hand__probe" aria-hidden="true" />
       {cards.map((card, index) => (
         <HandSlot key={card.id} id={card.id} index={index} className="hand__slot" style={fan.slotStyle(index)}>
-          {revealed ? <CardView card={card} /> : <CardBack layoutId={card.id} />}
+          <EnemyCard card={card} index={index} revealed={revealed} />
         </HandSlot>
       ))}
     </div>

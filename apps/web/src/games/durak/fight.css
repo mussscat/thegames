@@ -412,3 +412,8 @@
     }
   }
 }
+
+/* The enemy's card turning over (Подглядывание): the face lies in the flow, the back is the same size on its other side. */
+.hand__flip { position: relative; transform-style: preserve-3d; perspective: 600px; }
+.hand__flip-face, .hand__flip-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.hand__flip-back { position: absolute; inset: 0 auto auto 0; transform: rotateY(180deg); }
