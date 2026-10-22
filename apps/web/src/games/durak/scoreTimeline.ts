@@ -28,7 +28,8 @@ export type TimelineEvent = {
   readonly damage: number | null;
 };
 
-export type Timeline = { readonly events: readonly TimelineEvent[]; readonly end: number };
+/** `start` is the board the show opens on: everything the skipped plain-card steps already added. */
+export type Timeline = { readonly events: readonly TimelineEvent[]; readonly end: number; readonly start: Board };
 export type Board = { readonly chips: number; readonly mult: number; readonly damage: number | null };
 
 const other = (side: PlayerId): PlayerId => (side === 'player' ? 'enemy' : 'player');
@@ -71,14 +72,27 @@ function lastCardAfter(step: ScoreStep, previous: string | null): string | null 
   return step.source.kind === 'card' ? step.source.card.id : previous;
 }
 
-/** Turns a scored take into timed events: board fade-in, one beat per step, then the final. */
+/** A plain card only adds its own chips — nothing worth a beat; jokers, enhancements, tier and focus are. */
+const isShown = (step: ScoreStep): boolean => step.source.kind !== 'card';
+
+/** The board right before the first shown step (the running totals of the step ahead of it). */
+function startBoard(steps: readonly ScoreStep[], score: ScoredHit): Board {
+  const first = steps.findIndex(isShown);
+  if (first < 0) return { chips: score.chips, mult: score.mult, damage: null };
+  const before = steps[first - 1];
+  return before ? { chips: before.chips, mult: before.mult, damage: null } : { chips: 0, mult: 1, damage: null };
+}
+
+/** Turns a scored take into timed events: board fade-in, one beat per shown step (plain cards are skipped), then the final. */
 export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
   const step = STEP_MS / speed;
   const fade = BOARD_FADE_MS / speed;
   const beats = score.steps.reduce<{ readonly events: readonly TimelineEvent[]; readonly lastCard: string | null }>(
-    (acc, s, i) => {
+    (acc, s) => {
+      const lastCard = lastCardAfter(s, acc.lastCard);
+      if (!isShown(s)) return { events: acc.events, lastCard };
       const event: TimelineEvent = {
-        at: fade + i * step,
+        at: fade + acc.events.length * step,
         duration: step,
         ...beatOf(s, score.target, acc.lastCard),
         label: s.source.kind === 'focus' ? `${FOCUSES[s.source.focus].name} ${labelOf(s.effect)}` : labelOf(s.effect),
@@ -87,12 +101,12 @@ export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
         mult: s.mult,
         damage: null,
       };
-      return { events: [...acc.events, event], lastCard: lastCardAfter(s, acc.lastCard) };
+      return { events: [...acc.events, event], lastCard };
     },
     { events: [], lastCard: null },
   );
   const final: TimelineEvent = {
-    at: fade + score.steps.length * step,
+    at: fade + beats.events.length * step,
     duration: FINAL_MS / speed,
     pop: { kind: 'hp', side: score.target },
     bounce: [],
@@ -102,13 +116,13 @@ export function scoreTimeline(score: ScoredHit, speed: AnimSpeed): Timeline {
     mult: score.mult,
     damage: score.damage,
   };
-  return { events: [...beats.events, final], end: final.at + final.duration + fade };
+  return { events: [...beats.events, final], end: final.at + final.duration + fade, start: startBoard(score.steps, score) };
 }
 
 /** The board after event `index` (-1: before the first step). */
 export function boardAt(timeline: Timeline, index: number): Board {
   const event = timeline.events[index];
-  return event ? { chips: event.chips, mult: event.mult, damage: event.damage } : { chips: 0, mult: 1, damage: null };
+  return event ? { chips: event.chips, mult: event.mult, damage: event.damage } : timeline.start;
 }
 
 /** Timers to run from event `from` on (0 — the whole show; the last index — a skip to the final). */

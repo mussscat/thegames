@@ -1,4 +1,5 @@
-import { revealsTopCard } from '@game/durak';
+import { previewTake, revealsTopCard, type FightState } from '@game/durak';
+import type { Board } from '../scoreTimeline';
 import { LayoutGroup } from 'motion/react';
 import { PixelIcon } from '../../../components/pixel/PixelIcon';
 import { ActionBar } from '../ActionBar';
@@ -7,7 +8,7 @@ import { FightOverlay } from '../FightOverlay';
 import { FocusBar } from '../FocusBar';
 import { JokerSheet } from '../JokerSheet';
 import { JokerStack } from '../JokerStack';
-import { ScoreBoard } from '../ScoreBoard';
+import { IDLE_BOARD, ScoreBoard } from '../ScoreBoard';
 import { ScorePops } from '../ScorePops';
 import { TableView } from '../TableView';
 import { firingJoker } from '../firingJoker';
@@ -23,6 +24,12 @@ import { PixelStats } from './PixelStats';
 import '../fight.css';
 import '../score.css';
 import './pixelFight.css';
+
+/** Between shows the board follows the table: what taking it right now would score. */
+function liveBoard(fight: FightState): Board {
+  const preview = previewTake(fight);
+  return preview ? { chips: preview.chips, mult: preview.mult, damage: preview.damage } : IDLE_BOARD;
+}
 
 type PixelFightScreenProps = FightViewInput & {
   readonly error: string | null;
@@ -55,7 +62,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
             <div className="fight__mid">
               <PixelDeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
               <TableView table={round.table} attacker={round.attacker} frame="table--panel">
-                {playback.board && <ScoreBoard board={playback.board} />}
+                <ScoreBoard board={playback.board ?? liveBoard(fight)} persistent />
               </TableView>
               <div className="fight__side-stack">
                 <JokerStack

@@ -77,7 +77,7 @@
 }
 /* The panel is a pseudo-element, not the table's own border-image: on iOS an empty table lost its frame until a card
    came. A flat fill (the kit panel navy) under it keeps the panel even if the frame image is slow to paint. */
-.pfight .table { gap: 26px 6px; padding: 8px 8px 32px; background: #2b3a67; background-clip: padding-box; }
+.pfight .table { gap: 26px 6px; padding: 36px 8px 32px; background: #2b3a67; background-clip: padding-box; }
 .pfight .table--panel { position: relative; }
 .pfight .table--panel::before {
   content: '';

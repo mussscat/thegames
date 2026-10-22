@@ -16,7 +16,7 @@ export function PixelStats({ coins, roundNumber, onExit }: PixelStatsProps) {
         <PixelText className="pfight__gold">{coins}</PixelText>
       </div>
       <div className="px-slot-filled pfight__tile" aria-label={`Раздача ${roundNumber}`}>
-        <PixelText size="s">Раздача</PixelText>
+        <PixelText>Раздача</PixelText>
         <PixelText>{roundNumber}</PixelText>
       </div>
     </header>

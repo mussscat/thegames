@@ -15,16 +15,30 @@ function hit(steps: readonly ScoreStep[], target: ScoredHit['target'] = 'enemy')
   return { chips, mult, damage: Math.floor(chips * mult), steps, target };
 }
 
+/** A shown step: plain cards get no beat of their own, so fixtures need a modifier to have one. */
+const bonusStep = (chips: number): ScoreStep => ({
+  source: { kind: 'joker', side: 'attacker', slot: 0, joker: 'trumpAce', acting: 'trumpAce' },
+  effect: { kind: 'times', value: 2 },
+  chips,
+  mult: 2,
+});
+
 describe('scoreTimeline', () => {
-  it('times each step after the board fades in, then the final', () => {
-    const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1);
-    expect(t.events.map((e) => e.at)).toEqual([200, 550, 900]);
-    expect(t.events.map((e) => e.duration)).toEqual([350, 350, 600]);
-    expect(t.end).toBe(1700);
+  it('times each shown step after the board fades in, then the final; plain cards get no beat', () => {
+    const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4), bonusStep(4)]), 1);
+    expect(t.events.map((e) => e.at)).toEqual([200, 550]);
+    expect(t.events.map((e) => e.duration)).toEqual([350, 600]);
+    expect(t.end).toBe(1350);
+  });
+
+  it('opens on the board the skipped cards already built', () => {
+    expect(scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4), bonusStep(4)]), 1).start).toEqual({ chips: 4, mult: 1, damage: null });
+    expect(scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1).start).toEqual({ chips: 4, mult: 1, damage: null });
+    expect(scoreTimeline(hit([bonusStep(0)]), 1).start).toEqual({ chips: 0, mult: 1, damage: null });
   });
 
   it('divides every duration by the speed', () => {
-    const t = scoreTimeline(hit([cardStep(ace, 3, 3)]), 3);
+    const t = scoreTimeline(hit([cardStep(ace, 3, 3), bonusStep(3)]), 3);
     expect(t.events[0]?.at).toBeCloseTo(200 / 3);
     expect(t.events[1]?.at).toBeCloseTo(550 / 3);
     expect(t.events[1]?.duration).toBeCloseTo(200);
@@ -40,7 +54,7 @@ describe('scoreTimeline', () => {
     ];
     const t = scoreTimeline(hit(steps, 'enemy'), 1);
     expect(t.events.map((e) => [e.label, e.tone])).toEqual([
-      ['+3', 'chips'], ['+1 множ.', 'mult'], ['×2', 'times'], ['×0.5', 'times'], ['−6', 'final'],
+      ['+1 множ.', 'mult'], ['×2', 'times'], ['×0.5', 'times'], ['−6', 'final'],
     ]);
     expect(t.events.at(-1)).toMatchObject({ pop: { kind: 'hp', side: 'enemy' }, bounce: [], chips: 3, mult: 2, damage: 6 });
   });
@@ -52,8 +66,8 @@ describe('scoreTimeline', () => {
       { source: { kind: 'joker', side: 'defender', slot: 0, joker: 'usurer', acting: 'usurer' }, effect: { kind: 'times', value: 1.5 }, chips: 1, mult: 4.5 },
     ];
     const t = scoreTimeline(hit(steps, 'player'), 1);
-    expect(t.events[1]).toMatchObject({ pop: { kind: 'joker', side: 'enemy', slot: 2 }, bounce: [{ kind: 'joker', side: 'enemy', slot: 2 }] });
-    expect(t.events[2]).toMatchObject({ pop: { kind: 'joker', side: 'player', slot: 0 } });
+    expect(t.events[0]).toMatchObject({ pop: { kind: 'joker', side: 'enemy', slot: 2 }, bounce: [{ kind: 'joker', side: 'enemy', slot: 2 }] });
+    expect(t.events[1]).toMatchObject({ pop: { kind: 'joker', side: 'player', slot: 0 } });
   });
 
   it('pops a per-card joker (and a mirror copying one) over the card while its own ticket bounces', () => {
@@ -63,24 +77,25 @@ describe('scoreTimeline', () => {
       { source: { kind: 'joker', side: 'attacker', slot: 1, joker: 'hearts', acting: 'hearts' }, effect: { kind: 'chips', value: 3 }, chips: 9, mult: 1 },
     ];
     const t = scoreTimeline(hit(steps, 'enemy'), 1);
-    expect(t.events[1]).toMatchObject({ pop: { kind: 'card', cardId: 'hearts-14' }, bounce: [{ kind: 'joker', side: 'player', slot: 0 }], label: '+3' });
-    expect(t.events[2]).toMatchObject({ pop: { kind: 'card', cardId: 'hearts-14' }, bounce: [{ kind: 'joker', side: 'player', slot: 1 }] });
+    expect(t.events[0]).toMatchObject({ pop: { kind: 'card', cardId: 'hearts-14' }, bounce: [{ kind: 'joker', side: 'player', slot: 0 }], label: '+3' });
+    expect(t.events[1]).toMatchObject({ pop: { kind: 'card', cardId: 'hearts-14' }, bounce: [{ kind: 'joker', side: 'player', slot: 1 }] });
   });
 
-  it('pops the tier step over the banner and a card step over its card, bouncing it', () => {
+  it('pops the tier step over the banner and skips the plain card step', () => {
     const steps: ScoreStep[] = [
       { source: { kind: 'tier' }, effect: { kind: 'times', value: 1.25 }, chips: 0, mult: 1.25 },
       cardStep(six, 1, 1),
     ];
     const t = scoreTimeline(hit(steps, 'player'), 1);
     expect(t.events[0]).toMatchObject({ pop: { kind: 'tier' }, bounce: [], label: '×1.25' });
-    expect(t.events[1]).toMatchObject({ pop: { kind: 'card', cardId: 'clubs-6' }, bounce: [{ kind: 'card', cardId: 'clubs-6' }] });
+    expect(t.events).toHaveLength(2);
+    expect(t.events[1]).toMatchObject({ tone: 'final' });
   });
 
   it('labels a focus step with the focus name and pops it over the player bar', () => {
     const steps: ScoreStep[] = [cardStep(six, 1, 1), { source: { kind: 'focus', focus: 'boost' }, effect: { kind: 'mult', value: 3 }, chips: 1, mult: 4 }];
     const t = scoreTimeline(hit(steps, 'enemy'), 1);
-    expect(t.events[1]).toMatchObject({ label: 'Разгон +3 множ.', tone: 'mult', pop: { kind: 'hp', side: 'player' }, bounce: [] });
+    expect(t.events[0]).toMatchObject({ label: 'Разгон +3 множ.', tone: 'mult', pop: { kind: 'hp', side: 'player' }, bounce: [] });
   });
 
   it('plays only the final for a hit with no steps', () => {
@@ -91,36 +106,36 @@ describe('scoreTimeline', () => {
 });
 
 describe('boardAt', () => {
-  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1);
-  it('starts at 0 × 1 before the first step', () => {
-    expect(boardAt(t, -1)).toEqual({ chips: 0, mult: 1, damage: null });
+  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4), bonusStep(4)]), 1);
+  it('starts on the cards already counted before the first shown step', () => {
+    expect(boardAt(t, -1)).toEqual({ chips: 4, mult: 1, damage: null });
   });
   it('follows the running values and shows the damage only on the final', () => {
-    expect(boardAt(t, 0)).toEqual({ chips: 3, mult: 1, damage: null });
-    expect(boardAt(t, 2)).toEqual({ chips: 4, mult: 1, damage: 4 });
+    expect(boardAt(t, 0)).toEqual({ chips: 4, mult: 2, damage: null });
+    expect(boardAt(t, 1)).toEqual({ chips: 4, mult: 2, damage: 8 });
   });
 });
 
 describe('playbackCues', () => {
-  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1);
+  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4), bonusStep(4)]), 1);
   it('cues every event from the start', () => {
-    expect(playbackCues(t, 0)).toEqual({ cues: [{ at: 200, index: 0 }, { at: 550, index: 1 }, { at: 900, index: 2 }], doneAt: 1700 });
+    expect(playbackCues(t, 0)).toEqual({ cues: [{ at: 200, index: 0 }, { at: 550, index: 1 }], doneAt: 1350 });
   });
   it('skipping cues the final at once and is the same when repeated', () => {
-    const skip = playbackCues(t, 2);
-    expect(skip).toEqual({ cues: [{ at: 0, index: 2 }], doneAt: 800 });
-    expect(playbackCues(t, 2)).toEqual(skip);
+    const skip = playbackCues(t, 1);
+    expect(skip).toEqual({ cues: [{ at: 0, index: 1 }], doneAt: 800 });
+    expect(playbackCues(t, 1)).toEqual(skip);
   });
 });
 
 describe('skipTarget', () => {
-  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4)]), 1);
+  const t = scoreTimeline(hit([cardStep(ace, 3, 3), cardStep(six, 1, 4), bonusStep(4)]), 1);
   it('jumps to the final from the board or any step', () => {
-    expect(skipTarget(t, -1)).toBe(2);
-    expect(skipTarget(t, 1)).toBe(2);
+    expect(skipTarget(t, -1)).toBe(1);
+    expect(skipTarget(t, 0)).toBe(1);
   });
   it('finishes at once when the final is already showing, so a skip never makes the show longer', () => {
-    expect(skipTarget(t, 2)).toBe('done');
+    expect(skipTarget(t, 1)).toBe('done');
   });
 });
 
