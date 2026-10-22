@@ -60,8 +60,6 @@
 .pfight .card--playable { translate: 0 -10px; filter: none; }
 .pfight .card--trump.card--playable .feel { filter: none; }
 .pfight .card--trump.card--playable .face::after { content: ''; position: absolute; inset: 0; border-radius: 4px; box-shadow: 0 0 8px 3px color-mix(in srgb, var(--glow-trump) 70%, transparent); pointer-events: none; z-index: 2; }
-/* The golden card is gold itself: its trump glow is a cool cyan so it still stands out. */
-.pfight .face--golden { --glow-trump: #5fe6ff; }
 
 /* ---------- hands ---------- */
 .pfight .hand--player { height: 136px; margin-top: -22px; } /* the box has ~28px of room above the fan (lift + tilt); pull it up so the gap to the table matches the enemy side */
