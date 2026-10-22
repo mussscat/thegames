@@ -86,11 +86,20 @@ export function stageLabel(stage: number): { readonly circle: number; readonly f
   return { circle: Math.floor(stage / FIGHTS_PER_CIRCLE) + 1, fight: (stage % FIGHTS_PER_CIRCLE) + 1 };
 }
 
-export function createRun(seed: number): RunState {
+/** What a run starts with beyond the default: a sandbox hands out jokers, focuses and coins up front, or starts at a later fight. */
+export type RunLoadout = {
+  readonly jokers?: readonly JokerId[];
+  readonly focuses?: readonly FocusId[];
+  readonly coins?: number;
+  readonly stage?: number;
+};
+
+export function createRun(seed: number, loadout: RunLoadout = {}): RunState {
   const start = createRng(seed);
   const [order, rng] = shuffle(BOSS_RULES, start);
   const bosses = order.slice(0, CIRCLES);
-  return startFight({ seed: start.seed, rng, stage: 0, coins: 0, jokers: [], collected: 0, profile: {}, focuses: [], bosses, phase: { kind: 'over', won: false } });
+  const { jokers = [], focuses = [], coins = 0, stage = 0 } = loadout;
+  return startFight({ seed: start.seed, rng, stage, coins, jokers, collected: 0, profile: {}, focuses, bosses, phase: { kind: 'over', won: false } });
 }
 
 export type StageEnemy = EnemySpec & { readonly boss: BossRule | null };

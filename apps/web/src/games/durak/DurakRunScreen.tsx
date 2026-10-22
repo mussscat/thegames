@@ -10,10 +10,12 @@ type DurakRunScreenProps = {
   readonly initialRun: RunState;
   readonly onExit: () => void;
   readonly onNewRun: () => void;
+  /** Off in the sandbox: the run is not written to the save slot. */
+  readonly persist?: boolean;
 };
 
-export function DurakRunScreen({ initialRun, onExit, onNewRun }: DurakRunScreenProps) {
-  const { run, error, errorSeq, scoring, finishScoring, act } = useDurakRun(initialRun);
+export function DurakRunScreen({ initialRun, onExit, onNewRun, persist = true }: DurakRunScreenProps) {
+  const { run, error, errorSeq, scoring, finishScoring, act } = useDurakRun(initialRun, persist);
   const { phase } = run;
   const onStage = useStage().root !== null;
   switch (phase.kind) {

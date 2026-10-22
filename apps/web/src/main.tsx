@@ -17,15 +17,23 @@ import { installShellGuards } from './ui/shell';
 /** `?lab` opens the card lab — a tuning tool kept out of the main bundle. */
 const CardLab = lazy(() => import('./lab/CardLab').then((module) => ({ default: module.CardLab })));
 
+/** `?sandbox` opens the game with any jokers and focuses picked from a panel — also kept out of the main bundle. */
+const SandboxApp = lazy(() => import('./lab/SandboxApp').then((module) => ({ default: module.SandboxApp })));
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element #root not found');
 
 function render(root: HTMLElement): void {
+  const params = new URLSearchParams(window.location.search);
   createRoot(root).render(
     <StrictMode>
-      {new URLSearchParams(window.location.search).has('lab') ? (
+      {params.has('lab') ? (
         <Suspense fallback={null}>
           <CardLab />
+        </Suspense>
+      ) : params.has('sandbox') ? (
+        <Suspense fallback={null}>
+          <SandboxApp />
         </Suspense>
       ) : (
         <App />

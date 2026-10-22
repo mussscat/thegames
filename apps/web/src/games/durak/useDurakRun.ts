@@ -20,7 +20,8 @@ export type DurakRun = {
 
 type Held = { readonly before: RunState; readonly score: ScoredHit };
 
-export function useDurakRun(initial: RunState): DurakRun {
+/** `persist` off keeps the run out of the save slot (the sandbox must not overwrite a real run). */
+export function useDurakRun(initial: RunState, persist = true): DurakRun {
   const [run, setRun] = useState(initial);
   const [held, setHeld] = useState<Held | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +48,11 @@ export function useDurakRun(initial: RunState): DurakRun {
   const finishScoring = useCallback(() => setHeld(null), []);
 
   useEffect(() => {
-    const store = browserStore();
+    const store = persist ? browserStore() : null;
     if (!store) return;
     if (run.phase.kind === 'over') clearRun(store);
     else saveRun(store, run);
-  }, [run]);
+  }, [run, persist]);
 
   useEffect(() => {
     if (held || run.phase.kind !== 'fight') return undefined;
