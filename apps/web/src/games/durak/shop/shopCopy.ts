@@ -69,7 +69,7 @@ export function packSizeText(size: PackSize): string {
 }
 
 /** Shown under anything that talks about chips or the multiplier. */
-export const SCORE_HELP: TipLine = { name: 'Как считается удар', owner: null, description: 'Фишки (от забранных на «Беру» карт) × Множитель = урон' };
+export const SCORE_HELP: TipLine = { name: 'Как считается удар', owner: null, description: 'Фишки (от карт, которые берёт защитник) × Множитель = урон' };
 
 const MENTIONS_SCORING = /фишк|множител/i;
 
