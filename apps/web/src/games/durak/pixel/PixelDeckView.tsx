@@ -1,11 +1,37 @@
-import { isRedSuit } from '@game/core';
+import { isRedSuit, type Card } from '@game/core';
 import type { RoundState } from '@game/durak';
+import { motion } from 'motion/react';
 import { CardBack, CardView } from '../../../components/CardView';
 import { PixelIcon } from '../../../components/pixel/PixelIcon';
 import { PixelText } from '../../../components/pixel/PixelText';
 import { SuitMark } from '../../../ui/SuitMark';
+import { useMotionEnabled } from '../../../ui/useMotion';
 
 type PixelDeckViewProps = { readonly round: RoundState; readonly revealTop: boolean; /** Top cards shown face up (Прорицание). */ readonly peek?: number };
+
+const PEEK_STAGGER_S = 0.15;
+
+/** A card of the peek column: it turns over from its back and fades in, the one nearest the pile first. */
+function PeekCard({ card, index }: { readonly card: Card; readonly index: number }) {
+  const motionOn = useMotionEnabled();
+  return (
+    <div className="deck__peek-slot">
+      <motion.div
+        className="hand__flip"
+        initial={motionOn ? { rotateY: 180, opacity: 0 } : false}
+        animate={{ rotateY: 0, opacity: 1 }}
+        transition={motionOn ? { type: 'spring', stiffness: 220, damping: 18, delay: index * PEEK_STAGGER_S } : { duration: 0 }}
+      >
+        <div className="hand__flip-face">
+          <CardView card={card} />
+        </div>
+        <div className="hand__flip-back">
+          <CardBack />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 /** The deck pile on the pixel stage: the same pile as `DeckView`, with the count and the trump on kit text and a native deck icon. */
 export function PixelDeckView({ round, revealTop, peek = 0 }: PixelDeckViewProps) {
@@ -16,8 +42,8 @@ export function PixelDeckView({ round, revealTop, peek = 0 }: PixelDeckViewProps
     <div className={peek > 0 ? 'deck pdeck pdeck--peek' : 'deck pdeck'} data-testid="deck">
       {peek > 0 && (
         <div className="deck__peek" data-testid="deck-peek">
-          {round.deck.slice(0, Math.min(peek, Math.max(0, round.deck.length - 1))).map((card) => (
-            <CardView key={card.id} card={card} />
+          {round.deck.slice(0, Math.min(peek, Math.max(0, round.deck.length - 1))).map((card, index) => (
+            <PeekCard key={card.id} card={card} index={index} />
           ))}
         </div>
       )}
