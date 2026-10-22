@@ -2,7 +2,7 @@ import { isRedSuit, rankLabel, SUIT_NAMES, type Card } from '@game/core';
 import { ENHANCEMENTS, type CardEnhancements, type EnhancementId, type EnhancementSource } from '@game/durak';
 import { motion } from 'motion/react';
 import { CardFace } from '../ui/CardFace';
-import { tipLines } from './tipLines';
+import { tipLines, type TipLine } from './tipLines';
 import { CardTip, useCardTip } from './CardTip';
 import { FeelBox } from '../ui/FeelBox';
 import { backUrl } from '../ui/pixel/cardSprite';
@@ -22,6 +22,8 @@ type CardViewProps = {
   readonly onTapOption?: (use: EnhancementSource) => void;
   /** Halves that are a legal move right now; the others are disabled and dimmed. */
   readonly legalUses?: readonly EnhancementSource[];
+  /** Lines shown first in the held-down tooltip: the chips the card deals. */
+  readonly strikes?: readonly TipLine[];
 };
 
 function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''): string {
@@ -30,12 +32,12 @@ function cardClasses(card: Card, playable: boolean, trump: boolean, extra = ''):
     .join(' ');
 }
 
-export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses }: CardViewProps) {
+export function CardView({ card, playable = false, trump = false, enhancements, onTap, onTapOption, legalUses, strikes = [] }: CardViewProps) {
   const shared = useSharedLayout();
   const label = `${rankLabel(card.rank)} ${SUIT_NAMES[card.suit]}`;
   const own = enhancements?.own;
   const foreign = enhancements?.foreign;
-  const lines = tipLines(enhancements);
+  const lines = [...strikes, ...tipLines(enhancements)];
   const tip = useCardTip(lines.length > 0, !onTap && !onTapOption);
   const bubble = tip.anchor && <CardTip anchor={tip.anchor} lines={lines} />;
 

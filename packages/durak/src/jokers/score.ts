@@ -162,3 +162,15 @@ export function scoreTake(input: ScoreInput): TakeScore {
   const damage = Math.max(0, Math.floor(final.chips * final.mult + EPSILON));
   return { chips: final.chips, mult: final.mult, damage, steps: final.steps };
 }
+
+/** One chips bonus of a single card: its rank, its enhancement or a card joker. */
+export type CardPart = { readonly source: StepSource; readonly chips: number };
+
+export type CardScore = { readonly chips: number; readonly parts: readonly CardPart[] };
+
+/** The chips one card adds to a take (multipliers and whole-take effects left out); `input.attacker` supplies the card jokers. */
+export function cardScore(taken: TakenCard, input: ScoreInput): CardScore {
+  const { steps } = scoreCard({ chips: 0, mult: 1, steps: [] }, taken, input);
+  const parts = steps.flatMap((step) => (step.effect.kind === 'chips' ? [{ source: step.source, chips: step.effect.value }] : []));
+  return { chips: parts.reduce((sum, part) => sum + part.chips, 0), parts };
+}

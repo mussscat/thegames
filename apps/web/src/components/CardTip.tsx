@@ -119,7 +119,7 @@ export function CardTip({ anchor, lines }: { readonly anchor: Anchor; readonly l
     <StagePortal>
     <div ref={ref} className="card-tip" role="tooltip" style={style}>
       {lines.map((line) => (
-        <p key={line.name} className="card-tip__line">
+        <p key={`${line.name}/${line.owner ?? ''}`} className="card-tip__line">
           <strong className="card-tip__name">
             {line.name}
             {line.owner && <span className="card-tip__owner"> · {line.owner}</span>}

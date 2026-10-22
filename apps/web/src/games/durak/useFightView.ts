@@ -2,6 +2,10 @@ import type { Card } from '@game/core';
 import {
   applyFocus,
   currentActor,
+  enhancementVariants,
+  previewCardScore,
+  type CardEnhancements,
+  type TablePair,
   FOCUSES,
   focusReady,
   type EnhancementSource,
@@ -11,6 +15,8 @@ import {
   type ScoredHit,
 } from '@game/durak';
 import { useEffect, useState } from 'react';
+import { strikeTip } from '../../components/strikeTips';
+import type { TipLine } from '../../components/tipLines';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
 import { type FocusAction } from './ActionBar';
@@ -76,9 +82,15 @@ export function useFightView({ fight, errorSeq, run, scoring, onScoringDone, onF
           onCancel: () => setFocusPick(null),
         }
       : null;
+  // Held-down tooltips: what a card deals with every chips bonus in play (the player's jokers for a hand card, the attacker's for a table card).
+  const handStrikes = (card: Card, enhancements: CardEnhancements): readonly TipLine[] => {
+    const variants = enhancementVariants(enhancements);
+    return variants.map((variant) => strikeTip(previewCardScore(fight, card, variant.enhancement ?? null, 'player'), variant.use ? (variant.use === 'own' ? 'твоё' : 'соперника') : null));
+  };
+  const tableStrikes = (pair: TablePair): readonly TipLine[] => [strikeTip(previewCardScore(fight, pair.attack, pair.attackEnh ?? null, round.attacker), null)];
   const play = (card: Card, use?: EnhancementSource): void => {
     const base = defending ? { type: 'defend' as const, cardId: card.id } : { type: 'attack' as const, cardId: card.id };
     onFightAction(use ? { ...base, use } : base);
   };
-  return { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play };
+  return { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play, handStrikes, tableStrikes };
 }

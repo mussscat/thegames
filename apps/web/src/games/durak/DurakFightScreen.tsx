@@ -40,7 +40,7 @@ type DurakFightScreenProps = {
 };
 
 export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScoringDone, onFightAction, onLeaveFight, onExit, onUseFocus, onMoveJoker }: DurakFightScreenProps) {
-  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, targeting, focusAction, play } = useFightView({
+  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, targeting, focusAction, play, handStrikes, tableStrikes } = useFightView({
     fight,
     errorSeq,
     run,
@@ -94,7 +94,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
           <EnemyHand cards={round.hands.enemy} revealed={fight.reveal.enemyHand} />
           <div className="fight__mid">
             <DeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-            <TableView table={round.table} attacker={round.attacker}>
+            <TableView table={round.table} attacker={round.attacker} strikeOf={tableStrikes}>
               {playback.board && <ScoreBoard board={playback.board} />}
             </TableView>
             <div className="fight__side-stack">
@@ -108,7 +108,7 @@ export function DurakFightScreen({ fight, error, errorSeq, run, scoring, onScori
               />
               </div>
           </div>
-          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} strikeOf={handStrikes} />
           <ActionBar round={round} myTurn={myTurn} onAct={onFightAction} focus={focusAction} chips={<FocusBar focuses={focuses} pick={focusPick} onPick={setFocusPick} />} />
         </div>
         <p className="sr-only" role="status">

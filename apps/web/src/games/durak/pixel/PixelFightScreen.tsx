@@ -45,7 +45,7 @@ type PixelFightScreenProps = FightViewInput & {
  */
 export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...input }: PixelFightScreenProps) {
   const { fight, run, onFightAction, onUseFocus, errorSeq } = input;
-  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play } = useFightView(input, { replay: false });
+  const { settings, round, playback, myTurn, focuses, focusPick, setFocusPick, sheetOpen, setSheetOpen, focusSheetOpen, setFocusSheetOpen, targeting, focusAction, play, handStrikes, tableStrikes } = useFightView(input, { replay: false });
   const hit = (target: 'enemy' | 'player'): number => (fight.hits.some((h) => h.target === target) ? fight.hitSeq : 0);
   return (
     <LayoutGroup>
@@ -62,7 +62,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
           <CardSizeContext.Provider value="s">
             <div className="fight__mid">
               <PixelDeckView round={round} revealTop={revealsTopCard(fight.jokers.player)} peek={fight.reveal.topCards} />
-              <TableView table={round.table} attacker={round.attacker} frame="table--panel">
+              <TableView table={round.table} attacker={round.attacker} frame="table--panel" strikeOf={tableStrikes}>
                 <ScoreBoard board={playback.board ?? liveBoard(fight)} persistent />
               </TableView>
               <div className="fight__side-stack">
@@ -78,7 +78,7 @@ export function PixelFightScreen({ error, onLeaveFight, onExit, onMoveJoker, ...
               </div>
             </div>
           </CardSizeContext.Provider>
-          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} />
+          <PlayerHand round={round} myTurn={myTurn} shakeKey={errorSeq} sort={settings.sort} onPlay={play} targeting={targeting} strikeOf={handStrikes} />
         </div>
         <p className="sr-only" role="status">
           {error ?? statusText(fight)}

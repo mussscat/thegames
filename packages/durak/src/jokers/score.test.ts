@@ -3,7 +3,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import type { EnhancementId } from '../enhancements';
 import type { JokerId } from './catalog';
-import { scoreTake, type ScoreInput, type TakenCard } from './score';
+import { cardScore, scoreTake, type ScoreInput, type TakenCard } from './score';
 import { EMPTY_JOKER_STATE, type JokerState } from './state';
 
 const c = (rank: Rank, suit: Suit): Card => makeCard(suit, rank);
@@ -141,5 +141,30 @@ describe('focus charges', () => {
     const score = scoreTake(input([t(c(14, 'clubs')), t(c(14, 'hearts'))], { shield: 0.5 }));
     expect(score.steps.at(-1)?.source).toEqual({ kind: 'focus', focus: 'shield' });
     expect(score.damage).toBe(3);
+  });
+});
+
+describe('cardScore', () => {
+  it('sums the chips one card brings: rank, its enhancement and the attacker\'s card jokers', () => {
+    const score = cardScore(t(c(7, 'clubs'), 'golden'), input([], {}, ['clubs', 'small']));
+    expect(score.chips).toBe(1 + 3 + 3 + 2);
+    expect(score.parts.map((part) => [part.source.kind, part.chips])).toEqual([
+      ['card', 1],
+      ['enhancement', 3],
+      ['joker', 3],
+      ['joker', 2],
+    ]);
+  });
+
+  it('leaves multipliers and whole-take effects out', () => {
+    expect(cardScore(t(c(9, 'spades'), 'sharp'), input([], {}, ['gloat', 'trumpAce', 'usurer'])).chips).toBe(1);
+  });
+
+  it('matches what the card adds to a real take', () => {
+    const jokers: readonly JokerId[] = ['small', 'hearts'];
+    const taken = t(c(6, 'hearts'), 'golden');
+    const rest = t(c(14, 'clubs'));
+    const whole = scoreTake(input([taken, rest], {}, jokers)).chips;
+    expect(cardScore(taken, input([], {}, jokers)).chips + cardScore(rest, input([], {}, jokers)).chips).toBe(whole);
   });
 });

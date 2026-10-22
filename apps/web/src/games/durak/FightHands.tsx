@@ -1,5 +1,5 @@
 import type { Card } from '@game/core';
-import { cardEnhancements, isTrumpCard, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
+import { cardEnhancements, isTrumpCard, type CardEnhancements, legalActions, type EnhancementSource, type RoundState } from '@game/durak';
 import { motion, useAnimate } from 'motion/react';
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { usePrevious } from '../../ui/usePrevious';
@@ -10,6 +10,7 @@ import { useHandSlot } from '../../ui/useFlightIn';
 import { useSharedLayout } from '../../ui/SharedLayoutContext';
 import { useMotionEnabled } from '../../ui/useMotion';
 import { sortHand, type HandSort } from '../../ui/handSort';
+import type { TipLine } from '../../components/tipLines';
 
 /** A hand slot; remembers where its card stood so the table can fly the card from there. */
 function HandSlot({ id, index, className, style, children }: { readonly id: string; readonly index: number; readonly className: string; readonly style: CSSProperties; readonly children: ReactNode }) {
@@ -73,9 +74,11 @@ type PlayerHandProps = {
   readonly onPlay: (card: Card, use?: EnhancementSource) => void;
   /** A focus choosing its target cards: every card is tappable and a tap picks it instead of playing it. */
   readonly targeting?: { readonly picked: readonly string[]; readonly onPick: (card: Card) => void } | null;
+  /** What a card held down deals, as tooltip lines. */
+  readonly strikeOf?: (card: Card, enhancements: CardEnhancements) => readonly TipLine[];
 };
 
-export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targeting = null }: PlayerHandProps) {
+export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targeting = null, strikeOf }: PlayerHandProps) {
   const legal = legalActions(round, 'player');
   const playableIds = new Set(legal.flatMap((action) => ('cardId' in action ? [action.cardId] : [])));
   const legalUses = (cardId: string): readonly EnhancementSource[] =>
@@ -108,6 +111,7 @@ export function PlayerHand({ round, myTurn, shakeKey = 0, sort, onPlay, targetin
               onTap={targeting ? () => targeting.onPick(card) : myTurn && !split ? () => onPlay(card) : undefined}
               onTapOption={!targeting && myTurn && split ? (use) => onPlay(card, use) : undefined}
               legalUses={!targeting && myTurn && split ? legalUses(card.id) : undefined}
+              strikes={strikeOf?.(card, enhancements)}
             />
           </HandSlot>
         );

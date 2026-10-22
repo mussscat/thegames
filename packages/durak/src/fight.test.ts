@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFightAction, createFight, NO_CHARGES, NO_REVEAL, previewTake, type FightAction, type FightState } from './fight';
+import { applyFightAction, createFight, NO_CHARGES, NO_REVEAL, previewCardScore, previewTake, type FightAction, type FightState } from './fight';
 import { c, filler, roundState } from './fixtures';
 import type { JokerId } from './jokers/catalog';
 import type { PlayerId, RoundState } from './types';
@@ -405,5 +405,25 @@ describe('previewTake', () => {
 
   it('is null once the fight is over', () => {
     expect(previewTake({ ...base, winner: 'player' })).toBeNull();
+  });
+});
+
+describe('previewCardScore', () => {
+  const fightWith = (round: RoundState, over: Partial<FightState> = {}): FightState => ({ ...base, round, ...over });
+  const quiet = roundState({ hands: { player: filler(5), enemy: filler(5, 'diamonds') }, table: [] });
+
+  it('a card in the player\'s hand scores with the player\'s jokers', () => {
+    const state = fightWith(quiet, { jokers: { player: ['small'], enemy: ['clubs'] } });
+    expect(previewCardScore(state, c(7, 'clubs'), null, 'player').chips).toBe(3);
+  });
+
+  it('a card on the table scores with its attacker\'s jokers, the enemy\'s when it attacks', () => {
+    const round = roundState({ ...quiet, attacker: 'enemy', table: [{ attack: c(7, 'clubs'), defense: null }] });
+    const state = fightWith(round, { jokers: { player: ['small'], enemy: ['clubs'] } });
+    expect(previewCardScore(state, c(7, 'clubs'), null, 'enemy').chips).toBe(4);
+  });
+
+  it('counts the enhancement the card is played with', () => {
+    expect(previewCardScore(fightWith(quiet), c(10, 'hearts'), 'golden', 'player').chips).toBe(4);
   });
 });

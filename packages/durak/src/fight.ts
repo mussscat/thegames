@@ -2,7 +2,7 @@ import { createRng, err, nextInt, ok, SUITS, type Card, type Result, type RngSta
 import { dealRound } from './deal';
 import { EMPTY_PROFILES, type EnhancementId, type Profiles } from './enhancements';
 import { jokerHandSizes, type SideJokers } from './jokers/catalog';
-import { scoreTake, type ScoreInput, type TakeScore, type TakenCard } from './jokers/score';
+import { cardScore, scoreTake, type CardScore, type ScoreInput, type TakeScore, type TakenCard } from './jokers/score';
 import { afterBeaten, afterHitDealt, afterOwnTake, afterRound, EMPTY_JOKER_STATE, type JokerState } from './jokers/state';
 import { applyRoundAction } from './reducer';
 import {
@@ -191,6 +191,14 @@ export function previewTake(state: FightState): TakePreview | null {
   const taken: readonly TakenCard[] = round.table.map((pair) => ({ card: pair.attack, enhancement: pair.attackEnh ?? null }));
   const { chips, mult, damage } = scoreTake(takeScoreInput(state, taker, taken, round));
   return { taker, chips, mult, damage };
+}
+
+/**
+ * What one card would add to a take as chips (held down in the hand or on the table): `attacker` is who plays it as an
+ * attack, so their jokers score it; `enhancement` is the one it is (or would be) played with.
+ */
+export function previewCardScore(state: FightState, card: Card, enhancement: EnhancementId | null, attacker: PlayerId): CardScore {
+  return cardScore({ card, enhancement }, takeScoreInput(state, opponentOf(attacker), [], state.round));
 }
 
 /** Only taking the table hurts: the attacker's jokers score the take, the taker's defensive jokers apply last. */
