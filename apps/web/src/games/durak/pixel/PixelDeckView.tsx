@@ -13,7 +13,7 @@ export function PixelDeckView({ round, revealTop, peek = 0 }: PixelDeckViewProps
   const showTopFaceUp = revealTop && round.deck.length > 1 && top !== undefined;
   const stack = Math.min(3, Math.max(0, round.deck.length - 1));
   return (
-    <div className="deck pdeck" data-testid="deck">
+    <div className={peek > 0 ? 'deck pdeck pdeck--peek' : 'deck pdeck'} data-testid="deck">
       {peek > 0 && (
         <div className="deck__peek" data-testid="deck-peek">
           {round.deck.slice(0, Math.min(peek, Math.max(0, round.deck.length - 1))).map((card) => (

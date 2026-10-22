@@ -103,6 +103,7 @@
 .pfight .deck__peek > .card:nth-child(1) { z-index: 3; }
 .pfight .deck__peek > .card:nth-child(2) { z-index: 2; bottom: 26px; }
 .pfight .deck__peek > .card:nth-child(3) { z-index: 1; bottom: 52px; }
+.pfight .pdeck--peek .deck__pile, .pfight .pdeck--peek .pdeck__info { translate: 0 10px; } /* with the peek column: the pile and its count step down, widening the gap */
 .pdeck__info { position: absolute; left: -4px; right: -4px; top: 77px; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 4px; }
 .pdeck__count, .pdeck__trump { display: inline-flex; align-items: center; gap: 2px; }
 
