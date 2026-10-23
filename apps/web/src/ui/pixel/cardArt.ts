@@ -195,8 +195,6 @@ let artPixels: Readonly<Partial<Record<EnhancementId, Pixels>>> = {};
 let jokerPixels: Readonly<Partial<Record<JokerId, Pixels>>> = {};
 const smallUrls = new Map<string, string>();
 let jokerUrls: Readonly<Partial<Record<JokerId, string>>> = {};
-/** One common-rarity card back per pack kind: the emblem stand-in of the pack art. */
-let backdropUrls: Readonly<Partial<Record<'jokers' | 'arcana' | 'focuses' | 'deck', string>>> = {};
 let trickUrls: Readonly<Partial<Record<FocusId, string>>> = {};
 let tarotUrls: Readonly<Partial<Record<TarotId, string>>> = {};
 const suitUrls = new Map<string, string>();
@@ -219,7 +217,6 @@ export async function preloadCardArt(): Promise<void> {
     loadPixels(backSheetUrl).then((sheet) => {
       backPixels = fitWholeCard(crop(sheet, BACK_FRAME));
       backUrl = pixelsToUrl(backPixels);
-      backdropUrls = { ...backdropUrls, deck: backUrl };
     }),
     loadJokerArt(),
     loadSuitArt(),
@@ -244,7 +241,6 @@ async function loadSuitArt(): Promise<void> {
 async function loadJokerArt(): Promise<void> {
   const loaded = await Promise.all(RARITIES.map((rarity) => loadPixels(JOKER_BACKGROUNDS[rarity])));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
-  backdropUrls = { ...backdropUrls, jokers: pixelsToUrl(backgrounds.common) };
   await Promise.allSettled(
     JOKER_PERS_SHEETS.map(async (sheet, index) => {
       const url = JOKER_PERS_URLS[index];
@@ -264,7 +260,6 @@ async function loadJokerArt(): Promise<void> {
 async function loadTarotArt(): Promise<void> {
   const loaded = await Promise.all(RARITIES.map(async (rarity) => keyOut(await loadPixels(TARO_BACKGROUNDS[rarity]), TARO_BG_KEY)));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
-  backdropUrls = { ...backdropUrls, arcana: pixelsToUrl(backgrounds.common) };
   await Promise.allSettled(
     TARO_SHEETS.map(async (sheet, index) => {
       const url = TARO_URLS[index];
@@ -283,7 +278,6 @@ async function loadTarotArt(): Promise<void> {
 async function loadTrickArt(): Promise<void> {
   const loaded = await Promise.all(RARITIES.map((rarity) => loadPixels(TRICK_BACKGROUNDS[rarity])));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
-  backdropUrls = { ...backdropUrls, focuses: pixelsToUrl(backgrounds.common) };
   await Promise.allSettled(
     TRICK_SHEETS.map(async (sheet, index) => {
       const url = TRICK_URLS[index];
@@ -320,10 +314,6 @@ export function backArtUrl(size: CardSize = 'l'): string | undefined {
   return size === 's' ? smallUrl('back', backPixels, toSmallCard) : backUrl;
 }
 
-/** A card back in the colours of the pack kind (jokers, tarots, focuses, playing cards). */
-export function packBackdropUrl(kind: 'jokers' | 'arcana' | 'focuses' | 'deck'): string | undefined {
-  return backdropUrls[kind];
-}
 
 export function focusArtUrl(id: FocusId): string | undefined {
   return trickUrls[id];

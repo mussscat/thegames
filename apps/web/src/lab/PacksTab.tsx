@@ -19,6 +19,7 @@ import { PackCardFace } from '../games/durak/shop/PackCardFace';
 import { PackOpening } from '../games/durak/shop/PackOpening';
 import { cardLabel, PACK_NAMES, PACK_SIZE_NAMES } from '../games/durak/shop/shopCopy';
 import '../games/durak/shop.css';
+import { PackVariants } from './PackVariants';
 import { PixelButton } from '../ui/PixelButton';
 import { SettingsProvider, useSettings } from '../ui/SettingsContext';
 
@@ -78,6 +79,7 @@ function PacksBench() {
       <p>
         Монеты: {bench.purse.coins} · Джокеры: {bench.purse.jokers.map((id) => JOKERS[id].name).join(', ') || '—'} · Колода: {deck || '—'}
       </p>
+      <PackVariants />
       <h3>Все таро</h3>
       <div className="lab__tarots">
         {TAROT_IDS.map((id) => (

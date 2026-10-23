@@ -1,34 +1,22 @@
 import type { PackKind, PackSize } from '@game/durak';
-import packBigUrl from '../../../assets/pack_bg_big.png';
-import packMegaUrl from '../../../assets/pack_bg_mega.png';
-import packNormalUrl from '../../../assets/pack_bg_normal.png';
-import { packBackdropUrl } from '../../../ui/pixel/cardArt';
-import { PACK_NAMES, PACK_SIZE_NAMES, packSizeText } from './shopCopy';
+import arcanaUrl from '../../../assets/pack_arcana.png';
+import deckUrl from '../../../assets/pack_deck.png';
+import focusesUrl from '../../../assets/pack_focuses.png';
+import jokersUrl from '../../../assets/pack_jokers.png';
+import { PACK_NAMES, PACK_SIZE_NAMES } from './shopCopy';
 
-/** One foil per size. */
-const PACK_FOILS: Readonly<Record<PackSize, string>> = { normal: packNormalUrl, big: packBigUrl, mega: packMegaUrl };
+/** One sealed foil per kind, drawn 106x142 (the transparent rows are cut, stretched to the slot height) with the kind's emblem and an empty label plate. */
+const PACK_FOILS: Readonly<Record<PackKind, string>> = { jokers: jokersUrl, arcana: arcanaUrl, focuses: focusesUrl, deck: deckUrl };
 
 /**
- * A sealed foil booster: the foil of its size, a fan of three of the kind's card backs (no pack emblems were drawn,
- * so the colour of the cards tells the kind), the name and «N карт · бери K».
+ * A sealed foil booster: the foil of its kind, the size on its plate. Without a size (the opening screen) the plate
+ * names the kind instead.
  */
-/** Without a size (the opening screen) the pack shows the normal foil and no size label. */
 export function PackArt({ kind, size }: { readonly kind: PackKind; readonly size?: PackSize }) {
-  const back = packBackdropUrl(kind);
-  const foil = PACK_FOILS[size ?? 'normal'];
   return (
     <span className={`pack pack--${kind} pack--${size ?? 'normal'}`}>
-      <img className="sprite pack__foil" src={foil} alt="" draggable={false} />
-      {back && (
-        <span className="pack__fan" aria-hidden="true">
-          <img className="sprite pack__card pack__card--left" src={back} alt="" draggable={false} />
-          <img className="sprite pack__card pack__card--right" src={back} alt="" draggable={false} />
-          <img className="sprite pack__card pack__card--middle" src={back} alt="" draggable={false} />
-        </span>
-      )}
-      <span className="pack__name">{PACK_NAMES[kind]}</span>
-      {size && <span className="pack__size">{PACK_SIZE_NAMES[size]}</span>}
-      {size && <span className="pack__count">{packSizeText(size)}</span>}
+      <img className="sprite pack__foil" src={PACK_FOILS[kind]} alt="" draggable={false} />
+      <span className="pack__label">{size ? PACK_SIZE_NAMES[size] : PACK_NAMES[kind]}</span>
     </span>
   );
 }

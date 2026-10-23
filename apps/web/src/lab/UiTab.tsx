@@ -34,7 +34,7 @@ export function UiTab() {
     <div className="jokerlab">
       <section className="panel jokerlab__group">
         <h2 className="gallery__title">Паки</h2>
-        <p className="jokerlab__summary">Три фольги по размеру. Эмблем нет: вместо них веер из карт своего вида.</p>
+        <p className="jokerlab__summary">Фольга своего вида с эмблемой; размер написан на плашке.</p>
         {PACK_SIZES.map((size) => (
           <div key={size} className="uilab__row">
             <h3 className="gallery__subtitle">

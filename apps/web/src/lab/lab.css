@@ -142,6 +142,8 @@
 
 .lab__packs { display: flex; flex-direction: column; gap: 12px; }
 .lab__tarots { display: flex; flex-wrap: wrap; gap: 10px; }
+.lab__variants { --slot-h: clamp(92px, 16vh, 190px); display: flex; flex-wrap: wrap; gap: 14px; }
+.lab__variant { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; font-size: 0.75rem; }
 .lab__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
 /* ---------- sprites tab ---------- */

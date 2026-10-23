@@ -6,7 +6,7 @@ import { randomSeed } from '../seed';
 import { Backdrop } from '../ui/Backdrop';
 import { PixelStage } from '../ui/PixelStage';
 import { SettingsProvider } from '../ui/SettingsContext';
-import { readStageFlag } from '../ui/stageFlag';
+import { stageEnabled } from '../ui/stageFlag';
 import './sandbox.css';
 
 const SANDBOX_COINS = 50;
@@ -54,7 +54,8 @@ export function SandboxApp() {
   const [start, setStart] = useState<Start>('fight');
   const [coins, setCoins] = useState(SANDBOX_COINS);
   const [seed, setSeed] = useState(randomSeed);
-  const [onStage] = useState(readStageFlag);
+  // The sandbox always shows the pixel screens (as `?pixel` does); `?sandbox&pixel=0` brings the old ones back.
+  const [onStage] = useState(() => stageEnabled(window.location.search, '1'));
 
   // No shop follows the last fight, so a shop start offers one fewer stage.
   const lastStage = start === 'shop' ? RUN_SCHEDULE.length - 2 : RUN_SCHEDULE.length - 1;
