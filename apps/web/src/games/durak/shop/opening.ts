@@ -1,17 +1,20 @@
 import { conflictFor, MAX_FOCUSES, MAX_JOKERS, TAROTS, targetsOk, type DeckProfile, type EnhancementId, type FocusId, type JokerId, type PackCard, type ShopItem } from '@game/durak';
 
 /** Durations at x1; the animation speed setting divides them. */
-export const TEAR_MS = 600;
+/** The pack shakes and tears open. */
+export const TEAR_MS = 1100;
+/** The cards fly out of the tear before the first one flips. */
+export const BURST_MS = 350;
 export const FLIP_STEP_MS = 250;
 export const FLIP_MS = 300;
 
 export type RevealPlan = { readonly cardsAt: number; readonly flips: readonly number[]; readonly done: number };
 
-/** When the torn pack shows its cards and when each one flips face up. */
+/** When the torn pack shows its cards and when each one flips face up (after they have flown out). */
 export function revealSchedule(count: number, speed: number, reduced: boolean): RevealPlan {
   if (reduced) return { cardsAt: 0, flips: Array.from({ length: count }, () => 0), done: 0 };
   const cardsAt = TEAR_MS / speed;
-  const flips = Array.from({ length: count }, (_, i) => cardsAt + (i * FLIP_STEP_MS) / speed);
+  const flips = Array.from({ length: count }, (_, i) => cardsAt + (BURST_MS + i * FLIP_STEP_MS) / speed);
   return { cardsAt, flips, done: (flips.at(-1) ?? cardsAt) + FLIP_MS / speed };
 }
 

@@ -23,6 +23,8 @@ type ShopSlotProps = {
   /** «Купить» for single items, «Открыть» for packs. */
   readonly verb: string;
   readonly warning?: string | null;
+  /** The purchase happens once the sheet has closed — for a pack, whose opening is a full-screen layer. */
+  readonly buyAfterClose?: boolean;
   /** Disables the buy button with this text (e.g. «Мало места»). */
   readonly blocked?: string | null;
   readonly onSelect: () => void;
@@ -35,7 +37,7 @@ type ShopSlotProps = {
  * a tap opens a sheet with the big art, the rule and the buy button — disabled when the coins are short.
  * The sheet outlives the sale: it plays its exit animation over the remembered content of the sold slot.
  */
-export function ShopSlot({ price, coins, title, testId, tip, sheet, selected, verb, warning = null, blocked = null, onSelect, onBuy, children }: ShopSlotProps) {
+export function ShopSlot({ price, coins, title, testId, tip, sheet, selected, verb, warning = null, buyAfterClose = false, blocked = null, onSelect, onBuy, children }: ShopSlotProps) {
   const { anchor, handlers } = useCardTip(price !== null, false);
   const lastSheet = useRef<{ readonly title: string; readonly price: number; readonly sheet: SlotSheet } | null>(null);
   if (price !== null && sheet) lastSheet.current = { title, price, sheet };
@@ -54,6 +56,10 @@ export function ShopSlot({ price, coins, title, testId, tip, sheet, selected, ve
           disabled={price === null || coins < shown.price || blocked !== null}
           aria-label={`${verb} ${shown.title} за ${shown.price}`}
           onClick={() => {
+            if (buyAfterClose) {
+              close(onBuy);
+              return;
+            }
             onBuy();
             close();
           }}

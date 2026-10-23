@@ -16,14 +16,14 @@ import {
   type Rarity,
 } from '@game/durak';
 import { motion, useReducedMotion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { PixelButton } from '../../../ui/PixelButton';
 import { useSettings } from '../../../ui/SettingsContext';
 import type { SoundName } from '../../../ui/sound';
 import { ConfirmReplace } from './ConfirmReplace';
-import { canTake, FLIP_MS, replacementsFor, revealSchedule, type Replacement } from './opening';
-import { PackArt } from './PackArt';
+import { BURST_MS, canTake, FLIP_MS, replacementsFor, revealSchedule, type Replacement } from './opening';
 import { PackCardFace } from './PackCardFace';
+import { PackTear } from './PackTear';
 import { PACK_NAMES, packCardText, packCardTitle } from './shopCopy';
 import { TarotTargets } from './TarotTargets';
 import './opening.css';
@@ -106,21 +106,20 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
       aria-label={`Вскрытие: ${PACK_NAMES[opened.kind]}`}
       onClick={revealing ? revealAll : undefined}
     >
-      <h2 className="opening__title">
+      <h2 className={torn ? 'opening__title' : 'opening__title opening__title--wait'}>
         {PACK_NAMES[opened.kind]} · бери {opened.picksLeft}
       </h2>
       {!torn ? (
-        <span className="opening__pack">
-          <PackArt kind={opened.kind} />
-        </span>
+        <PackTear kind={opened.kind} speed={speed} />
       ) : (
-        <div className="opening__cards">
+        <div className="opening__cards" style={{ '--burst-ms': `${reduced ? 0 : BURST_MS / speed}ms` } as CSSProperties}>
           {opened.cards.map((entry, i) =>
             entry ? (
               <button
                 key={i}
                 type="button"
                 className={selected === i ? 'opening__card opening__card--selected' : 'opening__card'}
+                style={{ '--i': i } as CSSProperties}
                 aria-label={packCardTitle(entry)}
                 aria-pressed={selected === i}
                 disabled={i >= flipped}
@@ -177,7 +176,7 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
         </p>
       )}
 
-      <div className="opening__bar">
+      <div className={torn && !revealing ? 'opening__bar' : 'opening__bar opening__bar--wait'}>
         <PixelButton tone="orange" disabled={!ready || revealing} onClick={take}>
           {tarot && tarot.maxTargets > 0 ? 'Применить' : 'Взять'}
         </PixelButton>

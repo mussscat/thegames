@@ -4,14 +4,14 @@ import { canTake, castsWheelNow, replacementsFor, revealSchedule } from './openi
 const FULL = ['clubs', 'hearts', 'spades', 'diamonds', 'small'] as const;
 
 describe('revealSchedule', () => {
-  it('tears the pack, then flips one card after another', () => {
-    expect(revealSchedule(3, 1, false)).toEqual({ cardsAt: 600, flips: [600, 850, 1100], done: 1400 });
+  it('tears the pack, lets the cards fly out, then flips one card after another', () => {
+    expect(revealSchedule(3, 1, false)).toEqual({ cardsAt: 1100, flips: [1450, 1700, 1950], done: 2250 });
   });
   it('divides every time by the speed', () => {
     const plan = revealSchedule(2, 2, false);
-    expect(plan.cardsAt).toBe(300);
-    expect(plan.flips).toEqual([300, 425]);
-    expect(plan.done).toBe(575);
+    expect(plan.cardsAt).toBe(550);
+    expect(plan.flips).toEqual([725, 850]);
+    expect(plan.done).toBe(1000);
   });
   it('shows everything at once with reduced motion', () => {
     expect(revealSchedule(5, 1, true)).toEqual({ cardsAt: 0, flips: [0, 0, 0, 0, 0], done: 0 });

@@ -202,6 +202,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               sheet={pack ? { subtitle: `${PACK_SIZE_NAMES[pack.size]} · ${packSizeText(pack.size)}`, text: PACK_TEXT[pack.kind], art: <PackArt kind={pack.kind} size={pack.size} /> } : null}
               selected={selected?.kind === 'pack' && selected.index === index}
               verb="Купить"
+              buyAfterClose
               onSelect={() => select({ kind: 'pack', index })}
               onBuy={() => buy({ type: 'buyPack', index })}
             >

@@ -8,8 +8,8 @@ type DetailSheetProps = {
   readonly text: string;
   readonly warning?: string | null;
   readonly art: ReactNode;
-  /** A function gets `close` — it plays the exit animation, then calls onClose. */
-  readonly actions: ReactNode | ((close: () => void) => ReactNode);
+  /** A function gets `close` — it plays the exit animation, then calls onClose and the optional `then`. */
+  readonly actions: ReactNode | ((close: (then?: () => void) => void) => ReactNode);
   /** Extra content under the text (the tarot target hand). */
   readonly children?: ReactNode;
   /** null — the sheet cannot be dismissed (a bought tarot waits for «Применить» / «Пропустить»). */
@@ -23,13 +23,18 @@ const EXIT_FALLBACK_MS = 250;
 export function DetailSheet({ title, subtitle, text, warning = null, art, actions, children, onClose }: DetailSheetProps) {
   const [closing, setClosing] = useState(false);
   const finished = useRef(false);
-  const close = (): void => {
-    if (onClose) setClosing(true);
+  /** Runs once the exit animation is over: a full-screen layer that must not cover the closing sheet (a bought pack). */
+  const afterClose = useRef<(() => void) | null>(null);
+  const close = (then?: () => void): void => {
+    if (!onClose) return;
+    afterClose.current = then ?? null;
+    setClosing(true);
   };
   const finish = (): void => {
     if (finished.current) return;
     finished.current = true;
     onClose?.();
+    afterClose.current?.();
   };
   useEffect(() => {
     if (!closing) return undefined;
@@ -39,7 +44,7 @@ export function DetailSheet({ title, subtitle, text, warning = null, art, action
   }, [closing]);
   return (
     <StagePortal>
-    <div className={closing ? 'sheet-backdrop sheet-backdrop--closing' : 'sheet-backdrop'} data-testid="detail-sheet" onClick={close}>
+    <div className={closing ? 'sheet-backdrop sheet-backdrop--closing' : 'sheet-backdrop'} data-testid="detail-sheet" onClick={() => close()}>
       <div
         className={closing ? 'sheet panel sheet--closing' : 'sheet panel'}
         role="dialog"
@@ -63,7 +68,7 @@ export function DetailSheet({ title, subtitle, text, warning = null, art, action
         <div className="sheet__actions">
           {typeof actions === 'function' ? actions(close) : actions}
           {onClose && (
-            <PixelButton tone="blue" onClick={close}>
+            <PixelButton tone="blue" onClick={() => close()}>
               Закрыть
             </PixelButton>
           )}
