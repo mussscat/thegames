@@ -3,6 +3,8 @@ import {
   ENHANCEMENTS,
   JOKERS,
   MAX_FOCUSES,
+  MAX_JOKERS,
+  packCardRarity,
   stageEnemy,
   stageLabel,
   type FightReward,
@@ -15,6 +17,9 @@ import {
 } from '@game/durak';
 import { useEffect, useRef, useState } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
+import { PixelButton as KitButton } from '../../components/pixel/PixelButton';
+import { PixelIcon } from '../../components/pixel/PixelIcon';
+import { PixelText } from '../../components/pixel/PixelText';
 import { useSettings } from '../../ui/SettingsContext';
 import { usePrevious } from '../../ui/usePrevious';
 import { OwnedFocuses } from './shop/OwnedFocuses';
@@ -25,7 +30,7 @@ import { PackArt } from './shop/PackArt';
 import { PackCardFace } from './shop/PackCardFace';
 import { PackOpening } from './shop/PackOpening';
 import { ShopSlot } from './shop/ShopSlot';
-import { cardTipLines, PACK_NAMES, packCardTitle, packTipLines } from './shop/shopCopy';
+import { cardTipLines, PACK_NAMES, PACK_SIZE_NAMES, PACK_TEXT, packCardText, packCardTitle, packSizeText, packTipLines, RARITY_NAMES } from './shop/shopCopy';
 import { TarotCastSheet } from './shop/TarotCastSheet';
 import { castsWheelNow } from './shop/opening';
 import { coinSound, isNewError } from './sounds';
@@ -50,6 +55,11 @@ type ShopScreenProps = {
   readonly onAct: (action: RunAction) => void;
   readonly onExit: () => void;
 };
+
+/** Every slot of the item's kind is taken, so it cannot be bought. */
+function slotsFull(item: ShopItem | null | undefined, run: RunState): boolean {
+  return (item?.card.kind === 'joker' && run.jokers.length >= MAX_JOKERS) || (item?.card.kind === 'focus' && run.focuses.length >= MAX_FOCUSES);
+}
 
 /** Balatro's shop: owned jokers on top, a «МАГАЗИН» panel with 2 items and 2 packs, reroll and next fight. */
 export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }: ShopScreenProps) {
@@ -87,7 +97,6 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
     const busy = shop.opened !== null || shop.casting !== null;
     if (action.type === 'buyItem' && castsWheelNow(shop.items[action.index], run.coins, busy)) wheel.current = { jokers: run.jokers.length, marker: shop.items };
     setNotice(null);
-    setSelected(null);
     onAct(action);
   };
   const select = (next: Selection): void => {
@@ -114,19 +123,20 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
 
   return (
     <main className="screen shop" data-testid="shop" onClick={clearSelection}>
-      <header className="shop__side panel">
-        <PixelButton tone="blue" small onClick={onExit}>
-          Меню
-        </PixelButton>
-        <span className="shop__coins" aria-label={`Монеты: ${run.coins}`}>
-          <Coin /> {run.coins}
-        </span>
-        <span className="shop__stage">
-          Круг {circle} · бой {fight}
-        </span>
-        <span className="shop__reward" data-testid="shop-reward">
-          Награда +{reward.total}
-        </span>
+      <header className="shop__side">
+        <KitButton tone="orange" small className="pfight__menu" onClick={onExit}>
+          <PixelText>Меню</PixelText>
+        </KitButton>
+        <div className="px-slot-filled pfight__tile" aria-label={`Монеты: ${run.coins}`}>
+          <PixelIcon name="coin" />
+          <PixelText className="pfight__gold">{run.coins}</PixelText>
+        </div>
+        <div className="px-slot-filled pfight__tile shop__tile">
+          <PixelText>Круг {circle} · бой {fight}</PixelText>
+        </div>
+        <div className="px-slot-filled pfight__tile shop__tile" data-testid="shop-reward">
+          <PixelText>Награда +{reward.total}</PixelText>
+        </div>
       </header>
 
       <OwnedJokers
@@ -168,10 +178,11 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               coins={run.coins}
               title={item ? packCardTitle(item.card) : ''}
               tip={item ? cardTipLines(item.card, run.profile) : []}
+              sheet={item ? { subtitle: RARITY_NAMES[packCardRarity(item.card)], text: packCardText(item.card), art: <PackCardFace card={item.card} size="big" /> } : null}
               selected={selected?.kind === 'item' && selected.index === index}
               verb="Купить"
               warning={replacementWarning(item, run.profile)}
-              blocked={item?.card.kind === 'focus' && run.focuses.length >= MAX_FOCUSES ? 'Мало места' : null}
+              blocked={slotsFull(item, run) ? 'Нет места' : null}
               onSelect={() => select({ kind: 'item', index })}
               onBuy={() => buy({ type: 'buyItem', index })}
             >
@@ -188,6 +199,7 @@ export function ShopScreen({ run, shop, reward, error, errorSeq, onAct, onExit }
               coins={run.coins}
               title={pack ? PACK_NAMES[pack.kind] : ''}
               tip={pack ? packTipLines(pack) : []}
+              sheet={pack ? { subtitle: `${PACK_SIZE_NAMES[pack.size]} · ${packSizeText(pack.size)}`, text: PACK_TEXT[pack.kind], art: <PackArt kind={pack.kind} size={pack.size} /> } : null}
               selected={selected?.kind === 'pack' && selected.index === index}
               verb="Купить"
               onSelect={() => select({ kind: 'pack', index })}

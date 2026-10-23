@@ -1,22 +1,52 @@
-import { FOCUSES, focusSellPrice, MAX_FOCUSES, type FocusId, type RunAction } from '@game/durak';
+import { FOCUSES, focusSellPrice, MAX_FOCUSES, packCardRarity, type FocusId, type PackCard, type RunAction } from '@game/durak';
 import type { MouseEvent } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import { PixelButton } from '../../../ui/PixelButton';
+import { PixelText } from '../../../components/pixel/PixelText';
 import { FeelBox } from '../../../ui/FeelBox';
+import { DetailSheet } from './DetailSheet';
+import { OwnedSlot } from './OwnedSlot';
 import { PackCardFace } from './PackCardFace';
-import { cardTipLines } from './shopCopy';
+import { cardTipLines, RARITY_NAMES } from './shopCopy';
 
 function FocusSlot({ id, selected, onSelect }: { readonly id: FocusId; readonly selected: boolean; readonly onSelect: () => void }) {
   const { anchor, handlers } = useCardTip(true, false);
   return (
-    <li className={selected ? 'owned-focus owned-focus--selected' : 'owned-focus'}>
+    <>
       <button type="button" className="owned__card" aria-label={FOCUSES[id].name} aria-pressed={selected} onClick={onSelect} {...handlers}>
         <FeelBox>
           <PackCardFace card={{ kind: 'focus', focusId: id }} />
         </FeelBox>
       </button>
       {anchor && <CardTip anchor={anchor} lines={cardTipLines({ kind: 'focus', focusId: id }, {})} />}
-    </li>
+    </>
+  );
+}
+
+type FocusSheetProps = { readonly id: FocusId; readonly onClose: () => void; readonly onSell: () => void };
+
+/** A tapped owned focus: big card, its rule, and the sell button. */
+function FocusSheet({ id, onClose, onSell }: FocusSheetProps) {
+  const card: PackCard = { kind: 'focus', focusId: id };
+  return (
+    <DetailSheet
+      title={FOCUSES[id].name}
+      subtitle={RARITY_NAMES[packCardRarity(card)]}
+      text={FOCUSES[id].description}
+      art={<PackCardFace card={card} size="big" />}
+      onClose={onClose}
+      actions={(close) => (
+        <PixelButton
+          tone="orange"
+          onClick={() => {
+            onSell();
+            close();
+          }}
+        >
+          Продать за {focusSellPrice(id)}
+        </PixelButton>
+      )}
+    />
   );
 }
 
@@ -33,34 +63,30 @@ export function OwnedFocuses({ focuses, selected, onSelect, onAct }: OwnedFocuse
   const chosen = selected === null ? undefined : focuses[selected];
   return (
     <section className="owned owned--focuses panel" data-testid="owned-focuses" aria-label="Твои фокусы" onClick={stop}>
+      <h2 className="owned__title">
+        <PixelText>Фокусы</PixelText>
+      </h2>
+      <span className="owned__count">
+        <PixelText>
+          {focuses.length}/{MAX_FOCUSES}
+        </PixelText>
+      </span>
       <ul className="owned__list">
         {Array.from({ length: MAX_FOCUSES }, (_, slot) => {
           const id = focuses[slot];
-          return id ? (
-            <FocusSlot key={`${id}-${slot}`} id={id} selected={selected === slot} onSelect={() => onSelect(selected === slot ? null : slot)} />
-          ) : (
-            <li key={`empty-${slot}`} className="owned-focus" aria-hidden="true">
-              <span className="owned__empty" />
-            </li>
+          return (
+            <OwnedSlot key={slot} className="owned-focus" itemKey={id} layoutId={`focus-${id}`}>
+              {id && <FocusSlot id={id} selected={selected === slot} onSelect={() => onSelect(selected === slot ? null : slot)} />}
+            </OwnedSlot>
           );
         })}
       </ul>
-      <span className="owned__count">
-        {focuses.length}/{MAX_FOCUSES}
-      </span>
       {chosen && selected !== null && (
-        <div className="owned__actions">
-          <PixelButton
-            tone="orange"
-            small
-            onClick={() => {
-              onAct({ type: 'sellFocus', slot: selected });
-              onSelect(null);
-            }}
-          >
-            Продать {FOCUSES[chosen].name} за {focusSellPrice(chosen)}
-          </PixelButton>
-        </div>
+        <FocusSheet
+          id={chosen}
+          onClose={() => onSelect(null)}
+          onSell={() => onAct({ type: 'sellFocus', slot: selected })}
+        />
       )}
     </section>
   );

@@ -2,11 +2,13 @@
 .shop {
   --slot-h: clamp(92px, 16vh, 190px);
   --slot-w: calc(var(--slot-h) * 0.7);
-  /* Five owned slots must fit a 320 px screen. */
-  --owned-w: min(2.7em, 13vw);
+  --owned-gap: 2px;
+  --owned-m: 18px;
+  /* The row is exactly 100vw minus the shop padding (20px) and the column gap (8px): three cards + a margin on both sides for jokers, one card + the same margins for focuses. */
+  --owned-w: calc((100vw - 28px - 4 * var(--owned-m) - 2 * var(--owned-gap)) / 4);
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'side' 'owned' 'focuses' 'panel' 'status';
+  grid-template-columns: calc(var(--owned-w) * 3 + var(--owned-gap) * 2 + var(--owned-m) * 2) calc(var(--owned-w) + var(--owned-m) * 2);
+  grid-template-areas: 'side side' 'owned focuses' 'panel panel' 'status status';
   align-content: start;
   gap: 8px;
   height: 100%;
@@ -15,20 +17,22 @@
   -webkit-overflow-scrolling: touch;
   padding: 8px 10px calc(96px + env(safe-area-inset-bottom, 0px));
 }
-.shop__side { grid-area: side; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 10px; }
-.shop__coins { font-family: var(--font-head); color: var(--gold); font-size: 1.1rem; }
-.shop__stage, .shop__reward { font-size: 0.85rem; opacity: 0.9; }
-.shop__reward { margin-left: auto; }
+.shop__side { grid-area: side; display: grid; grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.shop__tile { padding: 0 6px; white-space: nowrap; }
+.shop__side .pfight__menu { padding: 0 12px; }
 
 /* ---------- owned jokers: five equal slots ---------- */
 .owned { grid-area: owned; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; padding: 8px 10px; }
+.owned__title, .owned__count { margin: 0; line-height: 1; }
+.owned__title { font: inherit; }
+.owned:not(.owned--focuses) .owned__list { grid-column: 1 / -1; flex-wrap: wrap; justify-content: center; justify-self: center; gap: var(--owned-gap); width: calc(var(--owned-w) * 3 + var(--owned-gap) * 2); }
 .owned__list { display: flex; justify-content: space-between; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.owned__slot { --jface-w: var(--owned-w); display: flex; align-items: center; justify-content: center; width: var(--owned-w); aspect-ratio: 5 / 7; }
-.owned__slot--selected .jface { transform: translateY(-3px); outline: 3px solid #ffffff; outline-offset: 2px; }
-.owned__card { padding: 0; border: 0; background: none; cursor: pointer; -webkit-touch-callout: none; }
-.owned__empty { width: 100%; height: 100%; border: 2px dashed rgb(255 255 255 / 25%); border-radius: 4px; }
+.owned__slot, .owned-focus { position: relative; }
+.owned__item { position: relative; display: flex; align-items: center; justify-content: center; }
+.owned__slot { --jface-w: var(--owned-w); display: flex; align-items: center; justify-content: center; width: var(--owned-w); height: calc(var(--owned-w) * 144 / 106); }
+.owned__card { display: block; line-height: 0; padding: 0; border: 0; background: none; cursor: pointer; -webkit-touch-callout: none; }
+.owned__empty { position: absolute; inset: 0; margin: auto; box-sizing: border-box; width: calc(var(--owned-w) * 0.88); height: calc(var(--owned-w) * 0.88 * 144 / 106); border: 2px dashed rgb(255 255 255 / 25%); border-radius: 4px; }
 .owned__count { font-size: 0.8rem; opacity: 0.8; }
-.owned__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 
 /* ---------- the shop panel ---------- */
 .shop__panel {
@@ -78,10 +82,6 @@
 .shop-slot--sold { justify-content: center; height: calc(var(--slot-h) + 10px); }
 .shop-slot__sold { padding: 4px 8px; border: 2px dashed rgb(255 255 255 / 25%); border-radius: 6px; opacity: 0.6; font-size: 0.8rem; }
 .shop-slot__face { padding: 0; border: 0; background: none; cursor: pointer; transition: transform 0.12s ease-out; }
-.shop-slot--selected .shop-slot__face { transform: translateY(-6px); }
-.shop-slot--selected .shop-slot__face > * { outline: 3px solid #ffffff; outline-offset: 3px; }
-.shop-slot__buy { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.shop-slot__warning { width: max-content; max-width: min(15em, 44vw); margin: 0; line-height: 1.25; padding: 2px 6px; border: 2px solid #000000; border-radius: 4px; background: #f39c32; color: #1b1426; font-size: 0.7rem; font-weight: 800; text-align: center; }
 .price-tag {
   position: absolute;
   top: 0;
@@ -127,7 +127,7 @@
 .shop-card__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
 .shop-card__glyph { font-size: 2.2em; line-height: 1; }
 .shop-card__name { padding: 0 4px; font-size: 0.75rem; font-weight: 800; line-height: 1.15; }
-.shop-card--focus-art { --fface-w: 100%; padding: 0; border: 0; background: none; }
+.shop-card--focus-art { --fface-w: 100%; padding: 0; border: 0; background: none; box-shadow: none; }
 .shop-card--focus-art .fface { height: 100%; width: auto; }
 .shop-card--tarot-art { --tface-w: 100%; padding: 0; border: 0; background: none; }
 .shop-card--tarot-art .tface { height: 100%; width: auto; }
@@ -159,7 +159,8 @@
 .pack__count { top: 80%; font-size: 9cqw; opacity: 0.95; }
 
 /* ---------- detail sheet (the shelf tarot's targets) ---------- */
-.sheet-backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 60%); }
+.sheet-backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 60%); animation: sheet-fade 0.2s ease-out; }
+.sheet-backdrop--closing { animation: sheet-fade-out 0.15s ease-in forwards; }
 .sheet {
   display: flex;
   flex-direction: column;
@@ -174,6 +175,7 @@
   border-radius: 14px 14px 0 0;
   animation: sheet-up 0.2s ease-out;
 }
+.sheet__art .pack { --slot-h: clamp(150px, 26vh, 230px); }
 .sheet__art .shop-card { --slot-h: clamp(120px, 20vh, 170px); }
 .sheet__title { margin: 0; font-family: var(--font-head); font-size: 1rem; }
 .sheet__subtitle, .sheet__text { margin: 0; text-align: center; }
@@ -182,19 +184,24 @@
 .sheet__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .sheet__actions .pbtn { min-width: 8em; }
 @keyframes sheet-up { from { transform: translateY(40%); opacity: 0; } }
+.sheet--closing { animation: sheet-down 0.15s ease-in forwards; }
+@keyframes sheet-down { to { transform: translateY(40%); opacity: 0; } }
+@keyframes sheet-fade { from { opacity: 0; } }
+@keyframes sheet-fade-out { to { opacity: 0; } }
 
 /* ---------- shop: wide screens, Balatro layout ---------- */
 @media (min-aspect-ratio: 5/4) {
   .shop {
     --slot-h: clamp(130px, 24vh, 220px);
-    grid-template-columns: minmax(200px, 20vw) minmax(0, 1fr);
-    grid-template-areas: 'side owned' 'side focuses' 'side panel' 'side status';
+    --owned-w: 4.4rem;
+    --owned-gap: 4px;
+    --owned-m: 18px;
+    grid-template-columns: minmax(200px, 20vw) auto minmax(0, 1fr);
+    grid-template-areas: 'side owned focuses' 'side panel panel' 'side status status';
     max-width: min(1280px, 100%);
     padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
   }
-  .shop__side { flex-direction: column; align-items: stretch; align-self: start; }
-  .shop__reward { margin-left: 0; }
-  .owned__list { justify-content: flex-start; gap: 18px; }
+  .shop__side { grid-template-columns: minmax(0, 1fr); align-self: start; }
   .shop__panel { grid-template-columns: minmax(150px, 210px) 1fr; grid-template-areas: 'head head' 'bar items' 'bar packs'; column-gap: 28px; }
   .shop__items, .shop__packs { justify-content: center; gap: 12px 40px; }
   .shop__bar { position: static; grid-area: bar; display: flex; flex-direction: column; justify-content: center; gap: 12px; width: auto; padding: 0; border: 0; background: none; transform: none; }
@@ -206,9 +213,11 @@
 /* ---------- focuses ---------- */
 .shop-card--focus { background: linear-gradient(180deg, #2b6b8f, #12324a); }
 .owned--focuses { grid-area: focuses; }
-.owned-focus { display: flex; align-items: center; justify-content: center; width: 52px; height: 70px; }
-.owned-focus .shop-card { --slot-h: 66px; --slot-w: 48px; padding: 2px; gap: 1px; }
+.owned-focus { display: flex; align-items: center; justify-content: center; width: var(--owned-w); height: calc(var(--owned-w) * 144 / 106); }
+.owned-focus .shop-card { --slot-w: var(--owned-w); --slot-h: calc(var(--owned-w) * 144 / 106); box-shadow: none; }
+.owned-focus .shop-card--focus-art .fface { width: 100%; height: 100%; aspect-ratio: auto; }
+.owned-focus .shop-card:not(.shop-card--focus-art) { padding: 2px; gap: 1px; }
 .owned-focus .shop-card__name { font-size: 0.55rem; }
 .owned-focus .shop-card__glyph { font-size: 1.3em; }
-.owned-focus--selected .fface, .owned-focus--selected .shop-card { outline: 3px solid #ffffff; outline-offset: 2px; }
-.owned--focuses .owned__list { justify-content: flex-start; gap: 10px; }
+.owned--focuses { grid-template-columns: 1fr auto; justify-self: start; width: calc(var(--owned-w) + var(--owned-m) * 2); box-sizing: border-box; padding-inline: 6px; }
+.owned--focuses .owned__list { grid-column: 1 / -1; flex-direction: column; align-items: center; gap: var(--owned-gap); }

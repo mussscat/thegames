@@ -1,9 +1,14 @@
-import type { MouseEvent, ReactNode } from 'react';
+import { useRef, type MouseEvent, type ReactNode } from 'react';
 import { CardTip, useCardTip } from '../../../components/CardTip';
 import type { TipLine } from '../../../components/tipLines';
-import { Coin } from '../../../ui/Coin';
+import { PixelIcon } from '../../../components/pixel/PixelIcon';
+import { PixelText } from '../../../components/pixel/PixelText';
 import { FeelBox } from '../../../ui/FeelBox';
 import { PixelButton } from '../../../ui/PixelButton';
+import { DetailSheet } from './DetailSheet';
+
+/** What the tapped slot's sheet shows: the big art, the rarity or size line and the rule. */
+export type SlotSheet = { readonly subtitle?: string; readonly text: string; readonly art: ReactNode };
 
 type ShopSlotProps = {
   /** null — sold this visit. */
@@ -12,6 +17,8 @@ type ShopSlotProps = {
   readonly title: string;
   readonly testId: string;
   readonly tip: readonly TipLine[];
+  /** null — sold this visit. */
+  readonly sheet: SlotSheet | null;
   readonly selected: boolean;
   /** «Купить» for single items, «Открыть» for packs. */
   readonly verb: string;
@@ -25,44 +32,58 @@ type ShopSlotProps = {
 
 /**
  * A Balatro shop slot: a coin tag on the card's top edge (red when unaffordable), the description on hover or long press,
- * a tap selects it and shows the buy button under it — disabled when the coins are short.
+ * a tap opens a sheet with the big art, the rule and the buy button — disabled when the coins are short.
+ * The sheet outlives the sale: it plays its exit animation over the remembered content of the sold slot.
  */
-export function ShopSlot({ price, coins, title, testId, tip, selected, verb, warning = null, blocked = null, onSelect, onBuy, children }: ShopSlotProps) {
+export function ShopSlot({ price, coins, title, testId, tip, sheet, selected, verb, warning = null, blocked = null, onSelect, onBuy, children }: ShopSlotProps) {
   const { anchor, handlers } = useCardTip(price !== null, false);
+  const lastSheet = useRef<{ readonly title: string; readonly price: number; readonly sheet: SlotSheet } | null>(null);
+  if (price !== null && sheet) lastSheet.current = { title, price, sheet };
+  const shown = lastSheet.current;
+  const sheetView = selected && shown && (
+    <DetailSheet
+      title={shown.title}
+      subtitle={shown.sheet.subtitle}
+      text={shown.sheet.text}
+      warning={price === null ? null : warning}
+      art={shown.sheet.art}
+      onClose={onSelect}
+      actions={(close) => (
+        <PixelButton
+          tone="orange"
+          disabled={price === null || coins < shown.price || blocked !== null}
+          aria-label={`${verb} ${shown.title} за ${shown.price}`}
+          onClick={() => {
+            onBuy();
+            close();
+          }}
+        >
+          {blocked ?? (coins >= shown.price ? `${verb} за ${shown.price}` : 'Мало монет')}
+        </PixelButton>
+      )}
+    />
+  );
+  const stop = (event: MouseEvent): void => event.stopPropagation();
   if (price === null) {
     return (
-      <div className="shop-slot shop-slot--sold" data-testid={testId}>
+      <div className="shop-slot shop-slot--sold" data-testid={testId} onClick={stop}>
         <span className="shop-slot__sold">Продано</span>
+        {sheetView}
       </div>
     );
   }
   const affordable = coins >= price;
-  const stop = (event: MouseEvent): void => event.stopPropagation();
   return (
-    <div className={selected ? 'shop-slot shop-slot--selected' : 'shop-slot'} data-testid={testId} onClick={stop}>
+    <div className="shop-slot" data-testid={testId} onClick={stop}>
       <span className={affordable ? 'price-tag' : 'price-tag price-tag--short'} aria-hidden="true">
-        <Coin />
-        {price}
+        <PixelIcon name="coin" />
+        <PixelText>{price}</PixelText>
       </span>
-      <button
-        type="button"
-        className="shop-slot__face"
-        aria-label={`${title}, ${price} монет`}
-        aria-pressed={selected}
-        onClick={onSelect}
-        {...handlers}
-      >
+      <button type="button" className="shop-slot__face" aria-label={`${title}, ${price} монет`} aria-pressed={selected} onClick={onSelect} {...handlers}>
         <FeelBox>{children}</FeelBox>
       </button>
-      {selected && (
-        <div className="shop-slot__buy">
-          {warning && <p className="shop-slot__warning">{warning}</p>}
-          <PixelButton tone="orange" small disabled={!affordable || blocked !== null} aria-label={`${verb} ${title} за ${price}`} onClick={onBuy}>
-            {blocked ?? (affordable ? verb : 'Мало монет')}
-          </PixelButton>
-        </div>
-      )}
       {anchor && <CardTip anchor={anchor} lines={tip} />}
+      {sheetView}
     </div>
   );
 }
