@@ -17,6 +17,7 @@ import {
 } from '@game/durak';
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState, type CSSProperties } from 'react';
+import { cardsBlockWidth, fitCardWidth } from './opening';
 import { PixelButton } from '../../../ui/PixelButton';
 import { useSettings } from '../../../ui/SettingsContext';
 import type { SoundName } from '../../../ui/sound';
@@ -52,6 +53,7 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
   const [flipped, setFlipped] = useState(reduced ? count : 0);
   const [selected, setSelected] = useState<number | null>(null);
   const [targets, setTargets] = useState<readonly string[]>([]);
+  const [cardW, setCardW] = useState(() => fitCardWidth(count, window.innerWidth, window.innerHeight));
   const [confirm, setConfirm] = useState<readonly Replacement[] | null>(null);
 
   // The reveal plays once per opening: the parent keys this component per pack, so a mega-pack pick does not replay it.
@@ -72,6 +74,12 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const refit = (): void => setCardW(fitCardWidth(count, window.innerWidth, window.innerHeight));
+    window.addEventListener('resize', refit);
+    return () => window.removeEventListener('resize', refit);
+  }, [count]);
+
   const revealing = flipped < count;
   const revealAll = (): void => {
     setTorn(true);
@@ -79,6 +87,13 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
   };
   const card = selected === null ? null : (opened.cards[selected] ?? null);
   const tarot = card?.kind === 'tarot' ? TAROTS[card.tarotId] : null;
+  const replaced = card?.kind === 'card' ? conflictFor(profile, card.cardId, card.enhancement) : null;
+  const needsExtras = opened.cards.some((entry) => {
+    if (!entry) return false;
+    if (entry.kind === 'tarot') return TAROTS[entry.tarotId].maxTargets > 0;
+    if (entry.kind === 'focus') return focuses.length >= MAX_FOCUSES;
+    return entry.kind === 'joker' && jokers.length >= MAX_JOKERS;
+  });
   const ready = card !== null && canTake(card, targets, profile, jokers, focuses);
   const choose = (index: number): void => {
     setSelected(index);
@@ -112,7 +127,7 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
       {!torn ? (
         <PackTear kind={opened.kind} speed={speed} />
       ) : (
-        <div className="opening__cards" style={{ '--burst-ms': `${reduced ? 0 : BURST_MS / speed}ms` } as CSSProperties}>
+        <div className="opening__cards" style={{ '--burst-ms': `${reduced ? 0 : BURST_MS / speed}ms`, '--cw': `${cardW}px`, '--block-w': `${cardsBlockWidth(count, cardW)}px` } as CSSProperties}>
           {opened.cards.map((entry, i) =>
             entry ? (
               <button
@@ -131,11 +146,8 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
                   animate={{ rotateY: i < flipped ? 0 : 180 }}
                   transition={{ duration: FLIP_MS / 1000 / speed }}
                 >
-                  <PackCardFace card={entry} size="big" faceDown={i >= flipped} />
+                  <PackCardFace card={entry} size="big" faceDown={i >= flipped} width={cardW - 6} />
                 </motion.span>
-                {entry.kind === 'card' && i < flipped && conflictFor(profile, entry.cardId, entry.enhancement) && (
-                  <span className="opening__conflict">В колоде: {ENHANCEMENTS[profile[entry.cardId] ?? entry.enhancement].name}</span>
-                )}
               </button>
             ) : (
               <span key={i} className="opening__taken">
@@ -146,35 +158,47 @@ export function PackOpening({ opened, profile, jokers, focuses, speed, error = n
         </div>
       )}
 
-      {card && <p className="opening__text">{packCardText(card)}</p>}
-      {card?.kind === 'tarot' && tarot && tarot.maxTargets > 0 && (
-        <TarotTargets tarotId={card.tarotId} hand={opened.hand} profile={profile} picked={targets} onChange={setTargets} />
-      )}
-      {card?.kind === 'focus' && focuses.length >= MAX_FOCUSES && (
-        <div className="opening__full">
-          <p>Оба слота заняты — продай фокус:</p>
-          {focuses.map((id, slot) => (
-            <PixelButton key={`${id}-${slot}`} tone="blue" small onClick={() => onSellFocus(slot)}>
-              {FOCUSES[id].name} +{focusSellPrice(id)}
-            </PixelButton>
-          ))}
+      <div className={torn ? 'opening__info' : 'opening__info opening__info--wait'} data-testid="pack-info">
+        {card ? (
+          <>
+            <b className="opening__name">{packCardTitle(card)}</b>
+            <p className="opening__text">{packCardText(card)}</p>
+            {replaced && <span className="opening__conflict">В колоде: {ENHANCEMENTS[replaced].name}</span>}
+          </>
+        ) : (
+          <p className="opening__text opening__text--hint">{revealing ? ' ' : 'Выбери карту, чтобы прочитать описание'}</p>
+        )}
+      </div>
+      {needsExtras && (
+        <div className="opening__extras">
+          {card?.kind === 'tarot' && tarot && tarot.maxTargets > 0 && (
+            <TarotTargets tarotId={card.tarotId} hand={opened.hand} profile={profile} picked={targets} onChange={setTargets} />
+          )}
+          {card?.kind === 'focus' && focuses.length >= MAX_FOCUSES && (
+            <div className="opening__full">
+              <p>Оба слота заняты — продай фокус:</p>
+              {focuses.map((id, slot) => (
+                <PixelButton key={`${id}-${slot}`} tone="blue" small onClick={() => onSellFocus(slot)}>
+                  {FOCUSES[id].name} +{focusSellPrice(id)}
+                </PixelButton>
+              ))}
+            </div>
+          )}
+          {card?.kind === 'joker' && jokers.length >= MAX_JOKERS && (
+            <div className="opening__full">
+              <p>Все {MAX_JOKERS} мест заняты — продай джокера:</p>
+              {jokers.map((id) => (
+                <PixelButton key={id} tone="blue" small onClick={() => onSell(id)}>
+                  {JOKERS[id].name} +{sellPrice(id)}
+                </PixelButton>
+              ))}
+            </div>
+          )}
         </div>
       )}
-      {card?.kind === 'joker' && jokers.length >= MAX_JOKERS && (
-        <div className="opening__full">
-          <p>Все {MAX_JOKERS} мест заняты — продай джокера:</p>
-          {jokers.map((id) => (
-            <PixelButton key={id} tone="blue" small onClick={() => onSell(id)}>
-              {JOKERS[id].name} +{sellPrice(id)}
-            </PixelButton>
-          ))}
-        </div>
-      )}
-      {error && (
-        <p className="opening__error" role="alert">
-          {error}
-        </p>
-      )}
+      <p className="opening__error" role="alert">
+        {error}
+      </p>
 
       <div className={torn && !revealing ? 'opening__bar' : 'opening__bar opening__bar--wait'}>
         <PixelButton tone="orange" disabled={!ready || revealing} onClick={take}>

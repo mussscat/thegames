@@ -48,3 +48,31 @@ export function canTake(card: PackCard, targets: readonly string[], profile: Dec
 export function castsWheelNow(item: ShopItem | null | undefined, coins: number, busy: boolean): boolean {
   return !busy && item?.card.kind === 'tarot' && item.card.tarotId === 'wheel' && coins >= item.price;
 }
+
+const CARD_RATIO = 0.7;
+const MAX_CARD_W = 120;
+const CARDS_HEIGHT_SHARE = 0.3;
+const SIDE_PADDING = 24;
+const CARD_GAP = 16;
+const PYRAMID_FROM = 5;
+const PYRAMID_COLUMNS = 3;
+
+/** Cards per row: a big pack stacks as a pyramid (3 + 2), like the shop jokers; a small one stays in one line. */
+export function cardColumns(count: number): number {
+  return count >= PYRAMID_FROM ? PYRAMID_COLUMNS : Math.max(1, count);
+}
+
+/** Width of one pack card so the rows fit the screen width and take at most ~30% of its height. */
+export function fitCardWidth(count: number, viewW: number, viewH: number): number {
+  const columns = cardColumns(count);
+  const rows = Math.ceil(count / columns);
+  const byWidth = (viewW - SIDE_PADDING - CARD_GAP * (columns - 1)) / columns;
+  const byHeight = ((viewH * CARDS_HEIGHT_SHARE - CARD_GAP * (rows - 1)) / rows) * CARD_RATIO;
+  return Math.floor(Math.max(40, Math.min(MAX_CARD_W, byWidth, byHeight)));
+}
+
+/** Pixel width of the card block, so rows wrap at the right column. */
+export function cardsBlockWidth(count: number, cardW: number): number {
+  const columns = cardColumns(count);
+  return columns * cardW + CARD_GAP * (columns - 1);
+}

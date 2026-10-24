@@ -70,25 +70,24 @@ export function ShopSlot({ price, coins, title, testId, tip, sheet, selected, ve
     />
   );
   const stop = (event: MouseEvent): void => event.stopPropagation();
-  if (price === null) {
-    return (
-      <div className="shop-slot shop-slot--sold" data-testid={testId} onClick={stop}>
-        <span className="shop-slot__sold">Продано</span>
-        {sheetView}
-      </div>
-    );
-  }
-  const affordable = coins >= price;
+  const affordable = price !== null && coins >= price;
+  // One stable tree for a live and a sold slot: the sheet must not remount when the purchase lands, or it opens again.
   return (
-    <div className="shop-slot" data-testid={testId} onClick={stop}>
-      <span className={affordable ? 'price-tag' : 'price-tag price-tag--short'} aria-hidden="true">
-        <PixelIcon name="coin" />
-        <PixelText>{price}</PixelText>
-      </span>
-      <button type="button" className="shop-slot__face" aria-label={`${title}, ${price} монет`} aria-pressed={selected} onClick={onSelect} {...handlers}>
-        <FeelBox>{children}</FeelBox>
-      </button>
-      {anchor && <CardTip anchor={anchor} lines={tip} />}
+    <div className={price === null ? 'shop-slot shop-slot--sold' : 'shop-slot'} data-testid={testId} onClick={stop}>
+      {price === null ? (
+        <span className="shop-slot__sold">Продано</span>
+      ) : (
+        <>
+          <span className={affordable ? 'price-tag' : 'price-tag price-tag--short'} aria-hidden="true">
+            <PixelIcon name="coin" />
+            <PixelText>{price}</PixelText>
+          </span>
+          <button type="button" className="shop-slot__face" aria-label={`${title}, ${price} монет`} aria-pressed={selected} onClick={onSelect} {...handlers}>
+            <FeelBox>{children}</FeelBox>
+          </button>
+          {anchor && <CardTip anchor={anchor} lines={tip} />}
+        </>
+      )}
       {sheetView}
     </div>
   );

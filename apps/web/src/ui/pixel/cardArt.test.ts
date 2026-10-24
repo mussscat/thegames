@@ -1,6 +1,6 @@
 import { makeCard } from '@game/core';
 import { describe, expect, it } from 'vitest';
-import { ART_H, ART_W, CARD_S_H, CARD_S_W, JOKER_S_H, JOKER_S_W, toSmallCard, toSmallJoker, composeJoker, composeSuitLayer, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
+import { clearEdgeFringe, ART_H, ART_W, CARD_S_H, CARD_S_W, JOKER_S_H, JOKER_S_W, toSmallCard, toSmallJoker, composeJoker, composeSuitLayer, composeTarot, composeTrick, fitEnhancementFrame, fitWholeCard, JOKER_H, JOKER_W, suitLayer, TARO_H, TARO_W, TRICK_H, TRICK_W } from './cardArt';
 import type { Pixels } from './sheet';
 
 function solid(w: number, h: number): Pixels {
@@ -183,5 +183,23 @@ describe('the small sprites of the pixel stage (own native sizes, never CSS-scal
 
   it('refuses to grow a sprite', () => {
     expect(() => toSmallCard(solid(40, 60))).toThrow();
+  });
+});
+
+describe('clearEdgeFringe', () => {
+  const TAN = [200, 170, 120, 255];
+  const FRINGE = [158, 40, 135, 255];
+  const grid = (): Pixels => ({ w: 6, h: 6, data: new Uint8ClampedArray(Array.from({ length: 36 }, () => TAN).flat()) });
+  const put = (p: Pixels, x: number, y: number, rgba: readonly number[]): void => p.data.set(rgba, (y * p.w + x) * 4);
+  const read = (p: Pixels, x: number, y: number) => Array.from(p.data.subarray((y * p.w + x) * 4, (y * p.w + x) * 4 + 4));
+
+  it('clears magenta on the outer rows but keeps the same colour inside and the frame colours', () => {
+    const img = grid();
+    put(img, 2, 0, FRINGE);
+    put(img, 3, 3, FRINGE);
+    const out = clearEdgeFringe(img);
+    expect(read(out, 2, 0)).toEqual([0, 0, 0, 0]);
+    expect(read(out, 3, 3)).toEqual(FRINGE);
+    expect(read(out, 0, 5)).toEqual(TAN);
   });
 });

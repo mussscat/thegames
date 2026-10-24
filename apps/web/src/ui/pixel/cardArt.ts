@@ -24,7 +24,7 @@ import plainSheetUrl from '../../assets/plain.png';
 import { MINI_SUITS } from './cardSprite';
 import { composeIndexLayer } from './cornerIndex';
 import { createGrid, setPixel, toDataUrl, type Grid } from './pixelArt';
-import { BACK_FRAME, crop, downscale, dropColumns, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, padToBox, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
+import { BACK_FRAME, crop, downscale, dropColumns, dropRows, ENHANCEMENT_FRAMES, fitInside, JOKER_PERS_SHEETS, keyOut, keyOutFringe, loadPixels, overlay, padToBox, PERS_CELLS, PLAIN_FRAME, pixelsToUrl, repeatColumns, rotate180, SUIT_BIG_KEY, SUIT_FRAMES, SUIT_SMALL_KEY, TARO_BG_KEY, TARO_CELLS, TARO_SHEETS, trimToContent, TRICK_CELLS, TRICK_SHEETS, type Pixels, type Rect } from './sheet';
 
 /** Card art size: the 3:5 enhancement frames are widened to it (variant C from the lab), the back and the plain card shrunk to it. */
 export const ART_W = 74;
@@ -104,11 +104,48 @@ export function composeJoker(background: Pixels, character: Pixels): Pixels {
   return composeCard(background, character, JOKER_BOX);
 }
 
-/** Tarot card: the rarity background (106×160) with a banner on top for the numeral and a ribbon below for the name. */
+/**
+ * Tarot card: the rarity background with a banner on top for the numeral and a ribbon below for the name. The sheets are
+ * 106×160; a plain band of the parchment is cut out of the middle so the card is as tall as a joker (106×144).
+ */
 export const TARO_W = 106;
-export const TARO_H = 160;
+export const TARO_H = 144;
+const TARO_SOURCE_H = 160;
+const TARO_CUT_FROM = 70;
 /** The picture sits between the banner and the ribbon. */
-const TARO_BOX: Rect = { x: 8, y: 28, w: 90, h: 102 };
+const TARO_BOX: Rect = { x: 8, y: 28, w: 90, h: 86 };
+
+const FRINGE_DEPTH = 2;
+
+/** Magenta left over from the key colour: bright red and blue, little green. */
+function isKeyFringe(r: number, g: number, b: number): boolean {
+  return r > 90 && b > 90 && g < r * 0.65 && g < b * 0.65;
+}
+
+/** Clears the key-colour fringe the background keeps on its outermost rows and columns (the tan frame never has it). */
+export function clearEdgeFringe(src: Pixels): Pixels {
+  const data = new Uint8ClampedArray(src.data);
+  for (let y = 0; y < src.h; y++) {
+    for (let x = 0; x < src.w; x++) {
+      if (x >= FRINGE_DEPTH && y >= FRINGE_DEPTH && x < src.w - FRINGE_DEPTH && y < src.h - FRINGE_DEPTH) continue;
+      const i = (y * src.w + x) * 4;
+      if ((data[i + 3] ?? 0) > 0 && isKeyFringe(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0)) data.fill(0, i, i + 4);
+    }
+  }
+  return { w: src.w, h: src.h, data };
+}
+
+/** The common background is 107 wide: its extra left column is a strip of the key colour, so it is cut off. */
+function trimStrayColumn(background: Pixels): Pixels {
+  return background.w === TARO_W + 1 ? dropColumns(background, [0]) : background;
+}
+
+/** Cuts the middle band out of a 160-tall tarot background and the stray column off a 107-wide one. */
+export function shortenTarotBackground(background: Pixels): Pixels {
+  const cut = Array.from({ length: TARO_SOURCE_H - TARO_H }, (_, i) => TARO_CUT_FROM + i);
+  const narrow = trimStrayColumn(background);
+  return narrow.h === TARO_SOURCE_H ? dropRows(narrow, cut) : narrow;
+}
 
 export function composeTarot(background: Pixels, character: Pixels): Pixels {
   return composeCard(background, character, TARO_BOX);
@@ -258,7 +295,7 @@ async function loadJokerArt(): Promise<void> {
 
 /** Same as the jokers: the three backgrounds first, then each picture sheet on its own. */
 async function loadTarotArt(): Promise<void> {
-  const loaded = await Promise.all(RARITIES.map(async (rarity) => keyOut(await loadPixels(TARO_BACKGROUNDS[rarity]), TARO_BG_KEY)));
+  const loaded = await Promise.all(RARITIES.map(async (rarity) => shortenTarotBackground(clearEdgeFringe(keyOut(await loadPixels(TARO_BACKGROUNDS[rarity]), TARO_BG_KEY)))));
   const backgrounds = Object.fromEntries(RARITIES.map((rarity, i) => [rarity, loaded[i]])) as Record<Rarity, Pixels>;
   await Promise.allSettled(
     TARO_SHEETS.map(async (sheet, index) => {

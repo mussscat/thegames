@@ -119,10 +119,9 @@
   text-align: center;
 }
 .shop-card--big { --slot-h: clamp(150px, 26vh, 230px); --slot-w: calc(var(--slot-h) * 0.7); }
-.shop-card--common { box-shadow: 0 0 0 2px #9a93a8, 0 0 10px rgb(154 147 168 / 55%); }
-.shop-card--rare { box-shadow: 0 0 0 3px #3a7bd5, 0 0 16px rgb(58 123 213 / 80%); }
-.shop-card--legendary { box-shadow: 0 0 0 3px #f5c542, 0 0 20px rgb(245 197 66 / 90%); }
 .shop-card--down { background: repeating-linear-gradient(45deg, #8e1f2c 0 6px, #b52a3a 6px 12px); box-shadow: none; }
+.shop-card--playing { container-type: size; width: calc(var(--slot-h, 170px) * 5 / 7); padding: 0; border: 0; background: none; box-shadow: none; }
+.shop-card--playing .pcard { width: 100% !important; font-size: 20cqw !important; }
 .shop-card--tarot { background: linear-gradient(180deg, #3b2a63, #1c1430); }
 .shop-card__numeral { font-family: var(--font-head); font-size: 0.7rem; color: var(--gold); }
 .shop-card__glyph { font-size: 2.2em; line-height: 1; }

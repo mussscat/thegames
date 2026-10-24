@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canTake, castsWheelNow, replacementsFor, revealSchedule } from './opening';
+import { canTake, cardColumns, castsWheelNow, fitCardWidth, replacementsFor, revealSchedule } from './opening';
 
 const FULL = ['clubs', 'hearts', 'spades', 'diamonds', 'small'] as const;
 
@@ -68,5 +68,17 @@ describe('canTake with focuses', () => {
   it('needs a free focus slot for a focus', () => {
     expect(canTake({ kind: 'focus', focusId: 'peek' }, [], {}, [], [])).toBe(true);
     expect(canTake({ kind: 'focus', focusId: 'peek' }, [], {}, [], ['pad', 'shield'])).toBe(false);
+  });
+});
+
+describe('pack card layout', () => {
+  it('stacks five cards as a 3 + 2 pyramid and keeps smaller packs in one line', () => {
+    expect(cardColumns(5)).toBe(3);
+    expect(cardColumns(3)).toBe(3);
+    expect(cardColumns(2)).toBe(2);
+  });
+  it('fits the rows into the screen width', () => {
+    const w = fitCardWidth(5, 390, 844);
+    expect(w * 3 + 16 * 2).toBeLessThanOrEqual(390 - 24);
   });
 });

@@ -3,7 +3,7 @@
   position: relative;
   display: block;
   width: var(--tface-w, 4em);
-  aspect-ratio: 106 / 160;
+  aspect-ratio: 106 / 144;
   container-type: inline-size;
   color: var(--ink);
   text-shadow: none;
@@ -21,6 +21,6 @@
   font-weight: 800;
 }
 /* Banner centre sits at 6.6% of the height, the ribbon centre at 92.5%. */
-.tface__numeral { top: 6.6%; translate: 0 -50%; font-family: var(--font-head); font-size: 8cqw; }
-.tface__name { top: 92.5%; translate: 0 -50%; font-family: var(--font-text); font-size: 10.5cqw; }
+.tface__numeral { top: 7.3%; translate: 0 -50%; font-family: var(--font-head); font-size: 8cqw; }
+.tface__name { top: 91.7%; translate: 0 -50%; font-family: var(--font-text); font-size: 10.5cqw; }
 .tface__name--long { font-size: 8.2cqw; }

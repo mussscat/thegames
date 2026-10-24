@@ -10,15 +10,15 @@ const TAROT_GLYPHS: Readonly<Record<TarotId, string>> = { sun: '☀', tower: '�
 export const FOCUS_GLYPHS: Readonly<Record<FocusId, string>> = { peek: '◎', foresight: '✧', redeal: '↻', boost: '▲', pad: '◆', shield: '⬡', piggy: '¤', swap: '⇄', doubler: '×2', suitShift: '♤' };
 const CARD_WIDTH = { slot: 76, big: 104 } as const;
 
-type PackCardFaceProps = { readonly card: PackCard; readonly size?: 'slot' | 'big'; readonly faceDown?: boolean };
+type PackCardFaceProps = { readonly card: PackCard; readonly size?: 'slot' | 'big'; readonly faceDown?: boolean; readonly width?: number };
 
 /** One card of the shop or a pack: a joker picture, a tarot or an enhanced playing card, framed by rarity. */
-export function PackCardFace({ card, size = 'slot', faceDown = false }: PackCardFaceProps) {
+export function PackCardFace({ card, size = 'slot', faceDown = false, width }: PackCardFaceProps) {
   const classes = ['shop-card', `shop-card--${size}`, `shop-card--${packCardRarity(card)}`, faceDown ? 'shop-card--down' : ''].filter(Boolean).join(' ');
   if (faceDown) return <span className={classes} aria-hidden="true" />;
   if (card.kind === 'card') {
     const playing = deckCard(card.cardId);
-    return <span className={`${classes} shop-card--playing`}>{playing && <PixelCard card={playing} width={CARD_WIDTH[size]} enhancement={card.enhancement} />}</span>;
+    return <span className={`${classes} shop-card--playing`}>{playing && <PixelCard card={playing} width={width ?? CARD_WIDTH[size]} enhancement={card.enhancement} />}</span>;
   }
   if (card.kind === 'joker') {
     return (
